@@ -1,0 +1,20 @@
+meta {
+  name: Update User
+  type: http
+  seq: 3
+}
+
+patch {
+  url: {{base_url}}/users/c24cc57a-5146-4a3e-be90-fb3e7450db69
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "firstName":"Teste UPDATE",
+    "lastName": "Teste 2 ",
+    "email":"testeupdate@teste.com",
+    "password":"teste"
+  }
+}

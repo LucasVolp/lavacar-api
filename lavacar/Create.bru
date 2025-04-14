@@ -1,0 +1,21 @@
+meta {
+  name: Create
+  type: http
+  seq: 4
+}
+
+post {
+  url: {{base_url}}/users
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "firstName":"Lucas",
+    "lastName":"Gabriel",
+    "email":"teste123@teste.com",
+    "password": "testeaa",
+    "role":"ADMIN"
+  }
+}
