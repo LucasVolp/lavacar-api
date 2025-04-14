@@ -1,11 +1,11 @@
 meta {
   name: Update User
   type: http
-  seq: 3
+  seq: 4
 }
 
 patch {
-  url: {{base_url}}/users/c24cc57a-5146-4a3e-be90-fb3e7450db69
+  url: {{base_url}}/users/05f17e29-ca02-44ea-9a3f-726dc62ccd13
   body: json
   auth: inherit
 }
@@ -13,7 +13,7 @@ patch {
 body:json {
   {
     "firstName":"Teste UPDATE",
-    "lastName": "Teste 2 ",
+    "lastName": "Teste 2 45",
     "email":"testeupdate@teste.com",
     "password":"teste"
   }

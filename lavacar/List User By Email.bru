@@ -1,0 +1,11 @@
+meta {
+  name: List User By Email
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{base_url}}/users/email/teste123@teste.com
+  body: none
+  auth: inherit
+}
