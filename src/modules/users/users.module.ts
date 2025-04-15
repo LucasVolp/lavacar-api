@@ -12,5 +12,6 @@ const usecases = Object.values(UseCases)
   imports: [SharedModule],
   controllers: [UsersController],
   providers: [UsersService, Logger, ...repositories, ...usecases],
+  exports: [...repositories]
 })
 export class UsersModule {}

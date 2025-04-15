@@ -7,5 +7,4 @@ export type CreateUserInput = {
     email: string,
     password: string,
     role?: Role
-
 };
