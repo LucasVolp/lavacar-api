@@ -11,6 +11,7 @@ export class AuthService {
 
   generateJwt(user: any) {
     const payload = {
+      sub: user.id,
       email: user.email,
       firstName: user.firstName,
       lastName: user.lastName,
@@ -25,6 +26,7 @@ export class AuthService {
     }
 
     const payload = {
+      sub: req.user.id,
       email: req.user.email,
       firstName: req.user.firstName,
       lastName: req.user.lastName,
@@ -32,10 +34,8 @@ export class AuthService {
     };
 
     return {
-      message: 'User information',
-      user: {
-        ...payload,
-      },
+      user: req.user,
+      access_token: this.jwtService.sign(payload),
     };
   }
 

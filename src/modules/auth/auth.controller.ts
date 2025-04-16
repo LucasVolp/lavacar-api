@@ -15,21 +15,13 @@ export class AuthController {
 
   @Get('google/redirect')
   @UseGuards(AuthGuard('google'))
-  async googleAuthRedirect(@Req() req: RequestUser, @Res() res: Response) {
+  googleAuthRedirect(@Req() req, @Res() res) {
     const user = req.user;
-    const access_token = this.authService.generateJwt(user);
-
-    const isValidToken =
-      await this.authService.validateGoogleAccessToken(access_token);
-
-    if (!isValidToken) {
-      return res.status(401).json({
-        message: 'Invalid Google access token',
-      });
-    }
-
-    const redirectUrl = `${process.env.FRONTEND_URL}?access_token=${access_token}`;
-    return res.redirect(redirectUrl);
+    const accessToken = this.authService.generateJwt(user);
+  
+    // Certifique-se de que a URL termina com um separador adequado
+    const redirectUrl = `${process.env.FRONTEND_URL}?access_token=${accessToken}`;
+    res.redirect(redirectUrl);
   }
 
   @Get('me')
