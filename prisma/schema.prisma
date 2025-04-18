@@ -18,114 +18,116 @@ enum Role {
 }
 
 enum AppointmentStatus {
-  PENDING       // Agendado, mas não iniciado
-  WAITING       // Cliente chegou, aguardando início
-  IN_PROGRESS   // Lavagem em andamento
-  COMPLETED     // Serviço concluído
-  CANCELED      // Cancelado
-  NO_SHOW       // Cliente não compareceu
+  PENDING // Agendado, mas não iniciado
+  WAITING // Cliente chegou, aguardando início
+  IN_PROGRESS // Lavagem em andamento
+  COMPLETED // Serviço concluído
+  CANCELED // Cancelado
+  NO_SHOW // Cliente não compareceu
 }
 
 model User {
-  id        String     @id @default(uuid())
-  firstName String
-  lastName  String
-  picture   String?
-  email     String     @unique
-  password  String
-  role      Role       @default(USER)
-  shops     Shop[]     // Se for admin
-  vehicles  Vehicle[]
+  id           String        @id @default(uuid())
+  firstName    String
+  lastName     String
+  picture      String?
+  email        String        @unique
+  password     String
+  role         Role          @default(USER)
+  shops        Shop[] // Se for admin
+  vehicles     Vehicle[]
   appointments Appointment[]
-  createdAt DateTime   @default(now())
-  updatedAt DateTime   @updatedAt
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
 }
 
 model Vehicle {
-  id        String     @id @default(uuid())
-  brand     String
-  model     String
-  color     String
-  plate     String     @unique
-  userId    String
-  user      User       @relation(fields: [userId], references: [id])
+  id           String        @id @default(uuid())
+  brand        String
+  model        String
+  color        String
+  plate        String        @unique
+  userId       String
+  user         User          @relation(fields: [userId], references: [id])
   appointments Appointment[]
-  createdAt DateTime   @default(now())
-  updatedAt DateTime   @updatedAt
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
 
   @@index([userId])
 }
 
 model Shop {
-  id          String       @id @default(uuid())
-  name        String
-  address     String
+  id           String        @id @default(uuid())
+  name         String
+  address      String
+  latitude     Float?
+  longitude    Float?
   contactPhone String
-  ownerId     String
-  owner       User         @relation(fields: [ownerId], references: [id])
-  services    Service[]
-  schedules   Schedule[]
+  ownerId      String
+  owner        User          @relation(fields: [ownerId], references: [id])
+  services     Service[]
+  schedules    Schedule[]
   blockedTimes BlockedTime[]
   appointments Appointment[]
-  createdAt   DateTime     @default(now())
-  updatedAt   DateTime     @updatedAt
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
 
   @@index([ownerId])
 }
 
 model Service {
-  id          String     @id @default(uuid())
-  name        String
-  description String
-  price       Float
-  duration    Int        // em minutos
-  shopId      String
-  shop        Shop       @relation(fields: [shopId], references: [id])
+  id           String        @id @default(uuid())
+  name         String
+  description  String
+  price        Float
+  duration     Int // em minutos
+  shopId       String
+  shop         Shop          @relation(fields: [shopId], references: [id])
   appointments Appointment[]
-  createdAt   DateTime   @default(now())
-  updatedAt   DateTime   @updatedAt
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
 
   @@index([shopId])
 }
 
 model Schedule {
-  id        String     @id @default(uuid())
-  weekday   Int        // 0 = Domingo, 6 = Sábado
-  startTime String     // "08:00"
-  endTime   String     // "18:00"
+  id        String @id @default(uuid())
+  weekday   Int // 0 = Domingo, 6 = Sábado
+  startTime String // "08:00"
+  endTime   String // "18:00"
   shopId    String
-  shop      Shop       @relation(fields: [shopId], references: [id])
+  shop      Shop   @relation(fields: [shopId], references: [id])
 
-  @@index([shopId])
   @@unique([weekday, shopId]) // Um dia por shop
+  @@index([shopId])
 }
 
 model BlockedTime {
-  id        String     @id @default(uuid())
-  date      DateTime
-  reason    String
-  shopId    String
-  shop      Shop       @relation(fields: [shopId], references: [id])
+  id     String   @id @default(uuid())
+  date   DateTime
+  reason String
+  shopId String
+  shop   Shop     @relation(fields: [shopId], references: [id])
 
   @@index([shopId])
   @@index([date])
 }
 
 model Appointment {
-  id           String            @id @default(uuid())
-  userId       String
-  user         User              @relation(fields: [userId], references: [id])
-  shopId       String
-  shop         Shop              @relation(fields: [shopId], references: [id])
-  vehicleId    String
-  vehicle      Vehicle           @relation(fields: [vehicleId], references: [id])
-  serviceId    String
-  service      Service           @relation(fields: [serviceId], references: [id])
-  scheduledAt  DateTime
-  status       AppointmentStatus @default(PENDING)
-  evaluation   Evaluation?
-  createdAt    DateTime          @default(now())
-  updatedAt    DateTime          @updatedAt
+  id          String            @id @default(uuid())
+  userId      String
+  user        User              @relation(fields: [userId], references: [id])
+  shopId      String
+  shop        Shop              @relation(fields: [shopId], references: [id])
+  vehicleId   String
+  vehicle     Vehicle           @relation(fields: [vehicleId], references: [id])
+  serviceId   String
+  service     Service           @relation(fields: [serviceId], references: [id])
+  scheduledAt DateTime
+  status      AppointmentStatus @default(PENDING)
+  evaluation  Evaluation?
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
 
   @@index([userId])
   @@index([shopId])
@@ -135,10 +137,10 @@ model Appointment {
 }
 
 model Evaluation {
-  id            String     @id @default(uuid())
-  rating        Int        // 1 a 5
+  id            String      @id @default(uuid())
+  rating        Int // 1 a 5
   comment       String?
-  appointmentId String     @unique
+  appointmentId String      @unique
   appointment   Appointment @relation(fields: [appointmentId], references: [id])
-  createdAt     DateTime   @default(now())
+  createdAt     DateTime    @default(now())
 }
