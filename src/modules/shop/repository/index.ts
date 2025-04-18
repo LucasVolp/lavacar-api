@@ -1,0 +1,5 @@
+export * from './create-shop.repository'
+export * from './delete-shop.repository'
+export * from './find-all-shop.repository'
+export * from './find-shop-by-id.repository'
+export * from './update-shop.repository'
