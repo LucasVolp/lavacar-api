@@ -1,0 +1,20 @@
+meta {
+  name: Create
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{base_url}}/shop
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "name":"Shop 1",
+    "address":"teste",
+    "contactPhone":"(67)992448204",
+    "ownerId":"cc1a63a9-5f4d-479e-9626-03dfe45a7fc8"
+  }
+}
