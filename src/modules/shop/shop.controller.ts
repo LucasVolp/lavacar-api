@@ -1,9 +1,14 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards } from '@nestjs/common';
 import { ShopService } from './shop.service';
 import { CreateShopDto } from './dto/create-shop.dto';
 import { UpdateShopDto } from './dto/update-shop.dto';
+import { RolesGuard } from 'src/guards/role.guard';
+import { Roles } from 'src/decorators/roles.decorator';
+import { Role } from 'src/modules/users/types/Role';
 
 @Controller('shop')
+@UseGuards(RolesGuard)
+@Roles(Role.USER)
 export class ShopController {
   constructor(private readonly shopService: ShopService) {}
 

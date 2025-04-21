@@ -8,10 +8,13 @@ import { JwtStrategy } from './shared/strategies/jwt.strategy';
 import { AuthService } from './modules/auth/auth.service';
 import { GoogleStrategy } from './shared/strategies/google.strategy';
 import { ShopModule } from './modules/shop/shop.module';
+import { ServiceModule } from './modules/service/service.module';
+import { APP_GUARD } from '@nestjs/core';
+import { RolesGuard } from './guards/role.guard';
 
 @Module({
-  imports: [UsersModule, AuthModule, ShopModule],
+  imports: [UsersModule, AuthModule, ShopModule, ServiceModule],
   controllers: [AppController],
-  providers: [AppService, JwtService, JwtStrategy, Logger, AuthService, GoogleStrategy],
+  providers: [AppService, {provide: APP_GUARD, useClass: RolesGuard}, JwtService, JwtStrategy, Logger, AuthService, GoogleStrategy],
 })
 export class AppModule {}
