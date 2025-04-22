@@ -7,8 +7,8 @@ import { Roles } from 'src/decorators/roles.decorator';
 import { Role } from 'src/modules/users/types/Role';
 
 @Controller('shop')
-@UseGuards(RolesGuard)
-@Roles(Role.USER)
+// @UseGuards(RolesGuard)
+// @Roles(Role.USER)
 export class ShopController {
   constructor(private readonly shopService: ShopService) {}
 
