@@ -1,26 +1,34 @@
 import { Injectable } from '@nestjs/common';
 import { CreateServiceDto } from './dto/create-service.dto';
 import { UpdateServiceDto } from './dto/update-service.dto';
+import { CreateServiceUseCase, DeleteServiceUseCase, FindAllServicesUseCase, FindServiceByIdUseCase, UpdateServiceUseCase } from './use-cases';
 
 @Injectable()
 export class ServiceService {
-  create(createServiceDto: CreateServiceDto) {
-    return 'This action adds a new service';
+  constructor(
+    private readonly CreateServiceUseCase: CreateServiceUseCase,
+    private readonly FindAllServicesUseCase: FindAllServicesUseCase,
+    private readonly FindServiceByIdUseCase: FindServiceByIdUseCase,
+    private readonly UpdateServiceUseCase: UpdateServiceUseCase,
+    private readonly DeleteServiceUseCase: DeleteServiceUseCase,
+  ){}
+  async create(data: CreateServiceDto) {
+    return await this.CreateServiceUseCase.execute(data);
   }
 
-  findAll() {
-    return `This action returns all service`;
+  async findAll() {
+    return await this.FindAllServicesUseCase.execute();
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} service`;
+  async findOne(id: string) {
+    return await this.FindServiceByIdUseCase.execute(id)
   }
 
-  update(id: number, updateServiceDto: UpdateServiceDto) {
-    return `This action updates a #${id} service`;
+  async update(id: string, data: UpdateServiceDto) {
+    return await this.UpdateServiceUseCase.execute(id, data);
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} service`;
+  async remove(id: string) {
+    return await this.DeleteServiceUseCase.execute(id);
   }
 }

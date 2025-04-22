@@ -1,0 +1,22 @@
+meta {
+  name: Create
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{base_url}}/service
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "name":"Service 123",
+    "description":"Description 12",
+    "price":50.5,
+    "duration":60,
+    "shopId":"de15eaa4-bea3-4a2c-b852-166d214ba154",
+    "a":"a"
+  }
+}
