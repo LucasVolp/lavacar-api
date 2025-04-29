@@ -12,9 +12,10 @@ import { ServiceModule } from './modules/service/service.module';
 import { APP_GUARD } from '@nestjs/core';
 import { RolesGuard } from './guards/role.guard';
 import { VehicleModule } from './modules/vehicle/vehicle.module';
+import { ScheduleModule } from './modules/schedule/schedule.module';
 
 @Module({
-  imports: [UsersModule, AuthModule, ShopModule, ServiceModule, VehicleModule],
+  imports: [UsersModule, AuthModule, ShopModule, ServiceModule, VehicleModule, ScheduleModule],
   controllers: [AppController],
   providers: [AppService, {provide: APP_GUARD, useClass: RolesGuard}, JwtService, JwtStrategy, Logger, AuthService, GoogleStrategy],
 })
