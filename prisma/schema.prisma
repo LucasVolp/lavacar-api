@@ -26,6 +26,21 @@ enum AppointmentStatus {
   NO_SHOW // Cliente não compareceu
 }
 
+enum Weekday {
+  SUNDAY
+  MONDAY
+  TUESDAY
+  WEDNESDAY
+  THURSDAY
+  FRIDAY
+  SATURDAY
+}
+
+enum ShopStatus {
+  OPEN
+  CLOSED
+}
+
 model User {
   id           String        @id @default(uuid())
   firstName    String
@@ -69,6 +84,7 @@ model Shop {
   schedules    Schedule[]
   blockedTimes BlockedTime[]
   appointments Appointment[]
+  status       ShopStatus    @default(OPEN)
   createdAt    DateTime      @default(now())
   updatedAt    DateTime      @updatedAt
 
@@ -92,12 +108,12 @@ model Service {
 }
 
 model Schedule {
-  id        String @id @default(uuid())
-  weekday   Int // 0 = Domingo, 6 = Sábado
+  id        String  @id @default(uuid())
+  weekday   Weekday @unique // enum
   startTime String // "08:00"
   endTime   String // "18:00"
   shopId    String
-  shop      Shop   @relation(fields: [shopId], references: [id])
+  shop      Shop    @relation(fields: [shopId], references: [id])
 
   @@unique([weekday, shopId]) // Um dia por shop
   @@index([shopId])
