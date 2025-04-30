@@ -108,23 +108,27 @@ model Service {
 }
 
 model Schedule {
-  id        String  @id @default(uuid())
-  weekday   Weekday @unique // enum
+  id        String   @id @default(uuid())
+  weekday   Weekday  @unique // enum
   startTime String // "08:00"
   endTime   String // "18:00"
   shopId    String
-  shop      Shop    @relation(fields: [shopId], references: [id])
+  shop      Shop     @relation(fields: [shopId], references: [id])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@unique([weekday, shopId]) // Um dia por shop
   @@index([shopId])
 }
 
 model BlockedTime {
-  id     String   @id @default(uuid())
-  date   DateTime
-  reason String
-  shopId String
-  shop   Shop     @relation(fields: [shopId], references: [id])
+  id        String   @id @default(uuid())
+  date      DateTime
+  reason    String
+  shopId    String
+  shop      Shop     @relation(fields: [shopId], references: [id])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([shopId])
   @@index([date])
