@@ -13,9 +13,10 @@ import { APP_GUARD } from '@nestjs/core';
 import { RolesGuard } from './guards/role.guard';
 import { VehicleModule } from './modules/vehicle/vehicle.module';
 import { ScheduleModule } from './modules/schedule/schedule.module';
+import { BlockedTimesModule } from './modules/blocked-time/blocked-times.module';
 
 @Module({
-  imports: [UsersModule, AuthModule, ShopModule, ServiceModule, VehicleModule, ScheduleModule],
+  imports: [UsersModule, AuthModule, ShopModule, ServiceModule, VehicleModule, ScheduleModule, BlockedTimesModule],
   controllers: [AppController],
   providers: [AppService, {provide: APP_GUARD, useClass: RolesGuard}, JwtService, JwtStrategy, Logger, AuthService, GoogleStrategy],
 })
