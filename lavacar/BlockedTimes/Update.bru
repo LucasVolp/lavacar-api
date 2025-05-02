@@ -1,0 +1,17 @@
+meta {
+  name: Update
+  type: http
+  seq: 4
+}
+
+patch {
+  url: {{base_url}}/blockedtime/f1313062-0257-4c49-b5c5-0fecea5f57d0
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "reason": "Férias2"
+  }
+}
