@@ -1,14 +1,7 @@
-import { PartialType } from '@nestjs/mapped-types';
+import { PartialType, OmitType } from '@nestjs/mapped-types';
 import { CreateBlockedTimeDto } from './create-blocked-time.dto';
-import { IsDate, IsOptional, IsString } from 'class-validator';
 
-export class UpdateBlockedTimeDto extends PartialType(CreateBlockedTimeDto) {
-    
-    @IsOptional()
-    @IsDate()
-    date: Date;
-
-    @IsOptional()
-    @IsString()
-    reason: string;
-}
+// ShopId não pode ser alterado
+export class UpdateBlockedTimeDto extends PartialType(
+    OmitType(CreateBlockedTimeDto, ['shopId'] as const)
+) {}

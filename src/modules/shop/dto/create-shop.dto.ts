@@ -1,28 +1,100 @@
-import { IsNumber, IsOptional, IsPhoneNumber, IsString, IsUUID } from "class-validator";
+import { 
+  IsEmail, 
+  IsEnum, 
+  IsInt, 
+  IsNotEmpty, 
+  IsOptional, 
+  IsString, 
+  IsUUID, 
+  Length, 
+  Matches, 
+  Max, 
+  Min 
+} from "class-validator";
+import { ShopStatus } from "prisma/generated";
 
 export class CreateShopDto {
-    @IsUUID()
-    id: string;
+  @IsString()
+  @IsNotEmpty()
+  name: string;
 
-    @IsString()
-    name: string;
+  @IsString()
+  @IsOptional()
+  description?: string;
 
-    @IsString()
-    address: string;
+  @IsString()
+  @IsOptional()
+  document?: string; // CNPJ
 
-    @IsOptional()
-    @IsNumber()
-    latitude?: number;
+  @IsString()
+  @IsNotEmpty()
+  @Matches(/^\+?[1-9]\d{1,14}$/, { message: 'phone must be a valid phone number' })
+  phone: string;
 
-    @IsOptional()
-    @IsNumber()
-    longitude?: number;
+  @IsEmail()
+  @IsOptional()
+  email?: string;
 
-    @IsString()
-    @IsPhoneNumber()
-    contactPhone: string;
+  @IsEnum(ShopStatus)
+  @IsOptional()
+  status?: ShopStatus;
 
-    @IsString()
-    ownerId: string;
+  // Endereço
+  @IsString()
+  @IsNotEmpty()
+  @Matches(/^\d{5}-?\d{3}$/, { message: 'zipCode must be a valid CEP' })
+  zipCode: string;
 
+  @IsString()
+  @IsNotEmpty()
+  street: string;
+
+  @IsString()
+  @IsNotEmpty()
+  number: string;
+
+  @IsString()
+  @IsOptional()
+  complement?: string;
+
+  @IsString()
+  @IsNotEmpty()
+  neighborhood: string;
+
+  @IsString()
+  @IsNotEmpty()
+  city: string;
+
+  @IsString()
+  @IsNotEmpty()
+  @Length(2, 2)
+  state: string;
+
+  // Configurações
+  @IsInt()
+  @Min(15)
+  @Max(60)
+  @IsOptional()
+  slotInterval?: number;
+
+  @IsInt()
+  @Min(0)
+  @Max(60)
+  @IsOptional()
+  bufferBetweenSlots?: number;
+
+  @IsInt()
+  @Min(1)
+  @Max(90)
+  @IsOptional()
+  maxAdvanceDays?: number;
+
+  @IsInt()
+  @Min(0)
+  @IsOptional()
+  minAdvanceMinutes?: number;
+
+  @IsUUID()
+  @IsNotEmpty()
+  ownerId: string;
 }
