@@ -1,7 +1,7 @@
 import { PartialType } from '@nestjs/mapped-types';
 import { CreateBlockedTimeDto } from './create-blocked-time.dto';
 import { IsDateString, IsEnum, IsOptional, IsString, Matches, ValidateIf } from 'class-validator';
-import { BlockedTimeType } from 'prisma/generated';
+import { BlockedTimeType } from '../types/BlockedTimeType';
 
 // ShopId não pode ser alterado
 export class UpdateBlockedTimeDto extends PartialType(CreateBlockedTimeDto) {

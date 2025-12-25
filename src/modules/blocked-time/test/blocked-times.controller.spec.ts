@@ -1,6 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { BlockedTimesController } from './blocked-times.controller';
-import { BlockedTimesService } from './blocked-times.service';
+import { BlockedTimesController } from '../blocked-times.controller';
+import { BlockedTimesService } from '../blocked-times.service';
 
 describe('BlockedTimesController', () => {
   let controller: BlockedTimesController;

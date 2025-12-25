@@ -11,6 +11,11 @@ export class FindAllBlockedTimeUseCase {
   async execute() {
     try {
       const blockedTimes = await this.blockedTimeRepository.findAll();
+      if (blockedTimes.length === 0) {
+        this.logger.log('No blocked times found', FindAllBlockedTimeUseCase.name);
+        return [];
+      }
+      
       this.logger.log('Blocked times found!', FindAllBlockedTimeUseCase.name);
       return blockedTimes;
     } catch (err) {

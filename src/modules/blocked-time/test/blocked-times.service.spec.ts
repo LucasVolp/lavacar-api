@@ -1,5 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { BlockedTimesService } from './blocked-times.service';
+import { BlockedTimesService } from '../blocked-times.service';
 
 describe('BlockedTimesService', () => {
   let service: BlockedTimesService;

@@ -18,6 +18,9 @@ export class CreateBlockedTimeRepository {
     async create(data: CreateBlockedTimeData) {
         return await this.prisma.blockedTime.create({
             data,
+            include: {
+                shop: true,
+            }
         });
     }
 

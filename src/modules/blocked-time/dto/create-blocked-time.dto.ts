@@ -1,5 +1,5 @@
 import { IsDateString, IsEnum, IsNotEmpty, IsOptional, IsString, IsUUID, Matches, ValidateIf } from "class-validator";
-import { BlockedTimeType } from "prisma/generated";
+import { BlockedTimeType } from "../types/BlockedTimeType";
 
 export class CreateBlockedTimeDto {
     @IsEnum(BlockedTimeType)

@@ -2,6 +2,7 @@ import { BadRequestException, Injectable, Logger, ServiceUnavailableException } 
 import { CreateBlockedTimeDto } from '../dto/create-blocked-time.dto';
 import { CreateBlockedTimeRepository } from '../repository';
 import { timeToMinutes } from 'src/shared/utils';
+import { BlockedTimeType } from '../types/BlockedTimeType';
 
 @Injectable()
 export class CreateBlockedTimeUseCase {
@@ -12,22 +13,22 @@ export class CreateBlockedTimeUseCase {
 
     async execute(data: CreateBlockedTimeDto) {
         try {
-            // Validar que endTime > startTime se for PARTIAL
-            if (data.type === 'PARTIAL' && data.startTime && data.endTime) {
+            if (data.type === BlockedTimeType.PARTIAL && data.startTime && data.endTime) {
                 const startMinutes = timeToMinutes(data.startTime);
                 const endMinutes = timeToMinutes(data.endTime);
 
                 if (endMinutes <= startMinutes) {
+                    this.logger.warn('endTime must be after startTime', CreateBlockedTimeUseCase.name);
                     throw new BadRequestException('endTime must be after startTime');
                 }
             }
 
-            // Validar que a data não é no passado
             const blockedDate = new Date(data.date);
             const today = new Date();
             today.setHours(0, 0, 0, 0);
 
             if (blockedDate < today) {
+                this.logger.warn('Cannot block a date in the past', CreateBlockedTimeUseCase.name);
                 throw new BadRequestException('Cannot block a date in the past');
             }
 

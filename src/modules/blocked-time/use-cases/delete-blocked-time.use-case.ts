@@ -13,12 +13,16 @@ export class DeleteBlockedTimeUseCase {
     try {
       const exists = await this.FindBlockedTimeByIdRepository.findById(id);
       if (!exists) {
+        this.logger.warn(`Blocked time not found with ID: ${id}`, DeleteBlockedTimeUseCase.name);
         throw new NotFoundException('Blocked time not found!');
       }
       const blockedTime = await this.BlockedTimeRepository.delete(id);
       this.logger.log('Blocked time deleted!', DeleteBlockedTimeUseCase.name);
       return blockedTime;
     } catch (err) {
+      if (err instanceof NotFoundException) {
+        throw err;
+      }
       const error = new ServiceUnavailableException({
         message: 'Error deleting blocked time',
         cause: err,
