@@ -1,0 +1,44 @@
+import { Injectable } from '@nestjs/common';
+import { 
+    CreateOrganizationUseCase,
+    FindAllOrganizationUseCase,
+    FindOrganizationByIdUseCase,
+    UpdateOrganizationUseCase,
+    DeleteOrganizationUseCase,
+} from './use-cases';
+import { CreateOrganizationDto, UpdateOrganizationDto } from './dto';
+
+@Injectable()
+export class OrganizationService {
+    constructor(
+        private readonly createOrganizationUseCase: CreateOrganizationUseCase,
+        private readonly findAllOrganizationUseCase: FindAllOrganizationUseCase,
+        private readonly findOrganizationByIdUseCase: FindOrganizationByIdUseCase,
+        private readonly updateOrganizationUseCase: UpdateOrganizationUseCase,
+        private readonly deleteOrganizationUseCase: DeleteOrganizationUseCase,
+    ) {}
+
+    create(data: CreateOrganizationDto) {
+        return this.createOrganizationUseCase.execute(data);
+    }
+
+    findAll() {
+        return this.findAllOrganizationUseCase.execute();
+    }
+
+    findById(id: string) {
+        return this.findOrganizationByIdUseCase.execute(id);
+    }
+
+    findBySlug(slug: string) {
+        return this.findOrganizationByIdUseCase.executeBySlug(slug);
+    }
+
+    update(id: string, data: UpdateOrganizationDto) {
+        return this.updateOrganizationUseCase.execute(id, data);
+    }
+
+    delete(id: string) {
+        return this.deleteOrganizationUseCase.execute(id);
+    }
+}

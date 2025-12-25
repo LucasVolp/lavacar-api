@@ -17,6 +17,9 @@ import { BlockedTimesModule } from './modules/blocked-time/blocked-times.module'
 import { ServiceGroupModule } from './modules/service-group/service-group.module';
 import { AppointmentModule } from './modules/appointment/appointment.module';
 import { EvaluationModule } from './modules/evaluation/evaluation.module';
+import { OrganizationModule } from './modules/organization/organization.module';
+import { OrganizationMemberModule } from './modules/organization-member/organization-member.module';
+import { ShopManagerModule } from './modules/shop-manager/shop-manager.module';
 
 @Module({
   imports: [
@@ -30,6 +33,9 @@ import { EvaluationModule } from './modules/evaluation/evaluation.module';
     BlockedTimesModule,
     AppointmentModule,
     EvaluationModule,
+    OrganizationModule,
+    OrganizationMemberModule,
+    ShopManagerModule,
   ],
   controllers: [AppController],
   providers: [AppService, 
