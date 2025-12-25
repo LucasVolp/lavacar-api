@@ -1,6 +1,6 @@
 import { Injectable } from "@nestjs/common";
 import { PrismaService } from "src/shared/databases/prisma.database";
-import { AppointmentStatus } from "prisma/generated";
+import { AppointmentStatus } from "../types/AppointmentStatus";
 
 @Injectable()
 export class CancelAppointmentRepository {

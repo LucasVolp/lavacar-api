@@ -1,14 +1,6 @@
 import { Injectable, Logger, ServiceUnavailableException } from "@nestjs/common";
 import { FindAllAppointmentRepository } from "../repository";
-import { AppointmentStatus } from "prisma/generated";
-
-interface FindAllFilters {
-    shopId?: string;
-    userId?: string;
-    status?: AppointmentStatus;
-    startDate?: string;
-    endDate?: string;
-}
+import { FindAllFilters } from "../dto/filters-appointment.dto";
 
 @Injectable()
 export class FindAllAppointmentUseCase {

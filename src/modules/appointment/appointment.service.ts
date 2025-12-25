@@ -1,7 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { CreateAppointmentDto } from './dto/create-appointment.dto';
 import { UpdateAppointmentDto } from './dto/update-appointment.dto';
-import { AppointmentStatus } from 'prisma/generated';
 import {
     CreateAppointmentUseCase,
     FindAllAppointmentUseCase,
@@ -9,14 +8,7 @@ import {
     UpdateAppointmentUseCase,
     CancelAppointmentUseCase,
 } from './use-cases';
-
-interface FindAllFilters {
-    shopId?: string;
-    userId?: string;
-    status?: AppointmentStatus;
-    startDate?: string;
-    endDate?: string;
-}
+import { FindAllFilters } from './dto/filters-appointment.dto';
 
 @Injectable()
 export class AppointmentService {

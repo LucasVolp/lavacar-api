@@ -8,192 +8,178 @@ import {
 } from "@nestjs/common";
 import { CreateAppointmentRepository, FindAppointmentsByDateRepository } from "../repository";
 import { CreateAppointmentDto } from "../dto/create-appointment.dto";
-import { PrismaService } from "src/shared/databases/prisma.database";
-import { timeToMinutes, isTimeOverlapping } from "src/shared/utils";
+import { timeToMinutes, extractTimeFromDateTime, extractWeekdayFromDateTime, isTimeOverlapping, addMinutesToTime } from "src/shared/utils";
 import { Weekday, BlockedTimeType } from "prisma/generated";
-
+import { FindUserRepository } from "src/modules/users/repository";
+import { FindShopByIdRepository } from "src/modules/shop/repository";
+import { ShopStatus } from "src/modules/shop/types/ShopStatus";
+import { FindServicesByIdsRepository } from "src/modules/service/repository";
+import { FindScheduleByWeekdayRepository } from "src/modules/schedule/repository";
+import { FindVehicleByIdRepository } from "src/modules/vehicle/repository";
+import { FindBlockedTimeByShopIdRepository } from "src/modules/blocked-time/repository";
 @Injectable()
 export class CreateAppointmentUseCase {
     constructor(
         private readonly appointmentRepository: CreateAppointmentRepository,
         private readonly findByDateRepository: FindAppointmentsByDateRepository,
-        private readonly prisma: PrismaService,
+        private readonly findServicesRepository: FindServicesByIdsRepository,
+        private readonly findUserByIdRepository: FindUserRepository,
+        private readonly findShopByIdRepository: FindShopByIdRepository,
+        private readonly findScheduleByIdRepository: FindScheduleByWeekdayRepository,
+        private readonly findVehicleByIdRepository: FindVehicleByIdRepository,
+        private readonly findBlockedTimeByShopRepository: FindBlockedTimeByShopIdRepository,
         private readonly logger: Logger = new Logger()
     ) {}
 
     async execute(data: CreateAppointmentDto) {
         try {
-            const scheduledDate = new Date(data.scheduledDate);
-            const scheduledTime = data.scheduledTime;
+            const userExists = await this.findUserByIdRepository.findById(data.userId);
+            if (!userExists) {
+                this.logger.warn(`User not found with ID: ${data.userId}`, CreateAppointmentUseCase.name);
+                throw new NotFoundException('User not found');
+            }
 
-            // 1. Buscar shop e validar configurações
-            const shop = await this.prisma.shop.findUnique({
-                where: { id: data.shopId },
-            });
-
-            if (!shop) {
+            const shopExists = await this.findShopByIdRepository.findById(data.shopId);
+            if (!shopExists) {
+                this.logger.warn(`Shop not found with ID: ${data.shopId}`, CreateAppointmentUseCase.name);
                 throw new NotFoundException('Shop not found');
             }
 
-            if (shop.status !== 'ACTIVE') {
+            if (shopExists.status !== ShopStatus.ACTIVE) {
+                this.logger.warn(`Shop with ID: ${data.shopId} is not active`, CreateAppointmentUseCase.name);
                 throw new BadRequestException('Shop is not active');
             }
 
-            // 2. Validar antecedência mínima
-            const scheduledAt = this.buildScheduledDateTime(scheduledDate, scheduledTime);
+            if (data.vehicleId) {
+                const vehicleExists = await this.findVehicleByIdRepository.findById(data.vehicleId);
+                if (!vehicleExists) {
+                    this.logger.warn(`Vehicle not found with ID: ${data.vehicleId}`, CreateAppointmentUseCase.name);
+                    throw new NotFoundException('Vehicle not found');
+                } else if (vehicleExists.userId !== data.userId) {
+                    this.logger.warn(`Vehicle with ID: ${data.vehicleId} does not belong to user ID: ${data.userId}`, CreateAppointmentUseCase.name);
+                    throw new BadRequestException('Vehicle does not belong to the user');
+                }
+            }
+
+            const serviceIds = data.serviceIds.map(service => service.serviceId);
+            const servicesExists = await this.findServicesRepository.findByIds(serviceIds, data.shopId);
+
+            if (servicesExists.length !== serviceIds.length) {
+                this.logger.warn(`One or more services not found for shop ID: ${data.shopId}`, CreateAppointmentUseCase.name);
+                throw new NotFoundException('One or more services not found for this shop');
+            }
+
+            // Calcular duração total e preço total dos serviços
+            const totalDuration = servicesExists.reduce((total, service) => total + service.duration, 0);
+            const totalPrice = servicesExists.reduce((total, service) => total + Number(service.price), 0);
+
+            // Extrair horários do agendamento
+            const scheduledAt = new Date(data.scheduledAt);
+            const startTime = extractTimeFromDateTime(scheduledAt);
+            const startMinutes = timeToMinutes(startTime);
+            const endMinutes = startMinutes + totalDuration;
+            const endTime = addMinutesToTime(startTime, totalDuration);
+            const endDateTime = new Date(scheduledAt.getTime() + totalDuration * 60000);
+            const weekday = extractWeekdayFromDateTime(scheduledAt) as Weekday;
+
+            // Verifica se o shop tem horário cadastrado para o dia da semana
+            const schedule = await this.findScheduleByIdRepository.findScheduleByWeekday(weekday, data.shopId);
+            
+            if (!schedule || schedule.isOpen !== 'ACTIVE') {
+                this.logger.warn(`No schedule found for shop ID: ${data.shopId} on weekday: ${weekday}`, CreateAppointmentUseCase.name);
+                throw new BadRequestException('Shop is closed on the selected day');
+            }
+
+            const shopOpenMinutes = timeToMinutes(schedule.startTime);
+            const shopCloseMinutes = timeToMinutes(schedule.endTime);
+
+            // Verifica se o agendamento começa dentro do horário
+            if (startMinutes < shopOpenMinutes) {
+                this.logger.warn(`Appointment starts before shop opens for shop ID: ${data.shopId}`, CreateAppointmentUseCase.name);
+                throw new BadRequestException('Appointment starts before shop opens');
+            }
+
+            // Verifica se o agendamento TERMINA dentro do horário
+            if (endMinutes > shopCloseMinutes) {
+                this.logger.warn(`Appointment ends after shop closes for shop ID: ${data.shopId}`, CreateAppointmentUseCase.name);
+                throw new BadRequestException('Appointment ends after shop closes');
+            }
+
+            // Verifica conflito com horário de intervalo (sobreposição completa)
+            if (schedule.breakStartTime && schedule.breakEndTime) {
+                if (isTimeOverlapping(startTime, endTime, schedule.breakStartTime, schedule.breakEndTime)) {
+                    this.logger.warn(`Appointment overlaps with shop break time for shop ID: ${data.shopId}`, CreateAppointmentUseCase.name);
+                    throw new BadRequestException('Appointment time overlaps with shop break time');
+                }
+            }
+
+            // Verificar se não é no passado
             const now = new Date();
-            const minAdvanceTime = new Date(now.getTime() + shop.minAdvanceMinutes * 60000);
+            if (scheduledAt <= now) {
+                throw new BadRequestException('Cannot schedule appointments in the past');
+            }
 
-            if (scheduledAt < minAdvanceTime) {
+            // Verificar antecedência mínima
+            const diffMinutes = (scheduledAt.getTime() - now.getTime()) / 60000;
+
+            if (diffMinutes < shopExists.minAdvanceMinutes) {
+                this.logger.warn(`Appointment does not meet minimum advance time for shop ID: ${data.shopId}`, CreateAppointmentUseCase.name);
                 throw new BadRequestException(
-                    `Appointment must be scheduled at least ${shop.minAdvanceMinutes} minutes in advance`
+                    `Appointment must be scheduled at least ${shopExists.minAdvanceMinutes} minutes in advance`
                 );
             }
 
-            // 3. Validar máximo de dias à frente
-            const maxDate = new Date();
-            maxDate.setDate(maxDate.getDate() + shop.maxAdvanceDays);
+            // Verificar máximo de dias à frente
+            const diffDays = (scheduledAt.getTime() - now.getTime()) / (1000 * 3600 * 24);
 
-            if (scheduledAt > maxDate) {
+            if (diffDays > shopExists.maxAdvanceDays) {
                 throw new BadRequestException(
-                    `Appointment cannot be scheduled more than ${shop.maxAdvanceDays} days in advance`
+                    `Appointment cannot be scheduled more than ${shopExists.maxAdvanceDays} days in advance`
                 );
             }
 
-            // 4. Buscar serviços e calcular duração/preço total
-            const services = await this.prisma.service.findMany({
-                where: {
-                    id: { in: data.serviceIds },
-                    shopId: data.shopId,
-                    isActive: true,
-                },
-            });
+            // Verificar BlockedTime (feriados, bloqueios)
+            const dateOnly = new Date(scheduledAt);
+            dateOnly.setHours(0, 0, 0, 0);
 
-            if (services.length !== data.serviceIds.length) {
-                throw new NotFoundException('One or more services not found or inactive');
-            }
-
-            const totalDuration = services.reduce((acc, s) => acc + s.duration, 0);
-            const totalPrice = services.reduce((acc, s) => acc + Number(s.price), 0);
-
-            // 5. Calcular horário de término
-            const endTime = new Date(scheduledAt.getTime() + totalDuration * 60000);
-            const endTimeString = `${endTime.getHours().toString().padStart(2, '0')}:${endTime.getMinutes().toString().padStart(2, '0')}`;
-
-            // 6. Verificar se o dia está bloqueado
-            const blockedTime = await this.prisma.blockedTime.findFirst({
-                where: {
-                    shopId: data.shopId,
-                    date: scheduledDate,
-                },
-            });
+            const blockedTime = await this.findBlockedTimeByShopRepository.findByShopAndDate(data.shopId, dateOnly);
 
             if (blockedTime) {
                 if (blockedTime.type === BlockedTimeType.FULL_DAY) {
-                    throw new ConflictException('This day is blocked for appointments');
+                    throw new BadRequestException(`Shop is closed on this date: ${blockedTime.reason || 'Blocked'}`);
                 }
 
-                // PARTIAL - verificar se o horário conflita
-                if (blockedTime.startTime && blockedTime.endTime) {
-                    if (isTimeOverlapping(scheduledTime, endTimeString, blockedTime.startTime, blockedTime.endTime)) {
-                        throw new ConflictException('This time slot is blocked');
+                if (blockedTime.type === BlockedTimeType.PARTIAL && blockedTime.startTime && blockedTime.endTime) {
+                    if (isTimeOverlapping(startTime, endTime, blockedTime.startTime, blockedTime.endTime)) {
+                        throw new BadRequestException(`Time slot is blocked: ${blockedTime.reason || 'Unavailable'}`);
                     }
                 }
             }
 
-            // 7. Verificar horário de funcionamento
-            const weekday = this.getWeekdayEnum(scheduledDate);
-            const schedule = await this.prisma.schedule.findUnique({
-                where: {
-                    weekday_shopId: {
-                        weekday,
-                        shopId: data.shopId,
-                    },
-                },
-            });
+            // Verificar conflito com agendamentos existentes
+            const existingAppointments = await this.findByDateRepository.findByShopAndDate(data.shopId, scheduledAt);
+            
+            for (const appointment of existingAppointments) {
+                const existingStart = extractTimeFromDateTime(appointment.scheduledAt);
+                const existingEnd = extractTimeFromDateTime(appointment.endTime);
 
-            if (!schedule || schedule.isOpen !== 'ACTIVE') {
-                throw new BadRequestException('Shop is closed on this day');
-            }
-
-            // Verificar se o horário está dentro do funcionamento
-            const scheduleStart = timeToMinutes(schedule.startTime);
-            const scheduleEnd = timeToMinutes(schedule.endTime);
-            const appointmentStart = timeToMinutes(scheduledTime);
-            const appointmentEnd = timeToMinutes(endTimeString);
-
-            if (appointmentStart < scheduleStart || appointmentEnd > scheduleEnd) {
-                throw new BadRequestException(
-                    `Appointment must be within working hours (${schedule.startTime} - ${schedule.endTime})`
-                );
-            }
-
-            // Verificar conflito com intervalo (almoço)
-            if (schedule.breakStartTime && schedule.breakEndTime) {
-                if (isTimeOverlapping(scheduledTime, endTimeString, schedule.breakStartTime, schedule.breakEndTime)) {
-                    throw new BadRequestException(
-                        `Appointment conflicts with break time (${schedule.breakStartTime} - ${schedule.breakEndTime})`
-                    );
+                if (isTimeOverlapping(startTime, endTime, existingStart, existingEnd)) {
+                    this.logger.warn(`Appointment overlaps with existing appointment for shop ID: ${data.shopId}`, CreateAppointmentUseCase.name);
+                    throw new ConflictException('Appointment time overlaps with an existing appointment');
                 }
             }
 
-            // 8. Verificar conflito com outros agendamentos
-            const existingAppointments = await this.findByDateRepository.findByShopAndDate(
-                data.shopId,
-                scheduledDate
-            );
-
-            for (const existing of existingAppointments) {
-                const existingStart = `${existing.scheduledAt.getHours().toString().padStart(2, '0')}:${existing.scheduledAt.getMinutes().toString().padStart(2, '0')}`;
-
-                // Considerar buffer entre agendamentos
-                const bufferEnd = new Date(existing.endTime.getTime() + shop.bufferBetweenSlots * 60000);
-                const bufferEndString = `${bufferEnd.getHours().toString().padStart(2, '0')}:${bufferEnd.getMinutes().toString().padStart(2, '0')}`;
-
-                if (isTimeOverlapping(scheduledTime, endTimeString, existingStart, bufferEndString)) {
-                    throw new ConflictException('This time slot is already booked');
-                }
-            }
-
-            // 9. Validar veículo pertence ao usuário
-            const vehicle = await this.prisma.vehicle.findFirst({
-                where: {
-                    id: data.vehicleId,
-                    userId: data.userId,
-                    isActive: true,
-                },
-            });
-
-            if (!vehicle) {
-                throw new NotFoundException('Vehicle not found or does not belong to user');
-            }
-
-            // 10. Criar agendamento
             const appointment = await this.appointmentRepository.create({
-                scheduledAt,
-                endTime,
-                totalPrice,
+                ...data,
+                scheduledAt: scheduledAt.toISOString(),
+                endTime: endDateTime.toISOString(),
                 totalDuration,
-                notes: data.notes,
-                userId: data.userId,
-                shopId: data.shopId,
-                vehicleId: data.vehicleId,
-                services: services.map(s => ({
-                    serviceId: s.id,
-                    serviceName: s.name,
-                    servicePrice: Number(s.price),
-                    duration: s.duration,
-                })),
+                totalPrice,
             });
 
-            this.logger.log(
-                `Appointment created: ${appointment.id} for ${scheduledDate.toISOString().split('T')[0]} at ${scheduledTime}`,
-                CreateAppointmentUseCase.name
-            );
-
+            this.logger.log(`Appointment created with ID: ${appointment.id}`, CreateAppointmentUseCase.name);
             return appointment;
         } catch (err) {
-            // Re-throw business exceptions
             if (
                 err instanceof BadRequestException ||
                 err instanceof NotFoundException ||
@@ -209,25 +195,5 @@ export class CreateAppointmentUseCase {
             this.logger.error(error.message, err.stack, CreateAppointmentUseCase.name);
             throw error;
         }
-    }
-
-    private buildScheduledDateTime(date: Date, time: string): Date {
-        const [hours, minutes] = time.split(':').map(Number);
-        const scheduledAt = new Date(date);
-        scheduledAt.setHours(hours, minutes, 0, 0);
-        return scheduledAt;
-    }
-
-    private getWeekdayEnum(date: Date): Weekday {
-        const weekdays: Weekday[] = [
-            Weekday.SUNDAY,
-            Weekday.MONDAY,
-            Weekday.TUESDAY,
-            Weekday.WEDNESDAY,
-            Weekday.THURSDAY,
-            Weekday.FRIDAY,
-            Weekday.SATURDAY,
-        ];
-        return weekdays[date.getDay()];
     }
 }

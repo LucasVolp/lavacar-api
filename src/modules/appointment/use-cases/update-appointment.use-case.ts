@@ -22,6 +22,7 @@ export class UpdateAppointmentUseCase {
             const existing = await this.findByIdRepository.findById(id);
 
             if (!existing) {
+                this.logger.warn(`Appointment not found with ID: ${id}`, UpdateAppointmentUseCase.name);
                 throw new NotFoundException('Appointment not found');
             }
 
@@ -32,6 +33,7 @@ export class UpdateAppointmentUseCase {
 
             // Se estiver cancelando, exigir motivo
             if (data.status === AppointmentStatus.CANCELED && !data.cancellationReason) {
+                this.logger.warn(`Cancellation reason required for appointment ID: ${id}`, UpdateAppointmentUseCase.name);
                 throw new BadRequestException('Cancellation reason is required');
             }
 

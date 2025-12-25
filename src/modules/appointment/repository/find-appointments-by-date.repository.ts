@@ -5,11 +5,6 @@ import { AppointmentStatus } from "prisma/generated";
 @Injectable()
 export class FindAppointmentsByDateRepository {
     constructor(private readonly prisma: PrismaService) {}
-
-    /**
-     * Busca agendamentos de uma loja em uma data específica
-     * Usado para calcular slots disponíveis
-     */
     async findByShopAndDate(shopId: string, date: Date) {
         const startOfDay = new Date(date);
         startOfDay.setHours(0, 0, 0, 0);
@@ -24,7 +19,6 @@ export class FindAppointmentsByDateRepository {
                     gte: startOfDay,
                     lte: endOfDay,
                 },
-                // Ignora agendamentos cancelados ou no-show
                 status: {
                     notIn: [AppointmentStatus.CANCELED, AppointmentStatus.NO_SHOW],
                 },

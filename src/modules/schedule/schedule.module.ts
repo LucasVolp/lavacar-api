@@ -13,5 +13,6 @@ const useCases = Object.values(UseCases);
   imports: [SharedModule],
   controllers: [ScheduleController],
   providers: [ScheduleService, Logger, ...repositories, ...useCases],
+  exports: [...repositories],
 })
 export class ScheduleModule {}

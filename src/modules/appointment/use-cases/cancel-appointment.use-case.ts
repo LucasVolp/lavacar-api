@@ -21,10 +21,9 @@ export class CancelAppointmentUseCase {
             const existing = await this.findByIdRepository.findById(id);
 
             if (!existing) {
+                this.logger.warn(`Appointment not found: ${id}`, CancelAppointmentUseCase.name);
                 throw new NotFoundException('Appointment not found');
             }
-
-            // Verificar se o agendamento pode ser cancelado
             const nonCancellableStatuses: string[] = [
                 AppointmentStatus.COMPLETED,
                 AppointmentStatus.CANCELED,
@@ -32,19 +31,18 @@ export class CancelAppointmentUseCase {
             ];
 
             if (nonCancellableStatuses.includes(existing.status)) {
+                this.logger.warn(`Attempt to cancel appointment with status ${existing.status}`, CancelAppointmentUseCase.name);
                 throw new BadRequestException(`Cannot cancel appointment with status ${existing.status}`);
             }
 
-            // Se for o cliente cancelando, verificar se é dele
             if (userId && existing.userId !== userId) {
                 throw new BadRequestException('You can only cancel your own appointments');
             }
 
-            // Verificar política de cancelamento (ex: até 2h antes)
             const now = new Date();
             const hoursUntilAppointment = (existing.scheduledAt.getTime() - now.getTime()) / (1000 * 60 * 60);
 
-            if (hoursUntilAppointment < 2) {
+            if (hoursUntilAppointment < 1) {
                 throw new BadRequestException('Cannot cancel appointment less than 2 hours before');
             }
 

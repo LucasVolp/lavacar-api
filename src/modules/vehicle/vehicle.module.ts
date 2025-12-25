@@ -13,5 +13,6 @@ const useCases = Object.values(UseCases);
   imports: [SharedModule, UsersModule],
   controllers: [VehicleController],
   providers: [VehicleService, Logger, ...repositories, ...useCases],
+  exports: [...repositories],
 })
 export class VehicleModule {}

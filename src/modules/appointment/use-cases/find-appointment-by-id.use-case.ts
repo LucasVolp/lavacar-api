@@ -13,6 +13,7 @@ export class FindAppointmentByIdUseCase {
             const appointment = await this.appointmentRepository.findById(id);
 
             if (!appointment) {
+                this.logger.warn(`Appointment not found with ID: ${id}`, FindAppointmentByIdUseCase.name);
                 throw new NotFoundException('Appointment not found');
             }
 

@@ -12,5 +12,6 @@ const repositories = Object.values(Repositories)
   imports: [SharedModule],
   controllers: [BlockedTimesController],
   providers: [BlockedTimesService, Logger, ...usecases, ...repositories],
+  exports: [...repositories],
 })
 export class BlockedTimesModule {}

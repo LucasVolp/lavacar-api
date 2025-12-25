@@ -1,4 +1,26 @@
 /**
+ * Extrai a hora "HH:mm" de uma string ISO DateTime ou Date
+ * @example extractTimeFromDateTime("2025-12-25T10:30:00") => "10:30"
+ * @example extractTimeFromDateTime(new Date()) => "14:25"
+ */
+export function extractTimeFromDateTime(dateTime: string | Date): string {
+  const date = typeof dateTime === 'string' ? new Date(dateTime) : dateTime;
+  const hours = date.getHours().toString().padStart(2, '0');
+  const minutes = date.getMinutes().toString().padStart(2, '0');
+  return `${hours}:${minutes}`;
+}
+
+/**
+ * Extrai o dia da semana de uma string ISO DateTime ou Date
+ * @returns Weekday enum value
+ */
+export function extractWeekdayFromDateTime(dateTime: string | Date): string {
+  const date = typeof dateTime === 'string' ? new Date(dateTime) : dateTime;
+  const weekdays = ['SUNDAY', 'MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY'];
+  return weekdays[date.getDay()];
+}
+
+/**
  * Converte string de hora "HH:mm" para minutos desde meia-noite
  * @example timeToMinutes("08:30") => 510
  */

@@ -3,21 +3,48 @@ import {
     IsArray, 
     IsDateString, 
     IsNotEmpty, 
+    IsNumber, 
     IsOptional, 
     IsString, 
-    IsUUID, 
-    Matches 
+    IsUUID,
+    ValidateNested
 } from "class-validator";
+import { Type } from "class-transformer";
+
+export class CreateAppointmentServiceData {
+    @IsUUID()
+    @IsNotEmpty()
+    serviceId: string;
+
+    @IsString()
+    @IsNotEmpty()
+    serviceName: string;
+
+    @IsNotEmpty()
+    @IsNumber({ maxDecimalPlaces: 2 })
+    servicePrice: number;
+
+    @IsNumber()
+    @IsNotEmpty()
+    duration: number;
+}
 
 export class CreateAppointmentDto {
     @IsDateString()
     @IsNotEmpty()
-    scheduledDate: string; // "2025-12-25"
+    scheduledAt: string;
 
-    @IsString()
+    @IsDateString()
     @IsNotEmpty()
-    @Matches(/^([01]?[0-9]|2[0-3]):[0-5][0-9]$/, { message: 'scheduledTime must be in HH:mm format' })
-    scheduledTime: string; // "10:00"
+    endTime: string;
+
+    @IsNumber({ maxDecimalPlaces: 2 })
+    @IsNotEmpty()
+    totalPrice: number;
+
+    @IsNumber()
+    @IsNotEmpty()
+    totalDuration: number;
 
     @IsString()
     @IsOptional()
@@ -37,6 +64,7 @@ export class CreateAppointmentDto {
 
     @IsArray()
     @ArrayMinSize(1, { message: 'At least one service is required' })
-    @IsUUID('4', { each: true })
-    serviceIds: string[];
+    @ValidateNested({ each: true })
+    @Type(() => CreateAppointmentServiceData)
+    serviceIds: CreateAppointmentServiceData[];
 }

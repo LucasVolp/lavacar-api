@@ -1,10 +1,8 @@
-import { PartialType } from '@nestjs/mapped-types';
-import { CreateAppointmentDto } from './create-appointment.dto';
 import { IsEnum, IsOptional, IsString } from 'class-validator';
 import { AppointmentStatus } from 'prisma/generated';
 
-// UserId, shopId, vehicleId e serviceIds não podem ser alterados após criação
-export class UpdateAppointmentDto extends PartialType(CreateAppointmentDto) {
+// userId, shopId, vehicleId e serviceIds NÃO podem ser alterados
+export class UpdateAppointmentDto {
     @IsEnum(AppointmentStatus)
     @IsOptional()
     status?: AppointmentStatus;
