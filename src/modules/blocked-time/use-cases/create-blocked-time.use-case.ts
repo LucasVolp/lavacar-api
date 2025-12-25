@@ -1,6 +1,6 @@
-import { BadRequestException, Injectable, Logger, ServiceUnavailableException } from '@nestjs/common';
+import { BadRequestException, ConflictException, Injectable, Logger, ServiceUnavailableException } from '@nestjs/common';
 import { CreateBlockedTimeDto } from '../dto/create-blocked-time.dto';
-import { CreateBlockedTimeRepository } from '../repository';
+import { CreateBlockedTimeRepository, FindBlockedTimeByShopIdRepository } from '../repository';
 import { timeToMinutes } from 'src/shared/utils';
 import { BlockedTimeType } from '../types/BlockedTimeType';
 
@@ -8,12 +8,18 @@ import { BlockedTimeType } from '../types/BlockedTimeType';
 export class CreateBlockedTimeUseCase {
     constructor(
         private readonly blockedTimeRepository: CreateBlockedTimeRepository,
+        private readonly findblockedTimeRepository: FindBlockedTimeByShopIdRepository,
         private readonly logger: Logger = new Logger(),
     ) {}
 
     async execute(data: CreateBlockedTimeDto) {
         try {
-            if (data.type === BlockedTimeType.PARTIAL && data.startTime && data.endTime) {
+            if (data.type === BlockedTimeType.PARTIAL) {
+                if (!data.startTime || !data.endTime) {
+                    this.logger.warn('startTime and endTime are required for PARTIAL blocked time', CreateBlockedTimeUseCase.name);
+                    throw new BadRequestException('startTime and endTime are required for PARTIAL blocked time');
+                }
+
                 const startMinutes = timeToMinutes(data.startTime);
                 const endMinutes = timeToMinutes(data.endTime);
 
@@ -24,6 +30,13 @@ export class CreateBlockedTimeUseCase {
             }
 
             const blockedDate = new Date(data.date);
+            const blockedTimeExists = await this.findblockedTimeRepository.findByShopAndDate(data.shopId, blockedDate);
+            
+            if (blockedTimeExists) {
+                this.logger.warn(`Blocked time already exists for shop ID: ${data.shopId} on date: ${data.date}`, CreateBlockedTimeUseCase.name);
+                throw new ConflictException('Blocked time already exists for the given date');
+            }
+
             const today = new Date();
             today.setHours(0, 0, 0, 0);
 
@@ -40,7 +53,7 @@ export class CreateBlockedTimeUseCase {
             this.logger.log(`Blocked time created for ${data.date}`, CreateBlockedTimeUseCase.name);
             return blockedTime;
         } catch (err) {
-            if (err instanceof BadRequestException) {
+            if (err instanceof BadRequestException || err instanceof ConflictException) {
                 throw err;
             }
 
