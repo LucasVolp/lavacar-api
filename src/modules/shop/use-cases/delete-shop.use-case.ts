@@ -13,6 +13,7 @@ export class DeleteShopUseCase {
         try {
             const shopExists = await this.FindShopByIdRepository.findById(id);
             if (!shopExists){
+                this.logger.warn('Shop not found', DeleteShopUseCase.name);
                 throw new NotFoundException("Shop not found!")
             }
             const shop = await this.ShopRepository.delete(id);

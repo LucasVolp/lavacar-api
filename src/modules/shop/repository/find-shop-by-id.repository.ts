@@ -9,7 +9,14 @@ export class FindShopByIdRepository {
         return await this.prisma.shop.findUnique({
             where: {id},
             include: {
-                services: true,
+                serviceGroups: {
+                    select: {
+                        name: true,
+                        services: true,
+                    }
+                },
+                organization: true,
+                owner: true,
                 schedules: true,
                 blockedTimes: true,
                 appointments: true,

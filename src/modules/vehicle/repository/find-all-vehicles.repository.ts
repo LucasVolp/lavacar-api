@@ -9,6 +9,7 @@ export class FindAllVehiclesRepository {
         return await this.prisma.vehicle.findMany({
             include: {
                 appointments: true,
+                user: true
             },
         });
     }

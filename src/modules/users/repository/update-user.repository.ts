@@ -9,7 +9,12 @@ export class UpdateUserRepository {
     async update(id: string, data: UpdateUserDto) {
         const user = await this.prisma.user.update({
             where: {id},
-            data
+            data,
+            include: {
+                vehicles: true,
+                appointments: true,
+                shops: true
+            },
         });
         return user;
     }

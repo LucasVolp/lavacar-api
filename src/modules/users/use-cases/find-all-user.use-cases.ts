@@ -10,7 +10,12 @@ export class FindAllUserUseCase {
 
     async execute(){
         try{
-            return await this.UserRepository.findAll()
+            const userExists = await this.UserRepository.findAll();
+            if (!userExists || userExists.length === 0) {
+                this.logger.warn('No users found in the database.');
+                return [];
+            }
+            return userExists;
         } catch (err) {
             const error = new ServiceUnavailableException('Something bad happened!', {
                 cause: err,

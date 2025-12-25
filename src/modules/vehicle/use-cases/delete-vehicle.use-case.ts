@@ -1,4 +1,4 @@
-import { Injectable, Logger, ServiceUnavailableException } from "@nestjs/common";
+import { Injectable, Logger, NotFoundException, ServiceUnavailableException } from "@nestjs/common";
 import { DeleteVehicleRepository, FindVehicleByIdRepository } from "../repository";
 
 @Injectable()
@@ -14,13 +14,16 @@ export class DeleteVehicleUseCase {
             const vehicleExists = await this.FindVehicleByIdRepository.findById(id);
             if (!vehicleExists) {
                 this.logger.error("Vehicle not found!", DeleteVehicleUseCase.name);
-                throw new Error('Vehicle not found!');
+                throw new NotFoundException('Vehicle not found!');
             }
             const vehicle = await this.VehicleRepository.delete(id);
             this.logger.log("Vehicle Deleted!", DeleteVehicleUseCase.name);
             return vehicle;
 
-       } catch (err) { 
+       } catch (err) {
+            if (err instanceof NotFoundException) {
+                throw err;
+            }
             const error = new ServiceUnavailableException('Something bad happened!', {
                 cause: err,
                 description: 'Error finding vehicle',

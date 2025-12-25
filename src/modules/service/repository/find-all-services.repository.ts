@@ -8,6 +8,7 @@ export class FindAllServicesRepository {
         return await this.prisma.service.findMany({
             include: {
                 shop: true,
+                group: true,
             }
         })
     }

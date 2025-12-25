@@ -11,7 +11,12 @@ export class FindAllServiceGroupUseCase {
     async execute(shopId?: string) {
         try {
             const serviceGroups = await this.serviceGroupRepository.findAll(shopId);
-            this.logger.log(`Found ${serviceGroups.length} service groups`, FindAllServiceGroupUseCase.name);
+            if (serviceGroups.length === 0) {
+                this.logger.log('No service groups found', FindAllServiceGroupUseCase.name);
+                return [];
+            }
+
+            this.logger.log(`${serviceGroups.length} service groups found`, FindAllServiceGroupUseCase.name);
             return serviceGroups;
         } catch (err) {
             const error = new ServiceUnavailableException('Something bad happened!', {

@@ -16,11 +16,4 @@ export class FindScheduleByWeekdayRepository {
             },
         });
     }
-
-    async findAllByShop(shopId: string) {
-        return await this.prisma.schedule.findMany({
-            where: { shopId },
-            orderBy: { weekday: 'asc' }
-        });
-    }
 }

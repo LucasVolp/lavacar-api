@@ -11,9 +11,10 @@ export class DeleteServiceGroupUseCase {
 
     async execute(id: string) {
         try {
-            const exists = await this.findByIdRepository.findById(id);
+            const serviceGroupExists = await this.findByIdRepository.findById(id);
             
-            if (!exists) {
+            if (!serviceGroupExists) {
+                this.logger.warn(`Service group not found with ID: ${id}`, DeleteServiceGroupUseCase.name);
                 throw new NotFoundException('Service group not found');
             }
 

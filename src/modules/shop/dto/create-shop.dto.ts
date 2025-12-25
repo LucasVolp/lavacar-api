@@ -11,7 +11,7 @@ import {
   Max, 
   Min 
 } from "class-validator";
-import { ShopStatus } from "prisma/generated";
+import { ShopStatus } from "../types/ShopStatus";
 
 export class CreateShopDto {
   @IsString()
@@ -93,6 +93,10 @@ export class CreateShopDto {
   @Min(0)
   @IsOptional()
   minAdvanceMinutes?: number;
+
+  @IsUUID()
+  @IsNotEmpty()
+  organizationId: string;
 
   @IsUUID()
   @IsNotEmpty()

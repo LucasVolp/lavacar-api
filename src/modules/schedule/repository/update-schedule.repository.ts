@@ -9,7 +9,10 @@ export class UpdateScheduleRepository {
     async update(id: string, data: UpdateScheduleDto) {
         return await this.prisma.schedule.update({
             where: { id },
-            data
+            data,
+            include: {
+                shop: true
+            },
         });
     }
 }

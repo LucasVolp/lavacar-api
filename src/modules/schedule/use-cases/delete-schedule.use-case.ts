@@ -13,12 +13,16 @@ export class DeleteScheduleUseCase {
         try {
             const scheduleExists = await this.FindScheduleByIdRepository.findById(id);
             if (!scheduleExists) {
+                this.logger.warn(`Schedule with id ${id} not found`, DeleteScheduleUseCase.name);
                 throw new NotFoundException('Schedule not found!');
             }
             const schedule = await this.ScheduleRepository.delete(id);
             this.logger.log('Schedule deleted!', DeleteScheduleUseCase.name);
             return schedule;
         } catch (err) {
+            if (err instanceof NotFoundException) {
+                throw err;
+            }
             const error = new ServiceUnavailableException({
                 message: 'Error deleting schedule',
                 cause: err,

@@ -1,5 +1,6 @@
-import { IsBoolean, IsEnum, IsNotEmpty, IsOptional, IsString, IsUUID, Matches, ValidateIf } from "class-validator";
-import { Weekday, ShopStatus } from "prisma/generated";
+import { IsEnum, IsNotEmpty, IsOptional, IsString, IsUUID, Matches, ValidateIf } from "class-validator";
+import { Weekday } from "../types/Weekday";
+import { ShopStatus } from "src/modules/shop/types/ShopStatus";
 
 export class CreateScheduleDto {
     @IsEnum(Weekday)

@@ -10,7 +10,12 @@ export class FindAllShopUseCase {
 
     async execute(){
         try {
-            return await this.ShopRepository.findAll()
+            const shops = await this.ShopRepository.findAll();
+            if (!shops || shops.length === 0) {
+                this.logger.warn('No shops found', FindAllShopUseCase.name);
+                return [];
+            }
+            return shops;
         } catch (err) {
             const error = new ServiceUnavailableException("Something bad Happened!", {
                 cause: err,

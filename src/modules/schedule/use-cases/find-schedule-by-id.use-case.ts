@@ -12,11 +12,15 @@ export class FindScheduleByIdUseCase {
         try {
             const schedule = await this.ScheduleRepository.findById(id);
             if (!schedule) {
+                this.logger.warn(`Schedule with id ${id} not found`, FindScheduleByIdUseCase.name);
                 throw new NotFoundException('Schedule not found!');
             }
             this.logger.log('Schedule found!', FindScheduleByIdUseCase.name);
             return schedule;
         } catch (err) {
+            if (err instanceof NotFoundException) {
+                throw err;
+            }
             const error = new ServiceUnavailableException({
                 message: 'Error finding schedule',
                 cause: err,

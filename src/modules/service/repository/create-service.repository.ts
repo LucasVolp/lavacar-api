@@ -7,7 +7,11 @@ export class CreateServiceRepository {
     constructor(private readonly prisma: PrismaService){}
     async create(data: CreateServiceDto){
         return await this.prisma.service.create({
-            data
+            data,
+            include: {
+                group: true,
+                shop: true,
+            }
         })
     }
 }

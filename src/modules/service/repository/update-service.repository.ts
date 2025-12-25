@@ -8,7 +8,11 @@ export class UpdateServiceRepository {
     async update(id: string, data: UpdateServiceDto){
         return await this.prisma.service.update({
             where: {id},
-            data
+            data,
+            include: {
+                group: true,
+                shop: true,
+            }
         })
     }
 }

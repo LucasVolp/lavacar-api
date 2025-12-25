@@ -14,6 +14,7 @@ export class DeleteUserUseCase {
             const UserExists = await this.FindUserRepository.findById(id);
 
             if (!UserExists) {
+                this.logger.warn('User not found!', DeleteUserUseCase.name);
                 throw new NotFoundException('User not found!');
             }
 
@@ -21,6 +22,9 @@ export class DeleteUserUseCase {
             this.logger.log('User Deleted!', DeleteUserUseCase.name);
             return user;
         } catch (err) {
+            if (err instanceof NotFoundException) {
+                throw err;
+            }
             const error = new ServiceUnavailableException('Something bad happened!', {
                 cause: err,
                 description: 'Error deleting user!'

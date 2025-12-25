@@ -8,12 +8,25 @@ export class FindShopBySlugRepository {
     async findBySlug(slug: string) {
         return await this.prisma.shop.findUnique({
             where: { slug },
+            include: {
+                serviceGroups: {
+                    select: {
+                        name: true,
+                        services: true,
+                    }
+                },
+                organization: true,
+                owner: true,
+                schedules: true,
+                blockedTimes: true,
+                appointments: true,
+            },
         });
     }
 
     async findAllSlugs(): Promise<string[]> {
         const shops = await this.prisma.shop.findMany({
-            select: { slug: true },
+            select: { id: true, slug: true },
         });
         return shops.map(shop => shop.slug);
     }

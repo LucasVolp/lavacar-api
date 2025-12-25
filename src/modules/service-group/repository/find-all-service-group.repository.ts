@@ -10,7 +10,6 @@ export class FindAllServiceGroupRepository {
             where: shopId ? { shopId } : undefined,
             include: {
                 services: {
-                    where: { isActive: true },
                     orderBy: { name: 'asc' }
                 },
             },

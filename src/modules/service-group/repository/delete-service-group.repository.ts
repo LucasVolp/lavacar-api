@@ -8,6 +8,9 @@ export class DeleteServiceGroupRepository {
     async delete(id: string) {
         return await this.prisma.serviceGroup.delete({
             where: { id },
+            include: {
+                services: true,
+            }
         });
     }
 }

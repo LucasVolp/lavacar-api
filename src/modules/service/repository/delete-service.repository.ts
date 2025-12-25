@@ -6,7 +6,11 @@ export class DeleteServiceRepository {
     constructor(private readonly prisma: PrismaService){}
     async delete(id: string) {
         return await this.prisma.service.delete({
-            where: {id}
+            where: {id},
+            include: {
+                group: true,
+                shop: true,
+            }
         })
     }
 }

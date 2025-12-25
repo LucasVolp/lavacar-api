@@ -8,7 +8,10 @@ export class createScheduleRepository {
 
     async create(data: CreateScheduleDto) {
         return await this.prisma.schedule.create({
-            data
+            data,
+            include: {
+                shop: true
+            }
         })
     }
 }

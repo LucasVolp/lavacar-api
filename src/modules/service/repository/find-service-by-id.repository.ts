@@ -10,6 +10,7 @@ export class FindServiceByIdRepository {
             where: {id},
             include: {
                 shop: true,
+                group: true,
             }
         })
     }

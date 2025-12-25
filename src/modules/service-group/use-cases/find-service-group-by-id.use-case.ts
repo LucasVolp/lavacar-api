@@ -13,6 +13,7 @@ export class FindServiceGroupByIdUseCase {
             const serviceGroup = await this.serviceGroupRepository.findById(id);
             
             if (!serviceGroup) {
+                this.logger.warn(`Service group not found with ID: ${id}`, FindServiceGroupByIdUseCase.name);
                 throw new NotFoundException('Service group not found');
             }
 

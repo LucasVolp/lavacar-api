@@ -9,6 +9,9 @@ export class CreateServiceGroupRepository {
     async create(data: CreateServiceGroupDto) {
         return await this.prisma.serviceGroup.create({
             data,
+            include: {
+                services: true,
+            }
         });
     }
 }

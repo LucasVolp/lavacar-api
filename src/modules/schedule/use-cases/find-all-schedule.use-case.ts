@@ -1,4 +1,4 @@
-import { Injectable, Logger, NotFoundException, ServiceUnavailableException } from "@nestjs/common";
+import { Injectable, Logger, ServiceUnavailableException } from "@nestjs/common";
 import { FindAllScheduleRepository } from "../repository";
 
 @Injectable()
@@ -12,7 +12,8 @@ export class FindAllScheduleUseCase {
         try {
             const schedules = await this.ScheduleRepository.findAll();
             if (!schedules) {
-                throw new NotFoundException('Schedules not found!');
+                this.logger.warn('No schedules found', FindAllScheduleUseCase.name);
+                return [];
             }
             this.logger.log('Schedules found!', FindAllScheduleUseCase.name);
             return schedules;

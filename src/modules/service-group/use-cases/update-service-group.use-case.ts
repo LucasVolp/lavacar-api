@@ -12,9 +12,9 @@ export class UpdateServiceGroupUseCase {
 
     async execute(id: string, data: UpdateServiceGroupDto) {
         try {
-            const exists = await this.findByIdRepository.findById(id);
+            const serviceGroupExists = await this.findByIdRepository.findById(id);
             
-            if (!exists) {
+            if (!serviceGroupExists) {
                 throw new NotFoundException('Service group not found');
             }
 

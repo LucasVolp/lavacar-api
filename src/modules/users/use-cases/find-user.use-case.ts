@@ -12,11 +12,15 @@ export class FindUserUseCase {
         try {
             const UserExists = await this.UserRepository.findById(id);
             if (!UserExists) {
+                this.logger.warn("User not found!", FindUserUseCase.name)
                 throw new NotFoundException('User not found!');
             }
             this.logger.log("User Found", FindUserUseCase.name)
             return UserExists
         } catch (err) {
+            if (err instanceof NotFoundException) {
+                throw err;
+            }
             const error = new ServiceUnavailableException('Something bad happened', {
                 cause: err,
                 description: 'Error finding User'

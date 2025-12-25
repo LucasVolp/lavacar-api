@@ -11,6 +11,11 @@ export class FindAllServicesUseCase{
     async execute(){
         try {
             const services = await this.ServiceRepository.findAll();
+            if (services.length === 0){
+                this.logger.warn('No Services found', FindAllServicesUseCase.name);
+                return [];
+            }
+
             this.logger.log('Services Found', FindAllServicesUseCase.name);
             return services;
         } catch (err) {

@@ -12,11 +12,15 @@ export class FindShopByIdUseCase{
         try {
             const shopExists = await this.ShopRepository.findById(id);
             if (!shopExists){
+                this.logger.warn('Shop not found', FindShopByIdUseCase.name);
                 throw new NotFoundException('Shop not found!');
             }
             this.logger.log("Shop Found!", FindShopByIdUseCase.name)
             return shopExists
         } catch (err) {
+            if (err instanceof NotFoundException) {
+                throw err;
+            }
             const error = new ServiceUnavailableException("Something Bad Happened!", {
                 cause: err,
                 description: "Error finding shop",

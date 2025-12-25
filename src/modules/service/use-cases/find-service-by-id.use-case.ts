@@ -17,6 +17,9 @@ export class FindServiceByIdUseCase {
             this.logger.log('Service Found', FindServiceByIdUseCase.name);
             return service;
         } catch (err) {
+            if (err instanceof NotFoundException) {
+                throw err;
+            }
             const error = new ServiceUnavailableException('Something bad happened!', {
                 cause: err,
                 description: 'O grêmio é minusculo!'

@@ -10,7 +10,6 @@ export class FindServiceGroupByIdRepository {
             where: { id },
             include: {
                 services: {
-                    where: { isActive: true },
                     orderBy: { name: 'asc' }
                 },
             },

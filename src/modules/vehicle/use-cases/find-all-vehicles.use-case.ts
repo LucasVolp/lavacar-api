@@ -11,6 +11,10 @@ export class FindAllVehiclesUseCase {
     async execute() {
         try {
             const vehicles = await this.VehicleRepository.findAll();
+            if (vehicles.length === 0) {
+                this.logger.log("No vehicles found.", FindAllVehiclesUseCase.name);
+                return [];
+            }
             this.logger.log("Vehicles Found!", FindAllVehiclesUseCase.name);
             return vehicles;
         } catch (err) {

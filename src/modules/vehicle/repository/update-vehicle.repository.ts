@@ -12,6 +12,7 @@ export class UpdateVehicleRepository {
             data,
             include: {
                 appointments: true,
+                user: true
             },
         });
     }

@@ -6,6 +6,12 @@ export class FindAllUserRepository {
     constructor(private readonly prisma: PrismaService) {}
 
     async findAll(){
-        return await this.prisma.user.findMany()
+        return await this.prisma.user.findMany({
+            include: {
+                vehicles: true,
+                appointments: true,
+                shops: true
+            },
+        })
     }
 }

@@ -10,6 +10,9 @@ export class UpdateServiceGroupRepository {
         return await this.prisma.serviceGroup.update({
             where: { id },
             data,
+            include: {
+                services: true,
+            }
         });
     }
 }

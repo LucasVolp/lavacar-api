@@ -8,6 +8,9 @@ export class DeleteScheduleRepository {
     async delete(id: string) {
         return await this.prisma.schedule.delete({
             where: { id },
+            include: {
+                shop: true
+            },
         });
     }
 }

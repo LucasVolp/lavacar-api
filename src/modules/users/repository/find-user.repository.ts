@@ -7,7 +7,12 @@ export class FindUserRepository {
 
     async findById(id: string) {
         return await this.prisma.user.findUnique({
-            where: { id }
+            where: { id },
+            include: {
+                vehicles: true,
+                appointments: true,
+                shops: true
+            },
         });
     }
 }

@@ -8,7 +8,14 @@ export class FindAllShopRepository {
     async findAll(){
         return await this.prisma.shop.findMany({
             include: {
-                services: true,
+                serviceGroups: {
+                    select: {
+                        name: true,
+                        services: true,
+                    }
+                },
+                organization: true,
+                owner: true,
                 schedules: true,
                 blockedTimes: true,
                 appointments: true,

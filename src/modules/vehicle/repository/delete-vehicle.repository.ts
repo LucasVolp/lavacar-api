@@ -10,6 +10,7 @@ export class DeleteVehicleRepository {
             where: { id },
             include: {
                 appointments: true,
+                user: true
             },
         });
     }

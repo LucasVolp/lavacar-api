@@ -4,13 +4,15 @@ import { ShopController } from './shop.controller';
 import { SharedModule } from 'src/shared/shared.module';
 import * as Repositories from './repository';
 import * as UseCases from './use-cases';
+import { UsersModule } from '../users/users.module';
 
 const repositories = Object.values(Repositories);
 const usecases = Object.values(UseCases);
 
 @Module({
-  imports: [SharedModule],
+  imports: [SharedModule, UsersModule],
   controllers: [ShopController],
   providers: [ShopService, Logger, ...repositories, ...usecases],
+  exports: [...repositories, ...usecases],
 })
 export class ShopModule {}

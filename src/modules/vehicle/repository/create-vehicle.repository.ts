@@ -11,6 +11,7 @@ export class CreateVehicleRepository{
             data,
             include: {
                 appointments: true,
+                user: true
             }
         })
     }

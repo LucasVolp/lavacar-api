@@ -14,10 +14,12 @@ export class CreateScheduleUseCase {
     async execute(data: CreateScheduleDto) {
         try {
             // Validar que endTime > startTime
+            this.logger.log('Validating schedule times', CreateScheduleUseCase.name);
             const startMinutes = timeToMinutes(data.startTime);
             const endMinutes = timeToMinutes(data.endTime);
 
             if (endMinutes <= startMinutes) {
+                this.logger.warn('endTime must be after startTime', CreateScheduleUseCase.name);
                 throw new BadRequestException('endTime must be after startTime');
             }
 
@@ -27,13 +29,16 @@ export class CreateScheduleUseCase {
                 const breakEnd = timeToMinutes(data.breakEndTime);
 
                 if (breakEnd <= breakStart) {
+                    this.logger.warn('breakEndTime must be after breakStartTime', CreateScheduleUseCase.name);
                     throw new BadRequestException('breakEndTime must be after breakStartTime');
                 }
 
                 if (breakStart < startMinutes || breakEnd > endMinutes) {
+                    this.logger.warn('Break time must be within working hours', CreateScheduleUseCase.name);
                     throw new BadRequestException('Break time must be within working hours');
                 }
             } else if (data.breakStartTime && !data.breakEndTime) {
+                this.logger.warn('breakEndTime is required when breakStartTime is provided', CreateScheduleUseCase.name);
                 throw new BadRequestException('breakEndTime is required when breakStartTime is provided');
             }
 
@@ -44,6 +49,7 @@ export class CreateScheduleUseCase {
             );
             
             if (scheduleExists) {
+                this.logger.warn(`Schedule already exists for weekday: ${data.weekday}`, CreateScheduleUseCase.name);
                 throw new ConflictException('Schedule already exists for this weekday');
             }
 
@@ -51,7 +57,6 @@ export class CreateScheduleUseCase {
             this.logger.log(`Schedule created for ${data.weekday}`, CreateScheduleUseCase.name);
             return schedule;
         } catch (err) {
-            // Re-throw business exceptions
             if (err instanceof BadRequestException || 
                 err instanceof ConflictException || 
                 err instanceof NotFoundException) {
