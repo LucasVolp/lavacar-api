@@ -11,6 +11,11 @@ export class FindAllEvaluationUseCase {
     async execute(shopId?: string) {
         try {
             const evaluations = await this.evaluationRepository.findAll(shopId);
+            if (evaluations.length === 0) {
+                this.logger.log('No evaluations found', FindAllEvaluationUseCase.name);
+                return [];
+            }
+            
             this.logger.log(`Found ${evaluations.length} evaluations`, FindAllEvaluationUseCase.name);
             return evaluations;
         } catch (err) {

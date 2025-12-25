@@ -1,6 +1,5 @@
 import { Injectable } from "@nestjs/common";
 import { PrismaService } from "src/shared/databases/prisma.database";
-
 @Injectable()
 export class FindAllEvaluationRepository {
     constructor(private readonly prisma: PrismaService) {}
@@ -23,7 +22,14 @@ export class FindAllEvaluationRepository {
                 appointment: {
                     include: {
                         services: true,
-                    }
+                        vehicle: true,
+                        shop: {
+                            select: {
+                                id: true,
+                                name: true,
+                            }
+                        }
+                    },
                 },
             },
             orderBy: { createdAt: 'desc' },

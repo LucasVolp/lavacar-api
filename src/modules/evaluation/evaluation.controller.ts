@@ -31,13 +31,12 @@ export class EvaluationController {
     update(
         @Param('id') id: string,
         @Body() updateEvaluationDto: UpdateEvaluationDto,
-        @Body('userId') userId?: string,
     ) {
-        return this.evaluationService.update(id, updateEvaluationDto, userId);
+        return this.evaluationService.update(id, updateEvaluationDto);
     }
 
     @Delete(':id')
-    remove(@Param('id') id: string, @Body('userId') userId?: string) {
-        return this.evaluationService.remove(id, userId);
+    remove(@Param('id') id: string) {
+        return this.evaluationService.remove(id);
     }
 }

@@ -37,11 +37,11 @@ export class EvaluationService {
         return await this.getShopStatsUseCase.execute(shopId);
     }
 
-    async update(id: string, data: UpdateEvaluationDto, userId?: string) {
-        return await this.updateEvaluationUseCase.execute(id, data, userId);
+    async update(id: string, data: UpdateEvaluationDto) {
+        return await this.updateEvaluationUseCase.execute(id, data);
     }
 
-    async remove(id: string, userId?: string) {
-        return await this.deleteEvaluationUseCase.execute(id, userId);
+    async remove(id: string) {
+        return await this.deleteEvaluationUseCase.execute(id);
     }
 }

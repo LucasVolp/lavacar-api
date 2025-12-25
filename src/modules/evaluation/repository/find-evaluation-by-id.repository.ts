@@ -19,6 +19,7 @@ export class FindEvaluationByIdRepository {
                 appointment: {
                     include: {
                         services: true,
+                        vehicle: true,
                         shop: {
                             select: {
                                 id: true,

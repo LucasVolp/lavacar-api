@@ -10,6 +10,27 @@ export class UpdateEvaluationRepository {
         return await this.prisma.evaluation.update({
             where: { id },
             data,
+            include: {
+                user: {
+                    select: {
+                        id: true,
+                        firstName: true,
+                        lastName: true,
+                    }
+                },
+                appointment: {
+                    include: {
+                        services: true,
+                        vehicle: true,
+                        shop: {
+                            select: {
+                                id: true,
+                                name: true,
+                            }
+                        },
+                    }
+                },
+            }
         });
     }
 }

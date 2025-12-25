@@ -13,6 +13,7 @@ export class FindEvaluationByIdUseCase {
             const evaluation = await this.evaluationRepository.findById(id);
 
             if (!evaluation) {
+                this.logger.warn(`Evaluation not found with ID: ${id}`, FindEvaluationByIdUseCase.name);
                 throw new NotFoundException('Evaluation not found');
             }
 

@@ -15,23 +15,18 @@ export class DeleteEvaluationUseCase {
         private readonly logger: Logger = new Logger()
     ) {}
 
-    async execute(id: string, userId?: string) {
+    async execute(id: string) {
         try {
             const existing = await this.findByIdRepository.findById(id);
 
             if (!existing) {
+                this.logger.warn(`Evaluation not found with ID: ${id}`, DeleteEvaluationUseCase.name);
                 throw new NotFoundException('Evaluation not found');
             }
 
-            // Verificar se o usuário é o dono da avaliação
-            if (userId && existing.userId !== userId) {
-                throw new BadRequestException('You can only delete your own evaluations');
-            }
-
-            await this.evaluationRepository.delete(id);
-            this.logger.log(`Evaluation deleted: ${id}`, DeleteEvaluationUseCase.name);
-
-            return { message: 'Evaluation deleted successfully' };
+            const deletedEvaluation = await this.evaluationRepository.delete(id);
+            this.logger.log(`Evaluation deleted with ID: ${id}`, DeleteEvaluationUseCase.name);
+            return deletedEvaluation;
         } catch (err) {
             if (err instanceof NotFoundException || err instanceof BadRequestException) {
                 throw err;

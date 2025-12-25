@@ -16,17 +16,13 @@ export class UpdateEvaluationUseCase {
         private readonly logger: Logger = new Logger()
     ) {}
 
-    async execute(id: string, data: UpdateEvaluationDto, userId?: string) {
+    async execute(id: string, data: UpdateEvaluationDto) {
         try {
             const existing = await this.findByIdRepository.findById(id);
 
             if (!existing) {
+                this.logger.warn(`Evaluation not found with ID: ${id}`, UpdateEvaluationUseCase.name);
                 throw new NotFoundException('Evaluation not found');
-            }
-
-            // Verificar se o usuário é o dono da avaliação
-            if (userId && existing.userId !== userId) {
-                throw new BadRequestException('You can only update your own evaluations');
             }
 
             const evaluation = await this.evaluationRepository.update(id, data);

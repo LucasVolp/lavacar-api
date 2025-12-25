@@ -18,6 +18,7 @@ export class CreateEvaluationRepository {
                                 name: true,
                             }
                         },
+                        vehicle: true
                     }
                 },
             },
