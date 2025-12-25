@@ -170,11 +170,20 @@ export class CreateAppointmentUseCase {
             }
 
             const appointment = await this.appointmentRepository.create({
-                ...data,
                 scheduledAt: scheduledAt.toISOString(),
                 endTime: endDateTime.toISOString(),
                 totalDuration,
                 totalPrice,
+                notes: data.notes,
+                userId: data.userId,
+                shopId: data.shopId,
+                vehicleId: data.vehicleId,
+                serviceIds: servicesExists.map(service => ({
+                    serviceId: service.id,
+                    serviceName: service.name,
+                    servicePrice: Number(service.price),
+                    duration: service.duration,
+                })),
             });
 
             this.logger.log(`Appointment created with ID: ${appointment.id}`, CreateAppointmentUseCase.name);

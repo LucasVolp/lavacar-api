@@ -16,6 +16,10 @@ export class UpdateShopDto extends PartialType(CreateShopDto) {
     @IsString()
     @IsOptional()
     document?: string; // CNPJ
+
+    @IsOptional()
+    @IsString()
+    slug?: string;
   
     @IsString()
     @IsOptional()
