@@ -13,6 +13,7 @@ enum Role {
   USER // Cliente
   OWNER // Dono do estabelecimento
   EMPLOYEE // Funcionário (futuro)
+  MANAGER // Gerente do estabelecimento (futuro)
   ADMIN // Admin do sistema (você)
 }
 
@@ -63,6 +64,7 @@ model User {
   firstName String
   lastName  String?
   email     String   @unique
+  cpf       String?  @unique
   password  String
   phone     String?
   picture   String?
@@ -72,10 +74,11 @@ model User {
   updatedAt DateTime @updatedAt
 
   // Relacionamentos
-  vehicles     Vehicle[]
-  appointments Appointment[]
-  evaluations  Evaluation[]
-  shops        Shop[] // Se for OWNER, pode ter múltiplas lojas
+  vehicles            Vehicle[]
+  appointments        Appointment[]
+  evaluations         Evaluation[]
+  shops               Shop[] // Se for OWNER, pode ter múltiplas lojas
+  organizationMembers OrganizationMember[]
 
   @@index([email])
   @@index([role])
@@ -85,7 +88,7 @@ model User {
 
 model Vehicle {
   id        String      @id @default(uuid())
-  plate     String // Placa do veículo
+  plate     String      @unique
   brand     String // Marca (ex: Fiat)
   model     String // Modelo (ex: Uno)
   year      Int? // Ano
@@ -105,6 +108,55 @@ model Vehicle {
   @@index([plate])
 }
 
+model Organization {
+  id        String   @id @default(uuid())
+  name      String
+  slug      String   @unique
+  document  String?  @unique
+  logoUrl   String?
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relacionamentos
+  shops   Shop[]
+  members OrganizationMember[]
+}
+
+model OrganizationMember {
+  id             String   @id @default(uuid())
+  userId         String
+  organizationId String
+  role           Role     @default(EMPLOYEE)
+  isActive       Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  managedShops ShopManager[]
+
+  @@unique([userId, organizationId])
+  @@index([organizationId])
+  @@index([userId])
+}
+
+model ShopManager {
+  id        String   @id @default(uuid())
+  shopId    String
+  memberId  String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  shop   Shop               @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  member OrganizationMember @relation(fields: [memberId], references: [id], onDelete: Cascade)
+
+  @@unique([shopId, memberId])
+  @@index([shopId])
+  @@index([memberId])
+}
+
 // ==================== ESTABELECIMENTO ====================
 
 model Shop {
@@ -112,7 +164,7 @@ model Shop {
   name        String
   slug        String     @unique // URL amigável: "lavacar-do-joao"
   description String?
-  document    String?    @unique
+  document    String?
   phone       String
   email       String?    @unique
   status      ShopStatus @default(ACTIVE)
@@ -126,7 +178,6 @@ model Shop {
   city         String // Cidade
   state        String  @db.Char(2) // UF (2 caracteres: SP, RJ, MG)
 
-
   // Configurações
   slotInterval       Int @default(30) // Intervalo entre slots em minutos (15, 30, 60)
   bufferBetweenSlots Int @default(0) // Tempo de folga entre agendamentos
@@ -134,20 +185,25 @@ model Shop {
   minAdvanceMinutes  Int @default(60) // Antecedência mínima para agendar (1h)
 
   // Relacionamentos
-  ownerId String
-  owner   User   @relation(fields: [ownerId], references: [id])
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id])
+
+  ownerId String?
+  owner   User?   @relation(fields: [ownerId], references: [id])
 
   services      Service[]
   schedules     Schedule[]
   blockedTimes  BlockedTime[]
   appointments  Appointment[]
   serviceGroups ServiceGroup[]
+  managers      ShopManager[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  @@unique([slug, organizationId])
+  @@index([organizationId])
   @@index([ownerId])
-  @@index([slug])
   @@index([status])
   @@index([city, state])
 }
@@ -182,10 +238,10 @@ model Service {
   duration    Int // Duração em minutos
   isActive    Boolean @default(true) // Pode desativar sem excluir
 
-  shopId   String
-  groupId  String?
-  shop     Shop          @relation(fields: [shopId], references: [id], onDelete: Cascade)
-  group    ServiceGroup? @relation(fields: [groupId], references: [id], onDelete: SetNull)
+  shopId  String
+  groupId String?
+  shop    Shop          @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  group   ServiceGroup? @relation(fields: [groupId], references: [id], onDelete: SetNull)
 
   appointmentServices AppointmentService[]
 
@@ -201,7 +257,7 @@ model Service {
 // ==================== HORÁRIO DE FUNCIONAMENTO ====================
 
 model Schedule {
-  id        String  @id @default(uuid())
+  id        String     @id @default(uuid())
   weekday   Weekday
   isOpen    ShopStatus @default(ACTIVE) // Pode marcar como fechado
   startTime String // "08:00" - Hora de abertura
@@ -248,13 +304,13 @@ model BlockedTime {
 // ==================== AGENDAMENTO ====================
 
 model Appointment {
-  id              String            @id @default(uuid())
-  scheduledAt     DateTime // Data e hora do agendamento
-  endTime         DateTime // Hora prevista de término (calculado)
-  status          AppointmentStatus @default(PENDING)
-  totalPrice      Decimal           @db.Decimal(10, 2) // Valor total
-  totalDuration   Int // Duração total em minutos
-  notes           String? // Observações do cliente
+  id                 String            @id @default(uuid())
+  scheduledAt        DateTime // Data e hora do agendamento
+  endTime            DateTime // Hora prevista de término (calculado)
+  status             AppointmentStatus @default(PENDING)
+  totalPrice         Decimal           @db.Decimal(10, 2) // Valor total
+  totalDuration      Int // Duração total em minutos
+  notes              String? // Observações do cliente
   cancellationReason String? // Motivo do cancelamento
 
   // Relacionamentos
