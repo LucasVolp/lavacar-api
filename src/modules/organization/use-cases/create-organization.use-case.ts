@@ -8,7 +8,7 @@ export class CreateOrganizationUseCase {
     constructor(
         private readonly createOrganizationRepository: CreateOrganizationRepository,
         private readonly findOrganizationByIdRepository: FindOrganizationByIdRepository,
-        private readonly logger = new Logger()
+        private readonly logger: Logger = new Logger(),
     ) {}
 
     async execute(data: CreateOrganizationDto) {

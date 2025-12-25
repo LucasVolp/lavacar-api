@@ -5,7 +5,7 @@ import { FindAllOrganizationRepository } from '../repository/find-all-organizati
 export class FindAllOrganizationUseCase {
     constructor(
         private readonly findAllOrganizationRepository: FindAllOrganizationRepository,
-        private readonly logger = new Logger()
+        private readonly logger: Logger = new Logger()
     ) {}
 
     async execute() {

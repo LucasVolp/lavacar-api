@@ -1,5 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { ShopManagerService } from './shop-manager.service';
+import { ShopManagerService } from '../shop-manager.service';
 
 describe('ShopManagerService', () => {
   let service: ShopManagerService;

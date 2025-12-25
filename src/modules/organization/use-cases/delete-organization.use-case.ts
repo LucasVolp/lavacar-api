@@ -7,7 +7,7 @@ export class DeleteOrganizationUseCase {
     constructor(
         private readonly deleteOrganizationRepository: DeleteOrganizationRepository,
         private readonly findOrganizationByIdRepository: FindOrganizationByIdRepository,
-        private readonly logger = new Logger()
+        private readonly logger: Logger = new Logger()
     ) {}
 
     async execute(id: string) {

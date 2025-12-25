@@ -1,34 +1,43 @@
 import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
 import { ShopManagerService } from './shop-manager.service';
-import { CreateShopManagerDto } from './dto/create-shop-manager.dto';
-import { UpdateShopManagerDto } from './dto/update-shop-manager.dto';
+import { CreateShopManagerDto, UpdateShopManagerDto } from './dto';
 
-@Controller('shop-manager')
+@Controller('shop-managers')
 export class ShopManagerController {
-  constructor(private readonly shopManagerService: ShopManagerService) {}
+    constructor(private readonly shopManagerService: ShopManagerService) {}
 
-  @Post()
-  create(@Body() createShopManagerDto: CreateShopManagerDto) {
-    return this.shopManagerService.create(createShopManagerDto);
-  }
+    @Post()
+    create(@Body() data: CreateShopManagerDto) {
+        return this.shopManagerService.create(data);
+    }
 
-  @Get()
-  findAll() {
-    return this.shopManagerService.findAll();
-  }
+    @Get()
+    findAll() {
+        return this.shopManagerService.findAll();
+    }
 
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.shopManagerService.findOne(+id);
-  }
+    @Get('shop/:shopId')
+    findByShopId(@Param('shopId') shopId: string) {
+        return this.shopManagerService.findByShopId(shopId);
+    }
 
-  @Patch(':id')
-  update(@Param('id') id: string, @Body() updateShopManagerDto: UpdateShopManagerDto) {
-    return this.shopManagerService.update(+id, updateShopManagerDto);
-  }
+    @Get('member/:memberId')
+    findByMemberId(@Param('memberId') memberId: string) {
+        return this.shopManagerService.findByMemberId(memberId);
+    }
 
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.shopManagerService.remove(+id);
-  }
+    @Get(':id')
+    findById(@Param('id') id: string) {
+        return this.shopManagerService.findById(id);
+    }
+
+    @Patch(':id')
+    update(@Param('id') id: string, @Body() data: UpdateShopManagerDto) {
+        return this.shopManagerService.update(id, data);
+    }
+
+    @Delete(':id')
+    delete(@Param('id') id: string) {
+        return this.shopManagerService.delete(id);
+    }
 }

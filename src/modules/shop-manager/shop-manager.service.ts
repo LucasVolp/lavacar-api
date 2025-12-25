@@ -1,26 +1,48 @@
 import { Injectable } from '@nestjs/common';
-import { CreateShopManagerDto } from './dto/create-shop-manager.dto';
-import { UpdateShopManagerDto } from './dto/update-shop-manager.dto';
+import {
+    CreateShopManagerUseCase,
+    FindAllShopManagerUseCase,
+    FindShopManagerByIdUseCase,
+    UpdateShopManagerUseCase,
+    DeleteShopManagerUseCase,
+} from './use-cases';
+import { CreateShopManagerDto, UpdateShopManagerDto } from './dto';
 
 @Injectable()
 export class ShopManagerService {
-  create(createShopManagerDto: CreateShopManagerDto) {
-    return 'This action adds a new shopManager';
-  }
+    constructor(
+        private readonly createShopManagerUseCase: CreateShopManagerUseCase,
+        private readonly findAllShopManagerUseCase: FindAllShopManagerUseCase,
+        private readonly findShopManagerByIdUseCase: FindShopManagerByIdUseCase,
+        private readonly updateShopManagerUseCase: UpdateShopManagerUseCase,
+        private readonly deleteShopManagerUseCase: DeleteShopManagerUseCase,
+    ) {}
 
-  findAll() {
-    return `This action returns all shopManager`;
-  }
+    create(data: CreateShopManagerDto) {
+        return this.createShopManagerUseCase.execute(data);
+    }
 
-  findOne(id: number) {
-    return `This action returns a #${id} shopManager`;
-  }
+    findAll() {
+        return this.findAllShopManagerUseCase.execute();
+    }
 
-  update(id: number, updateShopManagerDto: UpdateShopManagerDto) {
-    return `This action updates a #${id} shopManager`;
-  }
+    findByShopId(shopId: string) {
+        return this.findAllShopManagerUseCase.executeByShopId(shopId);
+    }
 
-  remove(id: number) {
-    return `This action removes a #${id} shopManager`;
-  }
+    findByMemberId(memberId: string) {
+        return this.findAllShopManagerUseCase.executeByMemberId(memberId);
+    }
+
+    findById(id: string) {
+        return this.findShopManagerByIdUseCase.execute(id);
+    }
+
+    update(id: string, data: UpdateShopManagerDto) {
+        return this.updateShopManagerUseCase.execute(id, data);
+    }
+
+    delete(id: string) {
+        return this.deleteShopManagerUseCase.execute(id);
+    }
 }
