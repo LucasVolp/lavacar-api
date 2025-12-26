@@ -1,4 +1,4 @@
-import { IsString, IsOptional, IsUrl, MaxLength, MinLength } from 'class-validator';
+import { IsString, IsOptional, IsUrl, MaxLength, MinLength, IsUUID } from 'class-validator';
 
 export class CreateOrganizationDto {
     @IsString()
@@ -10,6 +10,9 @@ export class CreateOrganizationDto {
     @IsString()
     @MaxLength(18)
     document?: string; // CNPJ
+
+    @IsUUID()
+    ownerId: string;
 
     @IsOptional()
     @IsUrl()

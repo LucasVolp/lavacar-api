@@ -79,6 +79,7 @@ model User {
   evaluations         Evaluation[]
   shops               Shop[] // Se for OWNER, pode ter múltiplas lojas
   organizationMembers OrganizationMember[]
+  organizations       Organization[]
 
   @@index([email])
   @@index([role])
@@ -114,6 +115,8 @@ model Organization {
   slug      String   @unique
   document  String?  @unique
   logoUrl   String?
+  ownerId   String
+  owner     User     @relation(fields: [ownerId], references: [id])
   isActive  Boolean  @default(true)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -166,7 +169,7 @@ model Shop {
   description String?
   document    String?
   phone       String
-  email       String?    @unique
+  email       String?
   status      ShopStatus @default(ACTIVE)
 
   // Endereço

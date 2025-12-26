@@ -14,7 +14,14 @@ export class CreateOrganizationRepository {
             data: {
                 ...data,
                 slug,
+                members: {
+                create: {
+                    userId: data.ownerId,
+                    role: 'OWNER',        
+                },
             },
+            },
+
         });
     }
 }

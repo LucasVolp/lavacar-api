@@ -1,12 +1,14 @@
 import { BadRequestException, Injectable, Logger, NotFoundException, ServiceUnavailableException } from '@nestjs/common';
 import { UpdateOrganizationRepository, FindOrganizationByIdRepository } from '../repository';
 import { UpdateOrganizationDto } from '../dto';
+import { FindUserRepository } from 'src/modules/users/repository';
 
 @Injectable()
 export class UpdateOrganizationUseCase {
     constructor(
         private readonly updateOrganizationRepository: UpdateOrganizationRepository,
         private readonly findOrganizationByIdRepository: FindOrganizationByIdRepository,
+        private readonly findUserRepository: FindUserRepository,
         private readonly logger: Logger = new Logger(),
     ) {}
 
@@ -25,6 +27,14 @@ export class UpdateOrganizationUseCase {
                 if (existingOrg) {
                     this.logger.warn('Organization with this document already exists', UpdateOrganizationUseCase.name);
                     throw new BadRequestException('Organization with this document already exists');
+                }
+            }
+
+            if (data.ownerId && data.ownerId !== organization.ownerId) {
+                const userExists = await this.findUserRepository.findById(data.ownerId);
+                if (!userExists) {
+                    this.logger.warn(`Attempt to update organization with non-existing ownerId: ${data.ownerId}`, UpdateOrganizationUseCase.name);
+                    throw new BadRequestException('Owner user does not exist.');
                 }
             }
 

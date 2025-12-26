@@ -2,12 +2,14 @@ import { BadRequestException, Injectable, Logger, ServiceUnavailableException } 
 import { CreateOrganizationRepository } from '../repository/create-organization.repository';
 import { FindOrganizationByIdRepository } from '../repository/find-organization-by-id.repository';
 import { CreateOrganizationDto } from '../dto';
+import { FindUserRepository } from 'src/modules/users/repository';
 
 @Injectable()
 export class CreateOrganizationUseCase {
     constructor(
         private readonly createOrganizationRepository: CreateOrganizationRepository,
         private readonly findOrganizationByIdRepository: FindOrganizationByIdRepository,
+        private readonly findUserRepository: FindUserRepository,
         private readonly logger: Logger = new Logger(),
     ) {}
 
@@ -19,6 +21,15 @@ export class CreateOrganizationUseCase {
                     this.logger.warn(`Attempt to create organization with existing document: ${data.document}`);
                     throw new BadRequestException('Organization with this document already exists.');
                 }
+            }
+
+            if (data.ownerId) {
+                const userExists = await this.findUserRepository.findById(data.ownerId);
+                if (!userExists) {
+                    this.logger.warn(`Attempt to create organization with non-existing ownerId: ${data.ownerId}`);
+                    throw new BadRequestException('Owner user does not exist.');
+                }
+                
             }
 
             return await this.createOrganizationRepository.create(data);

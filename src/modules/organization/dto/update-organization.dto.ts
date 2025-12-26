@@ -1,4 +1,4 @@
-import { IsString, IsOptional, IsUrl, MaxLength, MinLength, IsBoolean } from 'class-validator';
+import { IsString, IsOptional, IsUrl, MaxLength, MinLength, IsBoolean, IsUUID } from 'class-validator';
 
 export class UpdateOrganizationDto {
     @IsOptional()
@@ -11,6 +11,10 @@ export class UpdateOrganizationDto {
     @IsString()
     @MaxLength(18)
     document?: string;
+
+    @IsOptional()
+    @IsUUID()
+    ownerId?: string;
 
     @IsOptional()
     @IsUrl()
