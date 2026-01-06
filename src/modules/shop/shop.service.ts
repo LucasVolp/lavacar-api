@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { CreateShopDto } from './dto/create-shop.dto';
 import { UpdateShopDto } from './dto/update-shop.dto';
-import { CreateShopUseCase, DeleteShopUseCase, FindAllShopUseCase, FindShopByIdUseCase, UpdateShopUseCase } from './use-cases';
+import { CreateShopUseCase, DeleteShopUseCase, FindAllShopUseCase, FindShopByIdUseCase, FindShopBySlugUseCase, UpdateShopUseCase } from './use-cases';
 
 @Injectable()
 export class ShopService {
@@ -10,7 +10,8 @@ export class ShopService {
     private readonly FindAllShopUseCase: FindAllShopUseCase,
     private readonly FindShopByIdUseCase: FindShopByIdUseCase,
     private readonly UpdateShopUseCase: UpdateShopUseCase,
-    private readonly DeleteShopUseCase: DeleteShopUseCase
+    private readonly DeleteShopUseCase: DeleteShopUseCase,
+    private readonly FindShopBySlugUseCase: FindShopBySlugUseCase
   ){}
   async create(data: CreateShopDto) {
     return await this.CreateShopUseCase.execute(data);
@@ -30,5 +31,9 @@ export class ShopService {
 
   async remove(id: string) {
     return await this.DeleteShopUseCase.execute(id);
+  }
+
+  async findBySlug(slug: string) {
+    return await this.FindShopBySlugUseCase.execute(slug);
   }
 }
