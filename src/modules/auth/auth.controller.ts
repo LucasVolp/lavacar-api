@@ -17,8 +17,8 @@ export class AuthController {
     const user = req.user;
     const accessToken = this.authService.generateJwt(user);
   
-    // Certifique-se de que a URL termina com um separador adequado
-    const redirectUrl = `${process.env.FRONTEND_URL}?access_token=${accessToken}`;
+    // Agora redireciona para a página de callback dedicada
+    const redirectUrl = `${process.env.FRONTEND_URL}/auth/callback?access_token=${accessToken}`;
     res.redirect(redirectUrl);
   }
 

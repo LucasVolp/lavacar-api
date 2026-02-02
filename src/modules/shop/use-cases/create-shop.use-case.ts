@@ -18,7 +18,8 @@ export class CreateShopUseCase {
     async execute(data: CreateShopDto) {
         try {
             const existingSlugs = await this.findBySlugRepository.findAllSlugs();
-            const slug = generateUniqueSlug(data.name, existingSlugs);
+            const baseSlug = data.slug || data.name;
+            const slug = generateUniqueSlug(baseSlug, existingSlugs);
 
             if (data.ownerId) {
                 const userExists = await this.findUserRepository.findById(data.ownerId);

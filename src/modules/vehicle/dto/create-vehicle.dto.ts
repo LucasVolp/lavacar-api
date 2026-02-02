@@ -3,11 +3,11 @@ import { VehicleType } from "prisma/generated";
 
 export class CreateVehicleDto {
     @IsString()
-    @IsNotEmpty()
+    @IsOptional()
     @Matches(/^[A-Z]{3}[0-9][A-Z0-9][0-9]{2}$/, { 
         message: 'plate must be a valid Brazilian plate (AAA0A00 or AAA0000)' 
     })
-    plate: string;
+    plate?: string;
 
     @IsString()
     @IsNotEmpty()

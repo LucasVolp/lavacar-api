@@ -26,6 +26,11 @@ export class OrganizationController {
         return this.organizationService.findBySlug(slug);
     }
 
+    @Get('owner/:ownerId')
+    findByOwner(@Param('ownerId') ownerId: string) {
+        return this.organizationService.findByOwner(ownerId);
+    }
+
     @Patch(':id')
     update(@Param('id') id: string, @Body() data: UpdateOrganizationDto) {
         return this.organizationService.update(id, data);

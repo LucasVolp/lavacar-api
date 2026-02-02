@@ -1,23 +1,46 @@
+import { formatInTimeZone, toZonedTime, fromZonedTime } from 'date-fns-tz';
+import { startOfDay, endOfDay } from 'date-fns';
+
+const DEFAULT_TIMEZONE = 'America/Campo_Grande';
+
+/**
+ * Retorna o início do dia no timezone especificado (00:00:00)
+ * Retorna um Date em UTC que corresponde à meia-noite local
+ */
+export function getStartOfDayInTimezone(date: Date, timeZone: string = DEFAULT_TIMEZONE): Date {
+  const zonedDate = toZonedTime(date, timeZone);
+  const startZoned = startOfDay(zonedDate);
+  return fromZonedTime(startZoned, timeZone);
+}
+
+/**
+ * Retorna o fim do dia no timezone especificado (23:59:59.999)
+ * Retorna um Date em UTC que corresponde ao fim do dia local
+ */
+export function getEndOfDayInTimezone(date: Date, timeZone: string = DEFAULT_TIMEZONE): Date {
+  const zonedDate = toZonedTime(date, timeZone);
+  const endZoned = endOfDay(zonedDate);
+  return fromZonedTime(endZoned, timeZone);
+}
+
 /**
  * Extrai a hora "HH:mm" de uma string ISO DateTime ou Date
  * @example extractTimeFromDateTime("2025-12-25T10:30:00") => "10:30"
  * @example extractTimeFromDateTime(new Date()) => "14:25"
  */
-export function extractTimeFromDateTime(dateTime: string | Date): string {
-  const date = typeof dateTime === 'string' ? new Date(dateTime) : dateTime;
-  const hours = date.getHours().toString().padStart(2, '0');
-  const minutes = date.getMinutes().toString().padStart(2, '0');
-  return `${hours}:${minutes}`;
+export function extractTimeFromDateTime(dateTime: string | Date, timeZone: string = DEFAULT_TIMEZONE): string {
+  return formatInTimeZone(dateTime, timeZone, 'HH:mm');
 }
 
 /**
  * Extrai o dia da semana de uma string ISO DateTime ou Date
  * @returns Weekday enum value
  */
-export function extractWeekdayFromDateTime(dateTime: string | Date): string {
-  const date = typeof dateTime === 'string' ? new Date(dateTime) : dateTime;
-  const weekdays = ['SUNDAY', 'MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY'];
-  return weekdays[date.getDay()];
+export function extractWeekdayFromDateTime(dateTime: string | Date, timeZone: string = DEFAULT_TIMEZONE): string {
+  // Format returns the full day name in English.
+  // E.g. 'EEEE' => 'Tuesday'. We need uppercase.
+  const weekday = formatInTimeZone(dateTime, timeZone, 'EEEE');
+  return weekday.toUpperCase();
 }
 
 /**

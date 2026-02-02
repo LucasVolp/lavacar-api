@@ -11,14 +11,29 @@ export class FindAllAppointmentUseCase {
 
     async execute(filters: FindAllFilters = {}) {
         try {
+            // Parse startDate para início do dia (00:00:00)
+            let startDate: Date | undefined;
+            if (filters.startDate) {
+                startDate = new Date(filters.startDate);
+                startDate.setUTCHours(0, 0, 0, 0);
+            }
+
+            // Parse endDate para final do dia (23:59:59.999)
+            let endDate: Date | undefined;
+            if (filters.endDate) {
+                endDate = new Date(filters.endDate);
+                endDate.setUTCHours(23, 59, 59, 999);
+            }
+
             const parsedFilters = {
                 ...filters,
-                startDate: filters.startDate ? new Date(filters.startDate) : undefined,
-                endDate: filters.endDate ? new Date(filters.endDate) : undefined,
+                startDate,
+                endDate,
             };
 
             const appointments = await this.appointmentRepository.findAll(parsedFilters);
             this.logger.log(`Found ${appointments.length} appointments`, FindAllAppointmentUseCase.name);
+            return appointments;
             return appointments;
         } catch (err) {
             const error = new ServiceUnavailableException('Something bad happened!', {

@@ -5,6 +5,7 @@ import {
     FindOrganizationByIdUseCase,
     UpdateOrganizationUseCase,
     DeleteOrganizationUseCase,
+    FindOrganizationByOwnerUseCase,
 } from './use-cases';
 import { CreateOrganizationDto, UpdateOrganizationDto } from './dto';
 
@@ -16,6 +17,7 @@ export class OrganizationService {
         private readonly findOrganizationByIdUseCase: FindOrganizationByIdUseCase,
         private readonly updateOrganizationUseCase: UpdateOrganizationUseCase,
         private readonly deleteOrganizationUseCase: DeleteOrganizationUseCase,
+        private readonly findOrganizationByOwnerUseCase: FindOrganizationByOwnerUseCase,
     ) {}
 
     create(data: CreateOrganizationDto) {
@@ -32,6 +34,10 @@ export class OrganizationService {
 
     findBySlug(slug: string) {
         return this.findOrganizationByIdUseCase.executeBySlug(slug);
+    }
+
+    findByOwner(ownerId: string) {
+        return this.findOrganizationByOwnerUseCase.execute(ownerId);
     }
 
     update(id: string, data: UpdateOrganizationDto) {

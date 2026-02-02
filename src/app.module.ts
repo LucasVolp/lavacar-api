@@ -6,7 +6,7 @@ import { AuthModule } from './modules/auth/auth.module';
 import { JwtService } from '@nestjs/jwt';
 import { JwtStrategy } from './shared/strategies/jwt.strategy';
 import { AuthService } from './modules/auth/auth.service';
-// import { GoogleStrategy } from './shared/strategies/google.strategy';
+import { GoogleStrategy } from './shared/strategies/google.strategy'; // Descomentado
 import { ShopModule } from './modules/shop/shop.module';
 import { ServiceModule } from './modules/service/service.module';
 import { APP_GUARD } from '@nestjs/core';
@@ -20,6 +20,7 @@ import { EvaluationModule } from './modules/evaluation/evaluation.module';
 import { OrganizationModule } from './modules/organization/organization.module';
 import { OrganizationMemberModule } from './modules/organization-member/organization-member.module';
 import { ShopManagerModule } from './modules/shop-manager/shop-manager.module';
+import { FipeApiModule } from './modules/fipe-api/fipe-api.module';
 
 @Module({
   imports: [
@@ -36,6 +37,7 @@ import { ShopManagerModule } from './modules/shop-manager/shop-manager.module';
     OrganizationModule,
     OrganizationMemberModule,
     ShopManagerModule,
+    FipeApiModule,
   ],
   controllers: [AppController],
   providers: [AppService, 
@@ -44,7 +46,7 @@ import { ShopManagerModule } from './modules/shop-manager/shop-manager.module';
     JwtStrategy, 
     Logger, 
     AuthService, 
-    // GoogleStrategy,
+    GoogleStrategy,
   ],
 })
 export class AppModule {}

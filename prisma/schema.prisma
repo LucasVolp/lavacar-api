@@ -80,6 +80,7 @@ model User {
   shops               Shop[] // Se for OWNER, pode ter múltiplas lojas
   organizationMembers OrganizationMember[]
   organizations       Organization[]
+  shopClients         ShopClient[]
 
   @@index([email])
   @@index([role])
@@ -89,7 +90,7 @@ model User {
 
 model Vehicle {
   id        String      @id @default(uuid())
-  plate     String      @unique
+  plate     String?     @unique
   brand     String // Marca (ex: Fiat)
   model     String // Modelo (ex: Uno)
   year      Int? // Ano
@@ -124,6 +125,7 @@ model Organization {
   // Relacionamentos
   shops   Shop[]
   members OrganizationMember[]
+  goals   SalesGoal[]
 }
 
 model OrganizationMember {
@@ -171,6 +173,8 @@ model Shop {
   phone       String
   email       String?
   status      ShopStatus @default(ACTIVE)
+  logoUrl     String?
+  bannerUrl   String?
 
   // Endereço
   zipCode      String // CEP - campo obrigatório, usado para buscar o resto
@@ -180,6 +184,7 @@ model Shop {
   neighborhood String // Bairro
   city         String // Cidade
   state        String  @db.Char(2) // UF (2 caracteres: SP, RJ, MG)
+  timeZone     String  @default("America/Sao_Paulo") // Fuso horário da loja
 
   // Configurações
   slotInterval       Int @default(30) // Intervalo entre slots em minutos (15, 30, 60)
@@ -200,6 +205,8 @@ model Shop {
   appointments  Appointment[]
   serviceGroups ServiceGroup[]
   managers      ShopManager[]
+  clients       ShopClient[]
+  goals         SalesGoal[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -326,6 +333,7 @@ model Appointment {
 
   services   AppointmentService[]
   evaluation Evaluation?
+  checklist  Checklist?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -379,4 +387,64 @@ model Evaluation {
 
   @@index([appointmentId])
   @@index([userId])
+}
+
+// ==================== CLIENTES DO ESTABELECIMENTO (CRM) ====================
+
+model ShopClient {
+  id        String   @id @default(uuid())
+  shopId    String
+  userId    String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  shop Shop @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([shopId, userId])
+  @@index([shopId])
+  @@index([userId])
+}
+
+// ==================== CHECKLIST / VISTORIA ====================
+
+model Checklist {
+  id            String   @id @default(uuid())
+  appointmentId String   @unique
+  description   String? // Descrição de avarias ou observações
+  photos        String[] // URLs das fotos da vistoria
+
+  appointment Appointment @relation(fields: [appointmentId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// ==================== META DE VENDAS ====================
+
+enum GoalPeriod {
+  WEEKLY
+  MONTHLY
+}
+
+model SalesGoal {
+  id        String     @id @default(uuid())
+  amount    Decimal    @db.Decimal(10, 2)
+  period    GoalPeriod
+  startDate DateTime
+  endDate   DateTime
+
+  shopId         String?
+  organizationId String?
+
+  shop         Shop?         @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  organization Organization? @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([shopId])
+  @@index([organizationId])
+  @@index([startDate])
+  @@index([endDate])
 }

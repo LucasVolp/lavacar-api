@@ -18,6 +18,10 @@ export class CreateShopDto {
   @IsNotEmpty()
   name: string;
 
+  @IsOptional()
+  @IsString()
+  slug?: string;
+
   @IsString()
   @IsOptional()
   description?: string;
@@ -38,6 +42,18 @@ export class CreateShopDto {
   @IsEnum(ShopStatus)
   @IsOptional()
   status?: ShopStatus;
+
+  @IsString()
+  @IsOptional()
+  timeZone?: string;
+
+  @IsString()
+  @IsOptional()
+  logoUrl?: string;
+
+  @IsString()
+  @IsOptional()
+  bannerUrl?: string;
 
   // Endereço
   @IsString()
@@ -99,6 +115,6 @@ export class CreateShopDto {
   organizationId: string;
 
   @IsUUID()
-  @IsNotEmpty()
-  ownerId: string;
+  @IsOptional()
+  ownerId?: string;
 }

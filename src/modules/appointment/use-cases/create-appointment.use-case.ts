@@ -8,7 +8,7 @@ import {
 } from "@nestjs/common";
 import { CreateAppointmentRepository, FindAppointmentsByDateRepository } from "../repository";
 import { CreateAppointmentDto } from "../dto/create-appointment.dto";
-import { timeToMinutes, extractTimeFromDateTime, extractWeekdayFromDateTime, isTimeOverlapping, addMinutesToTime } from "src/shared/utils";
+import { timeToMinutes, extractTimeFromDateTime, extractWeekdayFromDateTime, isTimeOverlapping, addMinutesToTime, getStartOfDayInTimezone } from "src/shared/utils";
 import { Weekday, BlockedTimeType } from "prisma/generated";
 import { FindUserRepository } from "src/modules/users/repository";
 import { FindShopByIdRepository } from "src/modules/shop/repository";
@@ -93,6 +93,19 @@ export class CreateAppointmentUseCase {
             const shopOpenMinutes = timeToMinutes(schedule.startTime);
             const shopCloseMinutes = timeToMinutes(schedule.endTime);
 
+            // Debug logs
+            this.logger.debug(`
+                Appointment Time Debug:
+                ScheduledAt (UTC): ${data.scheduledAt}
+                Local Time: ${startTime}
+                Local Weekday: ${weekday}
+                Duration: ${totalDuration}
+                Start Minutes: ${startMinutes}
+                End Minutes: ${endMinutes}
+                Shop Open: ${schedule.startTime} (${shopOpenMinutes})
+                Shop Close: ${schedule.endTime} (${shopCloseMinutes})
+            `, CreateAppointmentUseCase.name);
+
             // Verifica se o agendamento começa dentro do horário
             if (startMinutes < shopOpenMinutes) {
                 this.logger.warn(`Appointment starts before shop opens for shop ID: ${data.shopId}`, CreateAppointmentUseCase.name);
@@ -139,8 +152,7 @@ export class CreateAppointmentUseCase {
             }
 
             // Verificar BlockedTime (feriados, bloqueios)
-            const dateOnly = new Date(scheduledAt);
-            dateOnly.setHours(0, 0, 0, 0);
+            const dateOnly = getStartOfDayInTimezone(scheduledAt);
 
             const blockedTime = await this.findBlockedTimeByShopRepository.findByShopAndDate(data.shopId, dateOnly);
 

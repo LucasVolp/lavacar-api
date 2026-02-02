@@ -34,6 +34,18 @@ export class UpdateShopDto extends PartialType(CreateShopDto) {
     @IsOptional()
     status?: ShopStatus;
   
+    @IsString()
+    @IsOptional()
+    timeZone?: string;
+
+    @IsString()
+    @IsOptional()
+    logoUrl?: string;
+
+    @IsString()
+    @IsOptional()
+    bannerUrl?: string;
+
     // Endereço
     @IsString()
     @IsOptional()
