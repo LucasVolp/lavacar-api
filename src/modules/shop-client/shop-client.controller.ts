@@ -1,6 +1,7 @@
-import { Controller, Get, Post, Body, Param, Delete } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, Delete, Query, Patch } from '@nestjs/common';
 import { ShopClientService } from './shop-client.service';
 import { CreateShopClientDto } from './dto/create-shop-client.dto';
+import { UpdateShopClientDto } from './dto/update-shop-client.dto';
 
 @Controller('shop-clients')
 export class ShopClientController {
@@ -12,18 +13,45 @@ export class ShopClientController {
     }
 
     @Get()
-    findAll() {
-        return this.shopClientService.findAll();
+    findAll(
+        @Query('page') page?: string,
+        @Query('perPage') perPage?: string,
+        @Query('search') search?: string,
+    ) {
+        return this.shopClientService.findAll({
+            page: page ? parseInt(page, 10) : undefined,
+            perPage: perPage ? parseInt(perPage, 10) : undefined,
+            search,
+        });
     }
 
     @Get('shop/:shopId')
-    findByShopId(@Param('shopId') shopId: string) {
-        return this.shopClientService.findByShopId(shopId);
+    findByShopId(
+        @Param('shopId') shopId: string,
+        @Query('page') page?: string,
+        @Query('perPage') perPage?: string,
+        @Query('search') search?: string,
+    ) {
+        return this.shopClientService.findByShopId(shopId, {
+            page: page ? parseInt(page, 10) : undefined,
+            perPage: perPage ? parseInt(perPage, 10) : undefined,
+            search,
+        });
+    }
+
+    @Get('shop/:shopId/count')
+    countByShopId(@Param('shopId') shopId: string) {
+        return this.shopClientService.countByShopId(shopId);
     }
 
     @Get(':id')
     findOne(@Param('id') id: string) {
         return this.shopClientService.findOne(id);
+    }
+
+    @Patch(':id')
+    update(@Param('id') id: string, @Body() updateShopClientDto: UpdateShopClientDto) {
+        return this.shopClientService.update(id, updateShopClientDto);
     }
 
     @Delete(':id')

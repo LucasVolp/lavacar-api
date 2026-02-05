@@ -31,10 +31,9 @@ export class FindAllAppointmentUseCase {
                 endDate,
             };
 
-            const appointments = await this.appointmentRepository.findAll(parsedFilters);
-            this.logger.log(`Found ${appointments.length} appointments`, FindAllAppointmentUseCase.name);
-            return appointments;
-            return appointments;
+            const result = await this.appointmentRepository.findAll(parsedFilters);
+            this.logger.log(`Found ${result.meta.total} appointments`, FindAllAppointmentUseCase.name);
+            return result;
         } catch (err) {
             const error = new ServiceUnavailableException('Something bad happened!', {
                 cause: err,

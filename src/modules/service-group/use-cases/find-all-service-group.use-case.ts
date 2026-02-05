@@ -1,6 +1,12 @@
 import { Injectable, Logger, ServiceUnavailableException } from "@nestjs/common";
 import { FindAllServiceGroupRepository } from "../repository";
 
+interface FindAllFilters {
+    shopId?: string;
+    page?: number;
+    perPage?: number;
+}
+
 @Injectable()
 export class FindAllServiceGroupUseCase {
     constructor(
@@ -8,16 +14,11 @@ export class FindAllServiceGroupUseCase {
         private readonly logger: Logger = new Logger()
     ) {}
 
-    async execute(shopId?: string) {
+    async execute(filters: FindAllFilters = {}) {
         try {
-            const serviceGroups = await this.serviceGroupRepository.findAll(shopId);
-            if (serviceGroups.length === 0) {
-                this.logger.log('No service groups found', FindAllServiceGroupUseCase.name);
-                return [];
-            }
-
-            this.logger.log(`${serviceGroups.length} service groups found`, FindAllServiceGroupUseCase.name);
-            return serviceGroups;
+            const result = await this.serviceGroupRepository.findAll(filters);
+            this.logger.log(`Found ${result.meta.total} service groups`, FindAllServiceGroupUseCase.name);
+            return result;
         } catch (err) {
             const error = new ServiceUnavailableException('Something bad happened!', {
                 cause: err,

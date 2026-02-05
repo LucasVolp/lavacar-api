@@ -1,6 +1,13 @@
 import { Injectable, Logger, ServiceUnavailableException } from '@nestjs/common';
 import { FindAllShopManagerRepository } from '../repository';
 
+interface FindAllFilters {
+    shopId?: string;
+    memberId?: string;
+    page?: number;
+    perPage?: number;
+}
+
 @Injectable()
 export class FindAllShopManagerUseCase {
     constructor(
@@ -8,15 +15,11 @@ export class FindAllShopManagerUseCase {
         private readonly logger: Logger = new Logger(),
     ) {}
 
-    async execute() {
+    async execute(filters: FindAllFilters = {}) {
         try {
-            const shopManagers = await this.findAllShopManagerRepository.findAll();
-            if (!shopManagers) {
-                this.logger.warn('No shop managers found', FindAllShopManagerUseCase.name);
-                return [];
-            }
-            this.logger.log('Shop managers found!', FindAllShopManagerUseCase.name);
-            return shopManagers;
+            const result = await this.findAllShopManagerRepository.findAll(filters);
+            this.logger.log(`Found ${result.meta.total} shop managers`, FindAllShopManagerUseCase.name);
+            return result;
         } catch (err) {
             const error = new ServiceUnavailableException({
                 message: 'Error finding shop managers',
@@ -28,15 +31,11 @@ export class FindAllShopManagerUseCase {
         }
     }
 
-    async executeByShopId(shopId: string) {
+    async executeByShopId(shopId: string, filters: { page?: number; perPage?: number } = {}) {
         try {
-            const shopManagers = await this.findAllShopManagerRepository.findByShopId(shopId);
-            if (!shopManagers) {
-                this.logger.warn(`No managers found for shop ${shopId}`, FindAllShopManagerUseCase.name);
-                return [];
-            }
-            this.logger.log('Shop managers found!', FindAllShopManagerUseCase.name);
-            return shopManagers;
+            const result = await this.findAllShopManagerRepository.findByShopId(shopId, filters);
+            this.logger.log(`Found ${result.meta.total} managers for shop ${shopId}`, FindAllShopManagerUseCase.name);
+            return result;
         } catch (err) {
             const error = new ServiceUnavailableException({
                 message: 'Error finding shop managers',
@@ -48,15 +47,11 @@ export class FindAllShopManagerUseCase {
         }
     }
 
-    async executeByMemberId(memberId: string) {
+    async executeByMemberId(memberId: string, filters: { page?: number; perPage?: number } = {}) {
         try {
-            const shopManagers = await this.findAllShopManagerRepository.findByMemberId(memberId);
-            if (!shopManagers) {
-                this.logger.warn(`No shops managed by member ${memberId}`, FindAllShopManagerUseCase.name);
-                return [];
-            }
-            this.logger.log('Shop managers found!', FindAllShopManagerUseCase.name);
-            return shopManagers;
+            const result = await this.findAllShopManagerRepository.findByMemberId(memberId, filters);
+            this.logger.log(`Found ${result.meta.total} shops managed by member ${memberId}`, FindAllShopManagerUseCase.name);
+            return result;
         } catch (err) {
             const error = new ServiceUnavailableException({
                 message: 'Error finding shop managers',

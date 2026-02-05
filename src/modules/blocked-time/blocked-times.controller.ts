@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, Query } from '@nestjs/common';
 import { BlockedTimesService } from './blocked-times.service';
 import { CreateBlockedTimeDto } from './dto/create-blocked-time.dto';
 import { UpdateBlockedTimeDto } from './dto/update-blocked-time.dto';
@@ -13,8 +13,16 @@ export class BlockedTimesController {
   }
 
   @Get()
-  findAll() {
-    return this.blockedTimesService.findAll();
+  findAll(
+    @Query('shopId') shopId?: string,
+    @Query('page') page?: string,
+    @Query('perPage') perPage?: string,
+  ) {
+    return this.blockedTimesService.findAll({
+      shopId,
+      page: page ? parseInt(page, 10) : undefined,
+      perPage: perPage ? parseInt(perPage, 10) : undefined,
+    });
   }
 
   @Get(':id')

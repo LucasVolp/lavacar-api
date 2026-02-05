@@ -17,8 +17,8 @@ export class BlockedTimesService {
     return await this.createBlockedTimeUseCase.execute(data);
   }
 
-  async findAll() {
-    return await this.findAllBlockedTimeUseCase.execute();
+  async findAll(filters?: { shopId?: string; page?: number; perPage?: number }) {
+    return await this.findAllBlockedTimeUseCase.execute(filters);
   }
 
   async findOne(id: string) {

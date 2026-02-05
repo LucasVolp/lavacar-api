@@ -1,39 +1,76 @@
 import { Injectable } from "@nestjs/common";
+import { Prisma } from "prisma/generated";
 import { PrismaService } from "src/shared/databases/prisma.database";
+import { PaginatedResult } from "src/shared/dto/pagination.dto";
+
+interface FindAllFilters {
+    shopId?: string;
+    rating?: number;
+    page?: number;
+    perPage?: number;
+}
+
 @Injectable()
 export class FindAllEvaluationRepository {
     constructor(private readonly prisma: PrismaService) {}
 
-    async findAll(shopId?: string) {
-        return await this.prisma.evaluation.findMany({
-            where: shopId ? {
-                appointment: {
-                    shopId,
-                }
-            } : undefined,
-            include: {
-                user: {
-                    select: {
-                        id: true,
-                        firstName: true,
-                        lastName: true,
-                    }
-                },
-                appointment: {
-                    include: {
-                        services: true,
-                        vehicle: true,
-                        shop: {
-                            select: {
-                                id: true,
-                                name: true,
-                            }
+    async findAll(filters: FindAllFilters = {}): Promise<PaginatedResult<any>> {
+        const page = filters.page || 1;
+        const perPage = filters.perPage || 10;
+        const skip = (page - 1) * perPage;
+
+        const where: Prisma.EvaluationWhereInput = {};
+
+        if (filters.shopId) {
+            where.appointment = {
+                shopId: filters.shopId,
+            };
+        }
+
+        if (filters.rating !== undefined) {
+            where.rating = filters.rating;
+        }
+
+        const [data, total] = await Promise.all([
+            this.prisma.evaluation.findMany({
+                where,
+                skip,
+                take: perPage,
+                include: {
+                    user: {
+                        select: {
+                            id: true,
+                            firstName: true,
+                            lastName: true,
                         }
                     },
+                    appointment: {
+                        include: {
+                            services: true,
+                            vehicle: true,
+                            shop: {
+                                select: {
+                                    id: true,
+                                    name: true,
+                                }
+                            }
+                        },
+                    },
                 },
+                orderBy: { createdAt: 'desc' },
+            }),
+            this.prisma.evaluation.count({ where }),
+        ]);
+
+        return {
+            data,
+            meta: {
+                total,
+                page,
+                perPage,
+                totalPages: Math.ceil(total / perPage),
             },
-            orderBy: { createdAt: 'desc' },
-        });
+        };
     }
 
     async getShopStats(shopId: string) {

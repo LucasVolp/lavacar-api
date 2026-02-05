@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, Query } from '@nestjs/common';
 import { ShopManagerService } from './shop-manager.service';
 import { CreateShopManagerDto, UpdateShopManagerDto } from './dto';
 
@@ -12,18 +12,38 @@ export class ShopManagerController {
     }
 
     @Get()
-    findAll() {
-        return this.shopManagerService.findAll();
+    findAll(
+        @Query('page') page?: string,
+        @Query('perPage') perPage?: string,
+    ) {
+        return this.shopManagerService.findAll({
+            page: page ? parseInt(page, 10) : undefined,
+            perPage: perPage ? parseInt(perPage, 10) : undefined,
+        });
     }
 
     @Get('shop/:shopId')
-    findByShopId(@Param('shopId') shopId: string) {
-        return this.shopManagerService.findByShopId(shopId);
+    findByShopId(
+        @Param('shopId') shopId: string,
+        @Query('page') page?: string,
+        @Query('perPage') perPage?: string,
+    ) {
+        return this.shopManagerService.findByShopId(shopId, {
+            page: page ? parseInt(page, 10) : undefined,
+            perPage: perPage ? parseInt(perPage, 10) : undefined,
+        });
     }
 
     @Get('member/:memberId')
-    findByMemberId(@Param('memberId') memberId: string) {
-        return this.shopManagerService.findByMemberId(memberId);
+    findByMemberId(
+        @Param('memberId') memberId: string,
+        @Query('page') page?: string,
+        @Query('perPage') perPage?: string,
+    ) {
+        return this.shopManagerService.findByMemberId(memberId, {
+            page: page ? parseInt(page, 10) : undefined,
+            perPage: perPage ? parseInt(perPage, 10) : undefined,
+        });
     }
 
     @Get(':id')

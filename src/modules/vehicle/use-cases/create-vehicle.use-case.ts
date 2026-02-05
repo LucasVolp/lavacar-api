@@ -26,8 +26,8 @@ export class CreateVehicleUseCase {
                 throw new NotFoundException('User not found');
             };
 
-            const vehicles = await this.findVehicleRepository.findAll();
-            const plateExists = vehicles.some(vehicle => vehicle.plate === normalizedData.plate);
+            const vehiclesResult = await this.findVehicleRepository.findAll({ perPage: 10000 });
+            const plateExists = vehiclesResult.data.some(vehicle => vehicle.plate === normalizedData.plate);
             if (plateExists) {
                 this.logger.warn(`Vehicle with plate ${normalizedData.plate} already exists`, CreateVehicleUseCase.name);
                 throw new ConflictException('Vehicle with this plate already exists for this user');

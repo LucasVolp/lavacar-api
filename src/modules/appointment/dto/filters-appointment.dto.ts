@@ -6,4 +6,6 @@ export interface FindAllFilters {
     status?: AppointmentStatus;
     startDate?: string;
     endDate?: string;
+    page?: number;
+    perPage?: number;
 }

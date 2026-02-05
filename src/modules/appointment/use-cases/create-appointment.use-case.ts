@@ -17,6 +17,7 @@ import { FindServicesByIdsRepository } from "src/modules/service/repository";
 import { FindScheduleByWeekdayRepository } from "src/modules/schedule/repository";
 import { FindVehicleByIdRepository } from "src/modules/vehicle/repository";
 import { FindBlockedTimeByShopIdRepository } from "src/modules/blocked-time/repository";
+import { FindShopClientByShopAndUserRepository, CreateShopClientRepository } from "src/modules/shop-client/repository";
 @Injectable()
 export class CreateAppointmentUseCase {
     constructor(
@@ -28,6 +29,8 @@ export class CreateAppointmentUseCase {
         private readonly findScheduleByIdRepository: FindScheduleByWeekdayRepository,
         private readonly findVehicleByIdRepository: FindVehicleByIdRepository,
         private readonly findBlockedTimeByShopRepository: FindBlockedTimeByShopIdRepository,
+        private readonly findShopClientRepository: FindShopClientByShopAndUserRepository,
+        private readonly createShopClientRepository: CreateShopClientRepository,
         private readonly logger: Logger = new Logger()
     ) {}
 
@@ -197,6 +200,22 @@ export class CreateAppointmentUseCase {
                     duration: service.duration,
                 })),
             });
+
+            // Auto-cadastrar cliente na loja se não existir (CRM)
+            try {
+                const existingShopClient = await this.findShopClientRepository.findByShopAndUser(data.shopId, data.userId);
+                
+                if (!existingShopClient) {
+                    await this.createShopClientRepository.create({
+                        shopId: data.shopId,
+                        userId: data.userId,
+                    });
+                    this.logger.log(`Client auto-registered to shop. UserId: ${data.userId}, ShopId: ${data.shopId}`, CreateAppointmentUseCase.name);
+                }
+            } catch (clientError) {
+                // Não falhar a criação do agendamento se o cadastro do cliente falhar
+                this.logger.warn(`Failed to auto-register client to shop: ${clientError.message}`, CreateAppointmentUseCase.name);
+            }
 
             this.logger.log(`Appointment created with ID: ${appointment.id}`, CreateAppointmentUseCase.name);
             return appointment;

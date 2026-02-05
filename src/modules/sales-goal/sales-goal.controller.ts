@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, Query } from '@nestjs/common';
 import { SalesGoalService } from './sales-goal.service';
 import { CreateSalesGoalDto } from './dto/create-sales-goal.dto';
 import { UpdateSalesGoalDto } from './dto/update-sales-goal.dto';
@@ -13,18 +13,38 @@ export class SalesGoalController {
     }
 
     @Get()
-    findAll() {
-        return this.salesGoalService.findAll();
+    findAll(
+        @Query('page') page?: string,
+        @Query('perPage') perPage?: string,
+    ) {
+        return this.salesGoalService.findAll({
+            page: page ? parseInt(page, 10) : undefined,
+            perPage: perPage ? parseInt(perPage, 10) : undefined,
+        });
     }
 
     @Get('shop/:shopId')
-    findByShopId(@Param('shopId') shopId: string) {
-        return this.salesGoalService.findByShopId(shopId);
+    findByShopId(
+        @Param('shopId') shopId: string,
+        @Query('page') page?: string,
+        @Query('perPage') perPage?: string,
+    ) {
+        return this.salesGoalService.findByShopId(shopId, {
+            page: page ? parseInt(page, 10) : undefined,
+            perPage: perPage ? parseInt(perPage, 10) : undefined,
+        });
     }
 
     @Get('organization/:organizationId')
-    findByOrganizationId(@Param('organizationId') organizationId: string) {
-        return this.salesGoalService.findByOrganizationId(organizationId);
+    findByOrganizationId(
+        @Param('organizationId') organizationId: string,
+        @Query('page') page?: string,
+        @Query('perPage') perPage?: string,
+    ) {
+        return this.salesGoalService.findByOrganizationId(organizationId, {
+            page: page ? parseInt(page, 10) : undefined,
+            perPage: perPage ? parseInt(perPage, 10) : undefined,
+        });
     }
 
     @Get(':id')

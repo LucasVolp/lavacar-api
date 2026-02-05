@@ -1,6 +1,12 @@
 import { Injectable, Logger, ServiceUnavailableException } from '@nestjs/common';
 import { FindAllShopClientRepository } from '../repository';
 
+interface FindAllFilters {
+    shopId?: string;
+    page?: number;
+    perPage?: number;
+}
+
 @Injectable()
 export class FindAllShopClientUseCase {
     constructor(
@@ -8,10 +14,11 @@ export class FindAllShopClientUseCase {
         private readonly logger: Logger = new Logger(),
     ) {}
 
-    async execute() {
+    async execute(filters: FindAllFilters = {}) {
         try {
-            const shopClients = await this.findAllShopClientRepository.findAll();
-            return shopClients;
+            const result = await this.findAllShopClientRepository.findAll(filters);
+            this.logger.log(`Found ${result.meta.total} shop clients`, FindAllShopClientUseCase.name);
+            return result;
         } catch (err) {
             const error = new ServiceUnavailableException('Something bad happened!', {
                 cause: err,
@@ -22,10 +29,11 @@ export class FindAllShopClientUseCase {
         }
     }
 
-    async executeByShopId(shopId: string) {
+    async executeByShopId(shopId: string, filters: { page?: number; perPage?: number } = {}) {
         try {
-            const shopClients = await this.findAllShopClientRepository.findByShopId(shopId);
-            return shopClients;
+            const result = await this.findAllShopClientRepository.findByShopId(shopId, filters);
+            this.logger.log(`Found ${result.meta.total} clients for shop ${shopId}`, FindAllShopClientUseCase.name);
+            return result;
         } catch (err) {
             const error = new ServiceUnavailableException('Something bad happened!', {
                 cause: err,

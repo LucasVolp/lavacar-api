@@ -1,4 +1,4 @@
-import { IsNotEmpty, IsUUID } from 'class-validator';
+import { IsNotEmpty, IsOptional, IsString, IsUUID } from 'class-validator';
 
 export class CreateShopClientDto {
     @IsUUID()
@@ -8,4 +8,20 @@ export class CreateShopClientDto {
     @IsUUID()
     @IsNotEmpty()
     userId: string;
+
+    @IsString()
+    @IsOptional()
+    customName?: string;
+
+    @IsString()
+    @IsOptional()
+    customPhone?: string;
+
+    @IsString()
+    @IsOptional()
+    customEmail?: string;
+
+    @IsString()
+    @IsOptional()
+    notes?: string;
 }

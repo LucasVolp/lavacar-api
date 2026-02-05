@@ -16,8 +16,8 @@ export class VehicleService {
     return await this.CreateVehicleUseCase.execute(data);
   }
 
-  async findAll() {
-    return await this.FindAllVehiclesUseCase.execute();
+  async findAll(filters?: { userId?: string; page?: number; perPage?: number }) {
+    return await this.FindAllVehiclesUseCase.execute(filters);
   }
 
   async findOne(id: string) {

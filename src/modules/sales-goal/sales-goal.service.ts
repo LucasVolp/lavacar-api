@@ -23,16 +23,16 @@ export class SalesGoalService {
         return await this.createSalesGoalUseCase.execute(data);
     }
 
-    async findAll() {
-        return await this.findAllSalesGoalUseCase.execute();
+    async findAll(filters?: { page?: number; perPage?: number }) {
+        return await this.findAllSalesGoalUseCase.execute(filters);
     }
 
-    async findByShopId(shopId: string) {
-        return await this.findAllSalesGoalUseCase.executeByShopId(shopId);
+    async findByShopId(shopId: string, filters?: { page?: number; perPage?: number }) {
+        return await this.findAllSalesGoalUseCase.executeByShopId(shopId, filters);
     }
 
-    async findByOrganizationId(organizationId: string) {
-        return await this.findAllSalesGoalUseCase.executeByOrganizationId(organizationId);
+    async findByOrganizationId(organizationId: string, filters?: { page?: number; perPage?: number }) {
+        return await this.findAllSalesGoalUseCase.executeByOrganizationId(organizationId, filters);
     }
 
     async findOne(id: string) {

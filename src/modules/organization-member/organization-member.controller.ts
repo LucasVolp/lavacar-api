@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, Query } from '@nestjs/common';
 import { OrganizationMemberService } from './organization-member.service';
 import { CreateOrganizationMemberDto, UpdateOrganizationMemberDto } from './dto';
 
@@ -12,13 +12,26 @@ export class OrganizationMemberController {
     }
 
     @Get()
-    findAll() {
-        return this.organizationMemberService.findAll();
+    findAll(
+        @Query('page') page?: string,
+        @Query('perPage') perPage?: string,
+    ) {
+        return this.organizationMemberService.findAll({
+            page: page ? parseInt(page, 10) : undefined,
+            perPage: perPage ? parseInt(perPage, 10) : undefined,
+        });
     }
 
     @Get('organization/:organizationId')
-    findByOrganizationId(@Param('organizationId') organizationId: string) {
-        return this.organizationMemberService.findByOrganizationId(organizationId);
+    findByOrganizationId(
+        @Param('organizationId') organizationId: string,
+        @Query('page') page?: string,
+        @Query('perPage') perPage?: string,
+    ) {
+        return this.organizationMemberService.findByOrganizationId(organizationId, {
+            page: page ? parseInt(page, 10) : undefined,
+            perPage: perPage ? parseInt(perPage, 10) : undefined,
+        });
     }
 
     @Get(':id')

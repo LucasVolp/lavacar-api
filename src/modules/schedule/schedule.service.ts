@@ -17,8 +17,8 @@ export class ScheduleService {
     return await this.createScheduleUseCase.execute(data);
   }
 
-  async findAll() {
-    return await this.findAllSchedulesUseCase.execute();
+  async findAll(filters?: { shopId?: string; page?: number; perPage?: number }) {
+    return await this.findAllSchedulesUseCase.execute(filters);
   }
 
   async findOne(id: string) {

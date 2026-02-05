@@ -1,6 +1,12 @@
 import { Injectable, Logger, ServiceUnavailableException } from "@nestjs/common";
 import { FindAllScheduleRepository } from "../repository";
 
+interface FindAllFilters {
+    shopId?: string;
+    page?: number;
+    perPage?: number;
+}
+
 @Injectable()
 export class FindAllScheduleUseCase {
     constructor (
@@ -8,15 +14,11 @@ export class FindAllScheduleUseCase {
         private readonly logger: Logger = new Logger()
     ) {}
 
-    async execute() {
+    async execute(filters: FindAllFilters = {}) {
         try {
-            const schedules = await this.ScheduleRepository.findAll();
-            if (!schedules) {
-                this.logger.warn('No schedules found', FindAllScheduleUseCase.name);
-                return [];
-            }
-            this.logger.log('Schedules found!', FindAllScheduleUseCase.name);
-            return schedules;
+            const result = await this.ScheduleRepository.findAll(filters);
+            this.logger.log(`Found ${result.meta.total} schedules`, FindAllScheduleUseCase.name);
+            return result;
         } catch (err) {
             const error = new ServiceUnavailableException({
                 message: 'Error finding schedules',

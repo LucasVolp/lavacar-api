@@ -1,6 +1,7 @@
 import { Injectable } from "@nestjs/common";
 import { PrismaService } from "src/shared/databases/prisma.database";
 import { AppointmentStatus } from "prisma/generated";
+import { PaginatedResult } from "src/shared/dto/pagination.dto";
 
 interface FindAllFilters {
     shopId?: string;
@@ -8,13 +9,19 @@ interface FindAllFilters {
     status?: AppointmentStatus;
     startDate?: Date;
     endDate?: Date;
+    page?: number;
+    perPage?: number;
 }
 
 @Injectable()
 export class FindAllAppointmentRepository {
     constructor(private readonly prisma: PrismaService) {}
 
-    async findAll(filters: FindAllFilters = {}) {
+    async findAll(filters: FindAllFilters = {}): Promise<PaginatedResult<any>> {
+        const page = filters.page || 1;
+        const perPage = filters.perPage || 10;
+        const skip = (page - 1) * perPage;
+
         const where: any = {};
 
         if (filters.shopId) where.shopId = filters.shopId;
@@ -27,29 +34,44 @@ export class FindAllAppointmentRepository {
             if (filters.endDate) where.scheduledAt.lte = filters.endDate;
         }
 
-        return await this.prisma.appointment.findMany({
-            where,
-            include: {
-                services: true,
-                vehicle: true,
-                user: {
-                    select: {
-                        id: true,
-                        firstName: true,
-                        lastName: true,
-                        email: true,
-                        phone: true,
-                    }
+        const [data, total] = await Promise.all([
+            this.prisma.appointment.findMany({
+                where,
+                skip,
+                take: perPage,
+                include: {
+                    services: true,
+                    vehicle: true,
+                    user: {
+                        select: {
+                            id: true,
+                            firstName: true,
+                            lastName: true,
+                            email: true,
+                            phone: true,
+                        }
+                    },
+                    shop: {
+                        select: {
+                            id: true,
+                            name: true,
+                            slug: true,
+                        }
+                    },
                 },
-                shop: {
-                    select: {
-                        id: true,
-                        name: true,
-                        slug: true,
-                    }
-                },
+                orderBy: { scheduledAt: 'asc' },
+            }),
+            this.prisma.appointment.count({ where }),
+        ]);
+
+        return {
+            data,
+            meta: {
+                total,
+                page,
+                perPage,
+                totalPages: Math.ceil(total / perPage),
             },
-            orderBy: { scheduledAt: 'asc' },
-        });
+        };
     }
 }

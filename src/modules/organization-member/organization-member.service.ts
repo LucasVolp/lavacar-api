@@ -22,12 +22,12 @@ export class OrganizationMemberService {
         return this.createOrganizationMemberUseCase.execute(data);
     }
 
-    findAll() {
-        return this.findAllOrganizationMemberUseCase.execute();
+    findAll(filters?: { page?: number; perPage?: number }) {
+        return this.findAllOrganizationMemberUseCase.execute(filters);
     }
 
-    findByOrganizationId(organizationId: string) {
-        return this.findAllOrganizationMemberUseCase.executeByOrganizationId(organizationId);
+    findByOrganizationId(organizationId: string, filters?: { page?: number; perPage?: number }) {
+        return this.findAllOrganizationMemberUseCase.executeByOrganizationId(organizationId, filters);
     }
 
     findById(id: string) {

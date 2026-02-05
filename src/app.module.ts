@@ -21,6 +21,9 @@ import { OrganizationModule } from './modules/organization/organization.module';
 import { OrganizationMemberModule } from './modules/organization-member/organization-member.module';
 import { ShopManagerModule } from './modules/shop-manager/shop-manager.module';
 import { FipeApiModule } from './modules/fipe-api/fipe-api.module';
+import { SalesGoalModule } from './modules/sales-goal/sales-goal.module';
+import { ChecklistModule } from './modules/checklist/checklist.module';
+import { ShopClientModule } from './modules/shop-client/shop-client.module';
 
 @Module({
   imports: [
@@ -38,6 +41,9 @@ import { FipeApiModule } from './modules/fipe-api/fipe-api.module';
     OrganizationMemberModule,
     ShopManagerModule,
     FipeApiModule,
+    SalesGoalModule,
+    ChecklistModule,
+    ShopClientModule
   ],
   controllers: [AppController],
   providers: [AppService, 

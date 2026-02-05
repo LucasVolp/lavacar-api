@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { CreateServiceDto } from './dto/create-service.dto';
 import { UpdateServiceDto } from './dto/update-service.dto';
+import { FilterServiceDto } from './dto/filter-service.dto';
 import { CreateServiceUseCase, DeleteServiceUseCase, FindAllServicesUseCase, FindServiceByIdUseCase, UpdateServiceUseCase } from './use-cases';
 
 @Injectable()
@@ -16,8 +17,8 @@ export class ServiceService {
     return await this.CreateServiceUseCase.execute(data);
   }
 
-  async findAll() {
-    return await this.FindAllServicesUseCase.execute();
+  async findAll(filters?: FilterServiceDto) {
+    return await this.FindAllServicesUseCase.execute(filters);
   }
 
   async findOne(id: string) {

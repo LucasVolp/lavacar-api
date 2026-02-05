@@ -24,8 +24,8 @@ export class OrganizationService {
         return this.createOrganizationUseCase.execute(data);
     }
 
-    findAll() {
-        return this.findAllOrganizationUseCase.execute();
+    findAll(filters?: { page?: number; perPage?: number }) {
+        return this.findAllOrganizationUseCase.execute(filters);
     }
 
     findById(id: string) {

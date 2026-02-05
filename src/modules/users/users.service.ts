@@ -19,8 +19,8 @@ export class UsersService {
     return this.CreateUserUseCase.execute(data);
   }
 
-  async findAll() {
-    return this.FindAllUserUseCase.execute();
+  async findAll(filters?: { page?: number; perPage?: number }) {
+    return this.FindAllUserUseCase.execute(filters);
   }
 
   async findOne(id: string) {

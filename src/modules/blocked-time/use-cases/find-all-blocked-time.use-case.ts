@@ -1,6 +1,12 @@
 import { Injectable, Logger, ServiceUnavailableException } from '@nestjs/common';
 import { FindAllBlockedTimeRepository } from '../repository';
 
+interface FindAllFilters {
+  shopId?: string;
+  page?: number;
+  perPage?: number;
+}
+
 @Injectable()
 export class FindAllBlockedTimeUseCase {
   constructor(
@@ -8,16 +14,11 @@ export class FindAllBlockedTimeUseCase {
     private readonly logger: Logger = new Logger(),
   ) {}
 
-  async execute() {
+  async execute(filters: FindAllFilters = {}) {
     try {
-      const blockedTimes = await this.blockedTimeRepository.findAll();
-      if (blockedTimes.length === 0) {
-        this.logger.log('No blocked times found', FindAllBlockedTimeUseCase.name);
-        return [];
-      }
-      
-      this.logger.log('Blocked times found!', FindAllBlockedTimeUseCase.name);
-      return blockedTimes;
+      const result = await this.blockedTimeRepository.findAll(filters);
+      this.logger.log(`Found ${result.meta.total} blocked times`, FindAllBlockedTimeUseCase.name);
+      return result;
     } catch (err) {
       const error = new ServiceUnavailableException({
         message: 'Error finding blocked times',

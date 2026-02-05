@@ -1,6 +1,13 @@
 import { Injectable, Logger, ServiceUnavailableException } from "@nestjs/common";
 import { FindAllEvaluationRepository } from "../repository";
 
+interface FindAllFilters {
+    shopId?: string;
+    rating?: number;
+    page?: number;
+    perPage?: number;
+}
+
 @Injectable()
 export class FindAllEvaluationUseCase {
     constructor(
@@ -8,16 +15,11 @@ export class FindAllEvaluationUseCase {
         private readonly logger: Logger = new Logger()
     ) {}
 
-    async execute(shopId?: string) {
+    async execute(filters: FindAllFilters = {}) {
         try {
-            const evaluations = await this.evaluationRepository.findAll(shopId);
-            if (evaluations.length === 0) {
-                this.logger.log('No evaluations found', FindAllEvaluationUseCase.name);
-                return [];
-            }
-            
-            this.logger.log(`Found ${evaluations.length} evaluations`, FindAllEvaluationUseCase.name);
-            return evaluations;
+            const result = await this.evaluationRepository.findAll(filters);
+            this.logger.log(`Found ${result.meta.total} evaluations`, FindAllEvaluationUseCase.name);
+            return result;
         } catch (err) {
             const error = new ServiceUnavailableException('Something bad happened!', {
                 cause: err,

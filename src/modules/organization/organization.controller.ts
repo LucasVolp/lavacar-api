@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, Query } from '@nestjs/common';
 import { OrganizationService } from './organization.service';
 import { CreateOrganizationDto, UpdateOrganizationDto } from './dto';
 
@@ -12,8 +12,14 @@ export class OrganizationController {
     }
 
     @Get()
-    findAll() {
-        return this.organizationService.findAll();
+    findAll(
+        @Query('page') page?: string,
+        @Query('perPage') perPage?: string,
+    ) {
+        return this.organizationService.findAll({
+            page: page ? parseInt(page, 10) : undefined,
+            perPage: perPage ? parseInt(perPage, 10) : undefined,
+        });
     }
 
     @Get(':id')

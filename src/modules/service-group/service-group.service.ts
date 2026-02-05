@@ -23,8 +23,8 @@ export class ServiceGroupService {
         return await this.createServiceGroupUseCase.execute(data);
     }
 
-    async findAll(shopId?: string) {
-        return await this.findAllServiceGroupUseCase.execute(shopId);
+    async findAll(filters?: { shopId?: string; page?: number; perPage?: number }) {
+        return await this.findAllServiceGroupUseCase.execute(filters);
     }
 
     async findOne(id: string) {

@@ -24,8 +24,8 @@ export class UpdateVehicleUseCase {
                 data.plate = data.plate.toUpperCase().replace(/[^A-Z0-9]/g, '');
             }
 
-            const allVehicles = await this.FindAllVehiclesRepository.findAll();
-            const plateExists = allVehicles.some(vehicle => vehicle.plate === data.plate && vehicle.id !== id);
+            const allVehiclesResult = await this.FindAllVehiclesRepository.findAll({ perPage: 10000 });
+            const plateExists = allVehiclesResult.data.some(vehicle => vehicle.plate === data.plate && vehicle.id !== id);
             if (plateExists) {
                 this.logger.warn(`Vehicle with plate ${data.plate} already exists`, UpdateVehicleUseCase.name);
                 throw new ConflictException('Vehicle with this plate already exists for this user');

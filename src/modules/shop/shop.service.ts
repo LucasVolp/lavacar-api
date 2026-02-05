@@ -17,8 +17,8 @@ export class ShopService {
     return await this.CreateShopUseCase.execute(data);
   }
 
-  async findAll() {
-    return await this.FindAllShopUseCase.execute();
+  async findAll(filters?: { organizationId?: string; page?: number; perPage?: number }) {
+    return await this.FindAllShopUseCase.execute(filters);
   }
 
   async findOne(id: string) {

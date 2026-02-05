@@ -395,6 +395,12 @@ model ShopClient {
   id        String   @id @default(uuid())
   shopId    String
   userId    String
+
+  customName  String?
+  customPhone String?
+  customEmail String?
+  notes       String?
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 

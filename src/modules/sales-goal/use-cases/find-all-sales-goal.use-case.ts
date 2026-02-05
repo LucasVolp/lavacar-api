@@ -1,6 +1,13 @@
 import { Injectable, Logger, ServiceUnavailableException } from '@nestjs/common';
 import { FindAllSalesGoalRepository } from '../repository';
 
+interface FindAllFilters {
+    shopId?: string;
+    organizationId?: string;
+    page?: number;
+    perPage?: number;
+}
+
 @Injectable()
 export class FindAllSalesGoalUseCase {
     constructor(
@@ -8,9 +15,9 @@ export class FindAllSalesGoalUseCase {
         private readonly logger: Logger = new Logger(),
     ) {}
 
-    async execute() {
+    async execute(filters: FindAllFilters = {}) {
         try {
-            return await this.findAllSalesGoalRepository.findAll();
+            return await this.findAllSalesGoalRepository.findAll(filters);
         } catch (err) {
             const error = new ServiceUnavailableException('Something bad happened!', {
                 cause: err,
@@ -21,9 +28,9 @@ export class FindAllSalesGoalUseCase {
         }
     }
 
-    async executeByShopId(shopId: string) {
+    async executeByShopId(shopId: string, filters: { page?: number; perPage?: number } = {}) {
         try {
-            return await this.findAllSalesGoalRepository.findByShopId(shopId);
+            return await this.findAllSalesGoalRepository.findByShopId(shopId, filters);
         } catch (err) {
             const error = new ServiceUnavailableException('Something bad happened!', {
                 cause: err,
@@ -34,9 +41,9 @@ export class FindAllSalesGoalUseCase {
         }
     }
 
-    async executeByOrganizationId(organizationId: string) {
+    async executeByOrganizationId(organizationId: string, filters: { page?: number; perPage?: number } = {}) {
         try {
-            return await this.findAllSalesGoalRepository.findByOrganizationId(organizationId);
+            return await this.findAllSalesGoalRepository.findByOrganizationId(organizationId, filters);
         } catch (err) {
             const error = new ServiceUnavailableException('Something bad happened!', {
                 cause: err,

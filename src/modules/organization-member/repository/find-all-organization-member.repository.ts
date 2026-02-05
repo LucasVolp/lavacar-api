@@ -1,50 +1,62 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from 'src/shared/databases/prisma.database';
+import { PaginatedResult } from 'src/shared/dto/pagination.dto';
+
+interface FindAllFilters {
+    organizationId?: string;
+    page?: number;
+    perPage?: number;
+}
 
 @Injectable()
 export class FindAllOrganizationMemberRepository {
     constructor(private readonly prisma: PrismaService) {}
 
-    async findAll() {
-        return await this.prisma.organizationMember.findMany({
-            include: {
-                user: {
-                    select: {
-                        id: true,
-                        firstName: true,
-                        lastName: true,
-                        email: true,
+    async findAll(filters: FindAllFilters = {}): Promise<PaginatedResult<any>> {
+        const page = filters.page || 1;
+        const perPage = filters.perPage || 10;
+        const skip = (page - 1) * perPage;
+
+        const where: any = {};
+        if (filters.organizationId) where.organizationId = filters.organizationId;
+
+        const [data, total] = await Promise.all([
+            this.prisma.organizationMember.findMany({
+                where,
+                skip,
+                take: perPage,
+                include: {
+                    user: {
+                        select: {
+                            id: true,
+                            firstName: true,
+                            lastName: true,
+                            email: true,
+                        },
+                    },
+                    organization: true,
+                    managedShops: {
+                        include: {
+                            shop: true,
+                        },
                     },
                 },
-                organization: true,
-                managedShops: {
-                    include: {
-                        shop: true,
-                    },
-                },
+            }),
+            this.prisma.organizationMember.count({ where }),
+        ]);
+
+        return {
+            data,
+            meta: {
+                total,
+                page,
+                perPage,
+                totalPages: Math.ceil(total / perPage),
             },
-        });
+        };
     }
 
-    async findByOrganizationId(organizationId: string) {
-        return await this.prisma.organizationMember.findMany({
-            where: { organizationId },
-            include: {
-                user: {
-                    select: {
-                        id: true,
-                        firstName: true,
-                        lastName: true,
-                        email: true,
-                    },
-                },
-                organization: true,
-                managedShops: {
-                    include: {
-                        shop: true,
-                    },
-                },
-            },
-        });
+    async findByOrganizationId(organizationId: string, filters: { page?: number; perPage?: number } = {}): Promise<PaginatedResult<any>> {
+        return this.findAll({ organizationId, ...filters });
     }
 }

@@ -13,8 +13,18 @@ export class EvaluationController {
     }
 
     @Get()
-    findAll(@Query('shopId') shopId?: string) {
-        return this.evaluationService.findAll(shopId);
+    findAll(
+        @Query('shopId') shopId?: string,
+        @Query('rating') rating?: string,
+        @Query('page') page?: string,
+        @Query('perPage') perPage?: string,
+    ) {
+        return this.evaluationService.findAll({
+            shopId,
+            rating: rating ? parseInt(rating, 10) : undefined,
+            page: page ? parseInt(page, 10) : undefined,
+            perPage: perPage ? parseInt(perPage, 10) : undefined,
+        });
     }
 
     @Get('stats/:shopId')

@@ -22,16 +22,16 @@ export class ShopManagerService {
         return this.createShopManagerUseCase.execute(data);
     }
 
-    findAll() {
-        return this.findAllShopManagerUseCase.execute();
+    findAll(filters?: { page?: number; perPage?: number }) {
+        return this.findAllShopManagerUseCase.execute(filters);
     }
 
-    findByShopId(shopId: string) {
-        return this.findAllShopManagerUseCase.executeByShopId(shopId);
+    findByShopId(shopId: string, filters?: { page?: number; perPage?: number }) {
+        return this.findAllShopManagerUseCase.executeByShopId(shopId, filters);
     }
 
-    findByMemberId(memberId: string) {
-        return this.findAllShopManagerUseCase.executeByMemberId(memberId);
+    findByMemberId(memberId: string, filters?: { page?: number; perPage?: number }) {
+        return this.findAllShopManagerUseCase.executeByMemberId(memberId, filters);
     }
 
     findById(id: string) {
