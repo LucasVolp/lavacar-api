@@ -37,7 +37,14 @@ export class UpdateAppointmentUseCase {
                 throw new BadRequestException('Cancellation reason is required');
             }
 
-            const appointment = await this.appointmentRepository.update(id, data);
+            const updateData: any = { ...data };
+
+            // Side Effect: Atualizar endTime ao completar
+            if (data.status === AppointmentStatus.COMPLETED) {
+                updateData.endTime = new Date();
+            }
+
+            const appointment = await this.appointmentRepository.update(id, updateData);
             this.logger.log(`Appointment updated: ${appointment.id}`, UpdateAppointmentUseCase.name);
             return appointment;
         } catch (err) {
@@ -55,26 +62,34 @@ export class UpdateAppointmentUseCase {
     }
 
     private validateStatusTransition(currentStatus: AppointmentStatus, newStatus: AppointmentStatus) {
+        // Atalhos permitidos para agilidade operacional (Walk-in, etc)
         const allowedTransitions: Record<AppointmentStatus, AppointmentStatus[]> = {
             [AppointmentStatus.PENDING]: [
                 AppointmentStatus.CONFIRMED,
                 AppointmentStatus.CANCELED,
+                AppointmentStatus.WAITING,
+                AppointmentStatus.IN_PROGRESS,
+                AppointmentStatus.COMPLETED,
             ],
             [AppointmentStatus.CONFIRMED]: [
                 AppointmentStatus.WAITING,
                 AppointmentStatus.CANCELED,
                 AppointmentStatus.NO_SHOW,
+                AppointmentStatus.IN_PROGRESS,
+                AppointmentStatus.COMPLETED,
             ],
             [AppointmentStatus.WAITING]: [
                 AppointmentStatus.IN_PROGRESS,
                 AppointmentStatus.CANCELED,
+                AppointmentStatus.COMPLETED,
             ],
             [AppointmentStatus.IN_PROGRESS]: [
                 AppointmentStatus.COMPLETED,
+                AppointmentStatus.CANCELED,
             ],
-            [AppointmentStatus.COMPLETED]: [],
-            [AppointmentStatus.CANCELED]: [],
-            [AppointmentStatus.NO_SHOW]: [],
+            [AppointmentStatus.COMPLETED]: [], // Terminal
+            [AppointmentStatus.CANCELED]: [], // Terminal
+            [AppointmentStatus.NO_SHOW]: [], // Terminal
         };
 
         if (!allowedTransitions[currentStatus].includes(newStatus)) {

@@ -3,14 +3,16 @@ import { AppointmentService } from './appointment.service';
 import { CreateAppointmentDto } from './dto/create-appointment.dto';
 import { UpdateAppointmentDto } from './dto/update-appointment.dto';
 import { AppointmentStatus } from './types/AppointmentStatus';
+import { CurrentUser } from 'src/shared/decorators/current-user.decorator';
+import { JwtPayload } from 'src/shared/types/jwt-payload.interface';
 
 @Controller('appointments')
 export class AppointmentController {
     constructor(private readonly appointmentService: AppointmentService) {}
 
     @Post()
-    create(@Body() createAppointmentDto: CreateAppointmentDto) {
-        return this.appointmentService.create(createAppointmentDto);
+    create(@Body() createAppointmentDto: CreateAppointmentDto, @CurrentUser() user: JwtPayload) {
+        return this.appointmentService.create(createAppointmentDto, user);
     }
 
     @Get()
@@ -47,9 +49,9 @@ export class AppointmentController {
     @Delete(':id')
     cancel(
         @Param('id') id: string,
+        @CurrentUser() user: JwtPayload,
         @Body('reason') reason?: string,
-        @Body('userId') userId?: string,
     ) {
-        return this.appointmentService.cancel(id, reason, userId);
+        return this.appointmentService.cancel(id, user, reason);
     }
 }

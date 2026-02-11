@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { CreateVehicleDto } from './dto/create-vehicle.dto';
 import { UpdateVehicleDto } from './dto/update-vehicle.dto';
-import { CreateVehicleUseCase, DeleteVehicleUseCase, FindAllVehiclesUseCase, FindVehicleByIdUseCase, UpdateVehicleUseCase } from './use-cases';
+import { CreateVehicleUseCase, DeleteVehicleUseCase, FindAllVehiclesUseCase, FindVehicleByIdUseCase, FindVehicleByPlateUseCase, UpdateVehicleUseCase } from './use-cases';
 
 @Injectable()
 export class VehicleService {
@@ -9,6 +9,7 @@ export class VehicleService {
     private readonly CreateVehicleUseCase: CreateVehicleUseCase,
     private readonly FindAllVehiclesUseCase: FindAllVehiclesUseCase,
     private readonly FindVehicleByIdUseCase: FindVehicleByIdUseCase,
+    private readonly FindVehicleByPlateUseCase: FindVehicleByPlateUseCase,
     private readonly UpdateVehicleUseCase: UpdateVehicleUseCase,
     private readonly DeleteVehicleUseCase: DeleteVehicleUseCase,
   ){}
@@ -22,6 +23,10 @@ export class VehicleService {
 
   async findOne(id: string) {
     return await this.FindVehicleByIdUseCase.execute(id);
+  }
+
+  async findByPlate(plate: string) {
+    return await this.FindVehicleByPlateUseCase.execute(plate);
   }
 
   async update(id: string, data: UpdateVehicleDto) {

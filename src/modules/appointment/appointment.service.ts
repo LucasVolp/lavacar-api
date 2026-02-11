@@ -9,6 +9,8 @@ import {
     CancelAppointmentUseCase,
 } from './use-cases';
 import { FindAllFilters } from './dto/filters-appointment.dto';
+import { JwtPayload } from 'src/shared/types/jwt-payload.interface';
+import { OwnershipService } from 'src/shared/services/ownership.service';
 
 @Injectable()
 export class AppointmentService {
@@ -18,10 +20,12 @@ export class AppointmentService {
         private readonly findAppointmentByIdUseCase: FindAppointmentByIdUseCase,
         private readonly updateAppointmentUseCase: UpdateAppointmentUseCase,
         private readonly cancelAppointmentUseCase: CancelAppointmentUseCase,
+        private readonly ownershipService: OwnershipService,
     ) {}
 
-    async create(data: CreateAppointmentDto) {
-        return await this.createAppointmentUseCase.execute(data);
+    async create(data: CreateAppointmentDto, user: JwtPayload) {
+        await this.ownershipService.assertShopAccess(user.id, user.role, data.shopId);
+        return await this.createAppointmentUseCase.execute(data, { id: user.id, role: user.role as any });
     }
 
     async findAll(filters: FindAllFilters = {}) {
@@ -36,7 +40,7 @@ export class AppointmentService {
         return await this.updateAppointmentUseCase.execute(id, data);
     }
 
-    async cancel(id: string, reason?: string, userId?: string) {
-        return await this.cancelAppointmentUseCase.execute(id, reason, userId);
+    async cancel(id: string, user: JwtPayload, reason?: string) {
+        return await this.cancelAppointmentUseCase.execute(id, reason, user.id);
     }
 }

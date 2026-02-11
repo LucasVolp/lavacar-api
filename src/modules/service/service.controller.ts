@@ -2,14 +2,16 @@ import { Controller, Get, Post, Body, Patch, Param, Delete, Query } from '@nestj
 import { ServiceService } from './service.service';
 import { CreateServiceDto } from './dto/create-service.dto';
 import { UpdateServiceDto } from './dto/update-service.dto';
+import { CurrentUser } from 'src/shared/decorators/current-user.decorator';
+import { JwtPayload } from 'src/shared/types/jwt-payload.interface';
 
 @Controller('service')
 export class ServiceController {
   constructor(private readonly serviceService: ServiceService) {}
 
   @Post()
-  create(@Body() createServiceDto: CreateServiceDto) {
-    return this.serviceService.create(createServiceDto);
+  create(@Body() createServiceDto: CreateServiceDto, @CurrentUser() user: JwtPayload) {
+    return this.serviceService.create(createServiceDto, user);
   }
 
   @Get()

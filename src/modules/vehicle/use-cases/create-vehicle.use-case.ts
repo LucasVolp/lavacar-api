@@ -17,7 +17,8 @@ export class CreateVehicleUseCase {
             this.logger.log(`Creating vehicle with plate: ${data.plate}`, CreateVehicleUseCase.name);
             const normalizedData = {
                 ...data,
-                plate: data.plate || ''.toUpperCase().replace(/[^A-Z0-9]/g, ''),
+                // Fix: Apply normalization to the input plate, not just the fallback
+                plate: (data.plate || '').toUpperCase().replace(/[^A-Z0-9]/g, ''),
             };
 
             const userExists = await this.findUserRepository.findById(normalizedData.userId);

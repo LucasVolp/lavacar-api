@@ -25,6 +25,11 @@ export class VehicleController {
     });
   }
 
+  @Get('plate/:plate')
+  findByPlate(@Param('plate') plate: string) {
+    return this.vehicleService.findByPlate(plate);
+  }
+
   @Get(':id')
   findOne(@Param('id') id: string) {
     return this.vehicleService.findOne(id);

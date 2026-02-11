@@ -3,6 +3,8 @@ import { CreateServiceDto } from './dto/create-service.dto';
 import { UpdateServiceDto } from './dto/update-service.dto';
 import { FilterServiceDto } from './dto/filter-service.dto';
 import { CreateServiceUseCase, DeleteServiceUseCase, FindAllServicesUseCase, FindServiceByIdUseCase, UpdateServiceUseCase } from './use-cases';
+import { JwtPayload } from 'src/shared/types/jwt-payload.interface';
+import { OwnershipService } from 'src/shared/services/ownership.service';
 
 @Injectable()
 export class ServiceService {
@@ -12,8 +14,10 @@ export class ServiceService {
     private readonly FindServiceByIdUseCase: FindServiceByIdUseCase,
     private readonly UpdateServiceUseCase: UpdateServiceUseCase,
     private readonly DeleteServiceUseCase: DeleteServiceUseCase,
+    private readonly ownershipService: OwnershipService,
   ){}
-  async create(data: CreateServiceDto) {
+  async create(data: CreateServiceDto, user: JwtPayload) {
+    await this.ownershipService.assertShopAccess(user.id, user.role, data.shopId);
     return await this.CreateServiceUseCase.execute(data);
   }
 

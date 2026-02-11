@@ -3,13 +3,13 @@ import {
     Injectable, 
     Logger, 
     NotFoundException, 
-    ConflictException,
+    ConflictException, 
     ServiceUnavailableException 
 } from "@nestjs/common";
 import { CreateAppointmentRepository, FindAppointmentsByDateRepository } from "../repository";
 import { CreateAppointmentDto } from "../dto/create-appointment.dto";
 import { timeToMinutes, extractTimeFromDateTime, extractWeekdayFromDateTime, isTimeOverlapping, addMinutesToTime, getStartOfDayInTimezone } from "src/shared/utils";
-import { Weekday, BlockedTimeType } from "prisma/generated";
+import { Weekday, BlockedTimeType, Role } from "prisma/generated";
 import { FindUserRepository } from "src/modules/users/repository";
 import { FindShopByIdRepository } from "src/modules/shop/repository";
 import { ShopStatus } from "src/modules/shop/types/ShopStatus";
@@ -18,6 +18,7 @@ import { FindScheduleByWeekdayRepository } from "src/modules/schedule/repository
 import { FindVehicleByIdRepository } from "src/modules/vehicle/repository";
 import { FindBlockedTimeByShopIdRepository } from "src/modules/blocked-time/repository";
 import { FindShopClientByShopAndUserRepository, CreateShopClientRepository } from "src/modules/shop-client/repository";
+
 @Injectable()
 export class CreateAppointmentUseCase {
     constructor(
@@ -34,8 +35,10 @@ export class CreateAppointmentUseCase {
         private readonly logger: Logger = new Logger()
     ) {}
 
-    async execute(data: CreateAppointmentDto) {
+    async execute(data: CreateAppointmentDto, currentUser?: { id?: string; role?: Role }) {
         try {
+            const resolvedRole: Role | undefined = currentUser?.role;
+
             const userExists = await this.findUserByIdRepository.findById(data.userId);
             if (!userExists) {
                 this.logger.warn(`User not found with ID: ${data.userId}`, CreateAppointmentUseCase.name);
@@ -129,16 +132,23 @@ export class CreateAppointmentUseCase {
                 }
             }
 
+            const isShopOwner = currentUser?.id
+                ? shopExists.ownerId === currentUser.id || shopExists.organization?.ownerId === currentUser.id
+                : false;
+
+            const isInternalOperation = isShopOwner || resolvedRole === Role.ADMIN;
+
             // Verificar se não é no passado
             const now = new Date();
-            if (scheduledAt <= now) {
+            // Allow internal staff to schedule in the past (e.g. retroactive entry)
+            if (!isInternalOperation && scheduledAt <= now) {
                 throw new BadRequestException('Cannot schedule appointments in the past');
             }
 
-            // Verificar antecedência mínima
+            // Verificar antecedência mínima (Skip for internal operations)
             const diffMinutes = (scheduledAt.getTime() - now.getTime()) / 60000;
 
-            if (diffMinutes < shopExists.minAdvanceMinutes) {
+            if (!isInternalOperation && diffMinutes < shopExists.minAdvanceMinutes) {
                 this.logger.warn(`Appointment does not meet minimum advance time for shop ID: ${data.shopId}`, CreateAppointmentUseCase.name);
                 throw new BadRequestException(
                     `Appointment must be scheduled at least ${shopExists.minAdvanceMinutes} minutes in advance`
@@ -213,8 +223,8 @@ export class CreateAppointmentUseCase {
                     this.logger.log(`Client auto-registered to shop. UserId: ${data.userId}, ShopId: ${data.shopId}`, CreateAppointmentUseCase.name);
                 }
             } catch (clientError) {
-                // Não falhar a criação do agendamento se o cadastro do cliente falhar
-                this.logger.warn(`Failed to auto-register client to shop: ${clientError.message}`, CreateAppointmentUseCase.name);
+                // Silently ignore if client already exists or other non-critical error
+                this.logger.debug(`Auto-register client skipped/failed: ${clientError.message}`, CreateAppointmentUseCase.name);
             }
 
             this.logger.log(`Appointment created with ID: ${appointment.id}`, CreateAppointmentUseCase.name);

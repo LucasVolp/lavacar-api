@@ -2,14 +2,16 @@ import { Controller, Get, Post, Body, Patch, Param, Delete, Query } from '@nestj
 import { SalesGoalService } from './sales-goal.service';
 import { CreateSalesGoalDto } from './dto/create-sales-goal.dto';
 import { UpdateSalesGoalDto } from './dto/update-sales-goal.dto';
+import { CurrentUser } from 'src/shared/decorators/current-user.decorator';
+import { JwtPayload } from 'src/shared/types/jwt-payload.interface';
 
 @Controller('sales-goal')
 export class SalesGoalController {
     constructor(private readonly salesGoalService: SalesGoalService) {}
 
     @Post()
-    create(@Body() createSalesGoalDto: CreateSalesGoalDto) {
-        return this.salesGoalService.create(createSalesGoalDto);
+    create(@Body() createSalesGoalDto: CreateSalesGoalDto, @CurrentUser() user: JwtPayload) {
+        return this.salesGoalService.create(createSalesGoalDto, user);
     }
 
     @Get()

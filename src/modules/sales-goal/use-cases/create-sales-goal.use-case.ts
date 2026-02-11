@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable, Logger, NotFoundException, ServiceUnavailableException } from '@nestjs/common';
+import { BadRequestException, ConflictException, Injectable, Logger, NotFoundException, ServiceUnavailableException } from '@nestjs/common';
 import { CreateSalesGoalDto } from '../dto/create-sales-goal.dto';
 import { CreateSalesGoalRepository } from '../repository';
 import { FindShopByIdRepository } from 'src/modules/shop/repository';
@@ -45,22 +45,16 @@ export class CreateSalesGoalUseCase {
 
             // Date validations
             const now = new Date();
-            now.setHours(0, 0, 0, 0); // Start of today
-
+            // We use current timestamp for endDate check to ensure the period hasn't fully passed.
+            
             const startDate = new Date(data.startDate);
             const endDate = new Date(data.endDate);
 
-            // "Não pode criar uma no passado"
-            // Assuming this means startDate cannot be before today.
-            // Converting startDate string to date at 00:00:00 for comparison if it comes as ISO date string without time or with time.
-            // If it comes with time, we might want to respect it or just check date part.
-            // Let's assume start of day comparison.
-            const startDateOnly = new Date(startDate);
-            startDateOnly.setHours(0, 0, 0, 0);
-
-            if (startDateOnly < now) {
-                this.logger.warn('Start date cannot be in the past', CreateSalesGoalUseCase.name);
-                throw new BadRequestException('Start date cannot be in the past');
+            // Allow current periods (e.g. starting on the 1st of current month, even if today is the 7th)
+            // But prevent creating goals for periods that are completely in the past.
+            if (endDate < now) {
+                this.logger.warn('Cannot create goal for a past period', CreateSalesGoalUseCase.name);
+                throw new BadRequestException('Cannot create goal for a past period');
             }
 
             if (endDate <= startDate) {
@@ -72,7 +66,11 @@ export class CreateSalesGoalUseCase {
             this.logger.log(`Sales goal created`, CreateSalesGoalUseCase.name);
             return salesGoal;
         } catch (err) {
-            if (err instanceof BadRequestException || err instanceof NotFoundException) {
+            if (err.code === 'P2002') {
+                this.logger.warn('Conflito de Meta detectado:', { newGoal: data });
+                throw new ConflictException('Já existe uma meta para este período nesta loja.');
+            }
+            if (err instanceof BadRequestException || err instanceof NotFoundException || err instanceof ConflictException) {
                 throw err;
             }
             const error = new ServiceUnavailableException('Something bad happened!', {

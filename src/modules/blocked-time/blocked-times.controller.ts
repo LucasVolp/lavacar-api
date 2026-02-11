@@ -2,14 +2,16 @@ import { Controller, Get, Post, Body, Patch, Param, Delete, Query } from '@nestj
 import { BlockedTimesService } from './blocked-times.service';
 import { CreateBlockedTimeDto } from './dto/create-blocked-time.dto';
 import { UpdateBlockedTimeDto } from './dto/update-blocked-time.dto';
+import { CurrentUser } from 'src/shared/decorators/current-user.decorator';
+import { JwtPayload } from 'src/shared/types/jwt-payload.interface';
 
 @Controller('blockedtime')
 export class BlockedTimesController {
   constructor(private readonly blockedTimesService: BlockedTimesService) {}
 
   @Post()
-  create(@Body() data: CreateBlockedTimeDto) {
-    return this.blockedTimesService.create(data);
+  create(@Body() data: CreateBlockedTimeDto, @CurrentUser() user: JwtPayload) {
+    return this.blockedTimesService.create(data, user);
   }
 
   @Get()

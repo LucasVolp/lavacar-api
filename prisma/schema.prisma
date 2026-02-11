@@ -431,6 +431,7 @@ model Checklist {
 enum GoalPeriod {
   WEEKLY
   MONTHLY
+  CUSTOM
 }
 
 model SalesGoal {
@@ -453,4 +454,5 @@ model SalesGoal {
   @@index([organizationId])
   @@index([startDate])
   @@index([endDate])
+  @@unique([shopId, period, startDate])
 }

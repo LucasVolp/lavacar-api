@@ -2,14 +2,16 @@ import { Controller, Get, Post, Body, Param, Delete, Query, Patch } from '@nestj
 import { ShopClientService } from './shop-client.service';
 import { CreateShopClientDto } from './dto/create-shop-client.dto';
 import { UpdateShopClientDto } from './dto/update-shop-client.dto';
+import { CurrentUser } from 'src/shared/decorators/current-user.decorator';
+import { JwtPayload } from 'src/shared/types/jwt-payload.interface';
 
 @Controller('shop-clients')
 export class ShopClientController {
     constructor(private readonly shopClientService: ShopClientService) {}
 
     @Post()
-    create(@Body() createShopClientDto: CreateShopClientDto) {
-        return this.shopClientService.create(createShopClientDto);
+    create(@Body() createShopClientDto: CreateShopClientDto, @CurrentUser() user: JwtPayload) {
+        return this.shopClientService.create(createShopClientDto, user);
     }
 
     @Get()

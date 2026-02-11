@@ -1,4 +1,4 @@
-import { BadRequestException, ConflictException, Injectable, Logger, NotFoundException, ServiceUnavailableException } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException, ServiceUnavailableException } from '@nestjs/common';
 import { CreateShopClientDto } from '../dto/create-shop-client.dto';
 import { CreateShopClientRepository, FindShopClientByIdRepository } from '../repository';
 import { FindShopByIdRepository } from 'src/modules/shop/repository';
@@ -30,15 +30,15 @@ export class CreateShopClientUseCase {
 
             const existing = await this.findShopClientRepository.findByShopAndUser(data.shopId, data.userId);
             if (existing) {
-                this.logger.warn(`Shop client relation already exists for shop ${data.shopId} and user ${data.userId}`, CreateShopClientUseCase.name);
-                throw new ConflictException('This user is already a client of this shop');
+                this.logger.debug(`Shop client relation already exists for shop ${data.shopId} and user ${data.userId}, returning existing`, CreateShopClientUseCase.name);
+                return existing;
             }
 
             const shopClient = await this.createShopClientRepository.create(data);
             this.logger.log(`Shop client created for shop ${data.shopId} and user ${data.userId}`, CreateShopClientUseCase.name);
             return shopClient;
         } catch (err) {
-            if (err instanceof NotFoundException || err instanceof ConflictException) {
+            if (err instanceof NotFoundException) {
                 throw err;
             }
             const error = new ServiceUnavailableException('Something bad happened!', {

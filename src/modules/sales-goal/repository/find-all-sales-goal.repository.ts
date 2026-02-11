@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from 'src/shared/databases/prisma.database';
 import { PaginatedResult } from 'src/shared/dto/pagination.dto';
+import { AppointmentStatus } from 'prisma/generated';
 
 interface FindAllFilters {
     shopId?: string;
@@ -22,7 +23,7 @@ export class FindAllSalesGoalRepository {
         if (filters.shopId) where.shopId = filters.shopId;
         if (filters.organizationId) where.organizationId = filters.organizationId;
 
-        const [data, total] = await Promise.all([
+        const [goals, total] = await Promise.all([
             this.prisma.salesGoal.findMany({
                 where,
                 skip,
@@ -46,8 +47,31 @@ export class FindAllSalesGoalRepository {
             this.prisma.salesGoal.count({ where }),
         ]);
 
+        const goalsWithProgress = await Promise.all(
+            goals.map(async (goal) => {
+                const aggregation = await this.prisma.appointment.aggregate({
+                    _sum: {
+                        totalPrice: true,
+                    },
+                    where: {
+                        shopId: goal.shopId || undefined,
+                        status: AppointmentStatus.COMPLETED,
+                        scheduledAt: {
+                            gte: goal.startDate,
+                            lte: goal.endDate,
+                        },
+                    },
+                });
+
+                return {
+                    ...goal,
+                    currentSales: Number(aggregation._sum?.totalPrice) || 0,
+                };
+            }),
+        );
+
         return {
-            data,
+            data: goalsWithProgress,
             meta: {
                 total,
                 page,

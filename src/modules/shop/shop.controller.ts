@@ -1,20 +1,17 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, Query } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, Query } from '@nestjs/common';
 import { ShopService } from './shop.service';
 import { CreateShopDto } from './dto/create-shop.dto';
 import { UpdateShopDto } from './dto/update-shop.dto';
-import { RolesGuard } from 'src/guards/role.guard';
-import { Roles } from 'src/decorators/roles.decorator';
-import { Role } from 'src/modules/users/types/Role';
+import { CurrentUser } from 'src/shared/decorators/current-user.decorator';
+import { JwtPayload } from 'src/shared/types/jwt-payload.interface';
 
 @Controller('shop')
-// @UseGuards(RolesGuard)
-// @Roles(Role.USER)
 export class ShopController {
   constructor(private readonly shopService: ShopService) {}
 
   @Post()
-  create(@Body() data: CreateShopDto) {
-    return this.shopService.create(data);
+  create(@Body() data: CreateShopDto, @CurrentUser() user: JwtPayload) {
+    return this.shopService.create(data, user);
   }
 
   @Get()

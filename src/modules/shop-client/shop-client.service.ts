@@ -10,6 +10,8 @@ import {
     UpdateShopClientUseCase,
 } from './use-cases';
 import { FindAllShopClientRepository } from './repository';
+import { JwtPayload } from 'src/shared/types/jwt-payload.interface';
+import { OwnershipService } from 'src/shared/services/ownership.service';
 
 @Injectable()
 export class ShopClientService {
@@ -20,9 +22,11 @@ export class ShopClientService {
         private readonly deleteShopClientUseCase: DeleteShopClientUseCase,
         private readonly updateShopClientUseCase: UpdateShopClientUseCase,
         private readonly findAllShopClientRepository: FindAllShopClientRepository,
+        private readonly ownershipService: OwnershipService,
     ) {}
 
-    async create(data: CreateShopClientDto) {
+    async create(data: CreateShopClientDto, user: JwtPayload) {
+        await this.ownershipService.assertShopAccess(user.id, user.role, data.shopId);
         return await this.createShopClientUseCase.execute(data);
     }
 

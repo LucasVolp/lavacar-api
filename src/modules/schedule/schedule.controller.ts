@@ -2,14 +2,16 @@ import { Controller, Get, Post, Body, Patch, Param, Delete, Query } from '@nestj
 import { ScheduleService } from './schedule.service';
 import { CreateScheduleDto } from './dto/create-schedule.dto';
 import { UpdateScheduleDto } from './dto/update-schedule.dto';
+import { CurrentUser } from 'src/shared/decorators/current-user.decorator';
+import { JwtPayload } from 'src/shared/types/jwt-payload.interface';
 
 @Controller('schedule')
 export class ScheduleController {
   constructor(private readonly scheduleService: ScheduleService) {}
 
   @Post()
-  create(@Body() data: CreateScheduleDto) {
-    return this.scheduleService.create(data);
+  create(@Body() data: CreateScheduleDto, @CurrentUser() user: JwtPayload) {
+    return this.scheduleService.create(data, user);
   }
 
   @Get()

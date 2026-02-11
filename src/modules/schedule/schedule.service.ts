@@ -2,6 +2,8 @@ import { Injectable } from '@nestjs/common';
 import { CreateScheduleDto } from './dto/create-schedule.dto';
 import { UpdateScheduleDto } from './dto/update-schedule.dto';
 import { CreateScheduleUseCase, DeleteScheduleUseCase, FindAllScheduleUseCase, FindScheduleByIdUseCase, UpdateScheduleUseCase } from './use-cases';
+import { JwtPayload } from 'src/shared/types/jwt-payload.interface';
+import { OwnershipService } from 'src/shared/services/ownership.service';
 
 @Injectable()
 export class ScheduleService {
@@ -10,10 +12,12 @@ export class ScheduleService {
     private readonly findAllSchedulesUseCase: FindAllScheduleUseCase,
     private readonly findScheduleByIdUseCase: FindScheduleByIdUseCase,
     private readonly updateScheduleUseCase: UpdateScheduleUseCase,
-    private readonly deleteScheduleUseCase: DeleteScheduleUseCase
+    private readonly deleteScheduleUseCase: DeleteScheduleUseCase,
+    private readonly ownershipService: OwnershipService,
   ) {}
 
-  async create(data: CreateScheduleDto) {
+  async create(data: CreateScheduleDto, user: JwtPayload) {
+    await this.ownershipService.assertShopAccess(user.id, user.role, data.shopId);
     return await this.createScheduleUseCase.execute(data);
   }
 

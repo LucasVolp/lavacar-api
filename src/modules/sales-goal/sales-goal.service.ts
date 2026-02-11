@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { ForbiddenException, Injectable } from '@nestjs/common';
 import { CreateSalesGoalDto } from './dto/create-sales-goal.dto';
 import { UpdateSalesGoalDto } from './dto/update-sales-goal.dto';
 import {
@@ -8,6 +8,8 @@ import {
     FindSalesGoalByIdUseCase,
     UpdateSalesGoalUseCase,
 } from './use-cases';
+import { JwtPayload } from 'src/shared/types/jwt-payload.interface';
+import { OwnershipService } from 'src/shared/services/ownership.service';
 
 @Injectable()
 export class SalesGoalService {
@@ -17,9 +19,16 @@ export class SalesGoalService {
         private readonly findSalesGoalByIdUseCase: FindSalesGoalByIdUseCase,
         private readonly updateSalesGoalUseCase: UpdateSalesGoalUseCase,
         private readonly deleteSalesGoalUseCase: DeleteSalesGoalUseCase,
+        private readonly ownershipService: OwnershipService,
     ) {}
 
-    async create(data: CreateSalesGoalDto) {
+    async create(data: CreateSalesGoalDto, user: JwtPayload) {
+        if (data.shopId) {
+            await this.ownershipService.assertShopAccess(user.id, user.role, data.shopId);
+        }
+        if (!['OWNER', 'MANAGER', 'ADMIN'].includes(user.role)) {
+            throw new ForbiddenException('Only OWNER, MANAGER or ADMIN can create sales goals');
+        }
         return await this.createSalesGoalUseCase.execute(data);
     }
 
