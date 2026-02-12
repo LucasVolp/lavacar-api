@@ -6,7 +6,7 @@ import { PaginatedResult } from "src/shared/dto/pagination.dto";
 interface FindAllFilters {
     shopId?: string;
     userId?: string;
-    status?: AppointmentStatus;
+    status?: AppointmentStatus | AppointmentStatus[];
     startDate?: Date;
     endDate?: Date;
     page?: number;
@@ -26,7 +26,13 @@ export class FindAllAppointmentRepository {
 
         if (filters.shopId) where.shopId = filters.shopId;
         if (filters.userId) where.userId = filters.userId;
-        if (filters.status) where.status = filters.status;
+        if (filters.status) {
+            if (Array.isArray(filters.status)) {
+                where.status = { in: filters.status };
+            } else {
+                where.status = filters.status;
+            }
+        }
 
         if (filters.startDate || filters.endDate) {
             where.scheduledAt = {};
@@ -58,6 +64,13 @@ export class FindAllAppointmentRepository {
                             slug: true,
                         }
                     },
+                    evaluation: {
+                        select: {
+                            id: true,
+                            rating: true,
+                            comment: true,
+                        }
+                    }
                 },
                 orderBy: { scheduledAt: 'asc' },
             }),

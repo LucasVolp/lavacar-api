@@ -5,6 +5,7 @@ import { PaginatedResult } from "src/shared/dto/pagination.dto";
 
 interface FindAllFilters {
     shopId?: string;
+    userId?: string;
     rating?: number;
     page?: number;
     perPage?: number;
@@ -25,6 +26,10 @@ export class FindAllEvaluationRepository {
             where.appointment = {
                 shopId: filters.shopId,
             };
+        }
+
+        if (filters.userId) {
+            where.userId = filters.userId;
         }
 
         if (filters.rating !== undefined) {

@@ -15,12 +15,14 @@ export class EvaluationController {
     @Get()
     findAll(
         @Query('shopId') shopId?: string,
+        @Query('userId') userId?: string,
         @Query('rating') rating?: string,
         @Query('page') page?: string,
         @Query('perPage') perPage?: string,
     ) {
         return this.evaluationService.findAll({
             shopId,
+            userId,
             rating: rating ? parseInt(rating, 10) : undefined,
             page: page ? parseInt(page, 10) : undefined,
             perPage: perPage ? parseInt(perPage, 10) : undefined,

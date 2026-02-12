@@ -3,6 +3,7 @@ import { FindAllEvaluationRepository } from "../repository";
 
 interface FindAllFilters {
     shopId?: string;
+    userId?: string;
     rating?: number;
     page?: number;
     perPage?: number;

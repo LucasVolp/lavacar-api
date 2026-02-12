@@ -19,16 +19,28 @@ export class AppointmentController {
     findAll(
         @Query('shopId') shopId?: string,
         @Query('userId') userId?: string,
-        @Query('status') status?: AppointmentStatus,
+        @Query('status') status?: string | string[],
         @Query('startDate') startDate?: string,
         @Query('endDate') endDate?: string,
         @Query('page') page?: string,
         @Query('perPage') perPage?: string,
     ) {
+        let parsedStatus: AppointmentStatus | AppointmentStatus[] | undefined;
+
+        if (status) {
+            if (Array.isArray(status)) {
+                parsedStatus = status as AppointmentStatus[];
+            } else if (typeof status === 'string' && status.includes(',')) {
+                parsedStatus = status.split(',') as AppointmentStatus[];
+            } else {
+                parsedStatus = status as AppointmentStatus;
+            }
+        }
+
         return this.appointmentService.findAll({
             shopId,
             userId,
-            status,
+            status: parsedStatus,
             startDate,
             endDate,
             page: page ? parseInt(page, 10) : undefined,

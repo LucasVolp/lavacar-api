@@ -39,6 +39,8 @@ export class CreateAppointmentUseCase {
         try {
             const resolvedRole: Role | undefined = currentUser?.role;
 
+
+
             const userExists = await this.findUserByIdRepository.findById(data.userId);
             if (!userExists) {
                 this.logger.warn(`User not found with ID: ${data.userId}`, CreateAppointmentUseCase.name);
@@ -55,6 +57,12 @@ export class CreateAppointmentUseCase {
                 this.logger.warn(`Shop with ID: ${data.shopId} is not active`, CreateAppointmentUseCase.name);
                 throw new BadRequestException('Shop is not active');
             }
+
+            const isShopOwner = currentUser?.id
+                ? shopExists.ownerId === currentUser.id || shopExists.organization?.ownerId === currentUser.id
+                : false;
+
+            const isInternalOperation = isShopOwner || resolvedRole === Role.ADMIN;
 
             if (data.vehicleId) {
                 const vehicleExists = await this.findVehicleByIdRepository.findById(data.vehicleId);
@@ -119,24 +127,18 @@ export class CreateAppointmentUseCase {
             }
 
             // Verifica se o agendamento TERMINA dentro do horário
-            if (endMinutes > shopCloseMinutes) {
+            if (!isInternalOperation && endMinutes > shopCloseMinutes) {
                 this.logger.warn(`Appointment ends after shop closes for shop ID: ${data.shopId}`, CreateAppointmentUseCase.name);
                 throw new BadRequestException('Appointment ends after shop closes');
             }
 
             // Verifica conflito com horário de intervalo (sobreposição completa)
-            if (schedule.breakStartTime && schedule.breakEndTime) {
+            if (!isInternalOperation && schedule.breakStartTime && schedule.breakEndTime) {
                 if (isTimeOverlapping(startTime, endTime, schedule.breakStartTime, schedule.breakEndTime)) {
                     this.logger.warn(`Appointment overlaps with shop break time for shop ID: ${data.shopId}`, CreateAppointmentUseCase.name);
                     throw new BadRequestException('Appointment time overlaps with shop break time');
                 }
             }
-
-            const isShopOwner = currentUser?.id
-                ? shopExists.ownerId === currentUser.id || shopExists.organization?.ownerId === currentUser.id
-                : false;
-
-            const isInternalOperation = isShopOwner || resolvedRole === Role.ADMIN;
 
             // Verificar se não é no passado
             const now = new Date();
@@ -169,12 +171,12 @@ export class CreateAppointmentUseCase {
 
             const blockedTime = await this.findBlockedTimeByShopRepository.findByShopAndDate(data.shopId, dateOnly);
 
-            if (blockedTime) {
+            if (blockedTime && !isInternalOperation) {
                 if (blockedTime.type === BlockedTimeType.FULL_DAY) {
                     throw new BadRequestException(`Shop is closed on this date: ${blockedTime.reason || 'Blocked'}`);
                 }
 
-                if (blockedTime.type === BlockedTimeType.PARTIAL && blockedTime.startTime && blockedTime.endTime) {
+                if (!isInternalOperation && blockedTime.type === BlockedTimeType.PARTIAL && blockedTime.startTime && blockedTime.endTime) {
                     if (isTimeOverlapping(startTime, endTime, blockedTime.startTime, blockedTime.endTime)) {
                         throw new BadRequestException(`Time slot is blocked: ${blockedTime.reason || 'Unavailable'}`);
                     }
@@ -188,7 +190,7 @@ export class CreateAppointmentUseCase {
                 const existingStart = extractTimeFromDateTime(appointment.scheduledAt);
                 const existingEnd = extractTimeFromDateTime(appointment.endTime);
 
-                if (isTimeOverlapping(startTime, endTime, existingStart, existingEnd)) {
+                if (!isInternalOperation && isTimeOverlapping(startTime, endTime, existingStart, existingEnd)) {
                     this.logger.warn(`Appointment overlaps with existing appointment for shop ID: ${data.shopId}`, CreateAppointmentUseCase.name);
                     throw new ConflictException('Appointment time overlaps with an existing appointment');
                 }

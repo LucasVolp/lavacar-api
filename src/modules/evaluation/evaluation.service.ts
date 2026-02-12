@@ -25,7 +25,7 @@ export class EvaluationService {
         return await this.createEvaluationUseCase.execute(data);
     }
 
-    async findAll(filters?: { shopId?: string; rating?: number; page?: number; perPage?: number }) {
+    async findAll(filters?: { shopId?: string; userId?: string; rating?: number; page?: number; perPage?: number }) {
         return await this.findAllEvaluationUseCase.execute(filters);
     }
 
