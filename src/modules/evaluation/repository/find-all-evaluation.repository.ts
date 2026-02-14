@@ -79,23 +79,34 @@ export class FindAllEvaluationRepository {
     }
 
     async getShopStats(shopId: string) {
-        const result = await this.prisma.evaluation.aggregate({
-            where: {
-                appointment: {
-                    shopId,
-                }
+        const where = {
+            appointment: {
+                shopId,
             },
-            _avg: {
-                rating: true,
-            },
-            _count: {
-                rating: true,
-            },
-        });
+        };
+
+        const [aggregate, distribution] = await Promise.all([
+            this.prisma.evaluation.aggregate({
+                where,
+                _avg: { rating: true },
+                _count: { rating: true },
+            }),
+            this.prisma.evaluation.groupBy({
+                by: ['rating'],
+                where,
+                _count: { rating: true },
+            }),
+        ]);
+
+        const ratingDistribution: Record<number, number> = {};
+        for (const entry of distribution) {
+            ratingDistribution[entry.rating] = entry._count.rating;
+        }
 
         return {
-            averageRating: result._avg.rating || 0,
-            totalEvaluations: result._count.rating,
+            averageRating: aggregate._avg.rating || 0,
+            totalEvaluations: aggregate._count.rating,
+            ratingDistribution,
         };
     }
 }

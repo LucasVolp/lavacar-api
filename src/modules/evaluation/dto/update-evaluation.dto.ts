@@ -13,4 +13,8 @@ export class UpdateEvaluationDto extends PartialType(CreateEvaluationDto) {
     @IsString()
     @IsOptional()
     comment?: string;
+
+    @IsString({ each: true })
+    @IsOptional()
+    photos?: string[];
 }

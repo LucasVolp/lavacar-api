@@ -11,6 +11,7 @@ interface FindAllFilters {
     endDate?: Date;
     page?: number;
     perPage?: number;
+    sortOrder?: 'asc' | 'desc';
 }
 
 @Injectable()
@@ -72,7 +73,7 @@ export class FindAllAppointmentRepository {
                         }
                     }
                 },
-                orderBy: { scheduledAt: 'asc' },
+                orderBy: { scheduledAt: filters.sortOrder || 'asc' },
             }),
             this.prisma.appointment.count({ where }),
         ]);

@@ -18,4 +18,8 @@ export class CreateEvaluationDto {
     @IsUUID()
     @IsNotEmpty()
     userId: string;
+
+    @IsString({ each: true })
+    @IsOptional()
+    photos?: string[];
 }

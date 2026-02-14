@@ -8,6 +8,14 @@ import { ValidationPipe } from '@nestjs/common';
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   
+  app.use((req, res, next) => {
+    console.log(`[${new Date().toISOString()}] ${req.method} ${req.url}`);
+    if (req.method === 'POST' || req.method === 'PATCH') {
+      console.log('Body:', req.body);
+    }
+    next();
+  });
+
   // Habilitar CORS
   app.enableCors({
     origin: ['http://localhost:3001', 'http://localhost:3000'], // Frontend URLs

@@ -244,6 +244,7 @@ model Service {
   id          String  @id @default(uuid())
   name        String // "Lavagem Simples"
   description String?
+  photoUrl    String?
   price       Decimal @db.Decimal(10, 2) // Usar Decimal para valores monetários!
   duration    Int // Duração em minutos
   isActive    Boolean @default(true) // Pode desativar sem excluir
@@ -376,6 +377,7 @@ model Evaluation {
   id            String  @id @default(uuid())
   rating        Int
   comment       String?
+  photos      String[] // Foto do serviço, opcional
   appointmentId String  @unique
   userId        String // Quem avaliou
 

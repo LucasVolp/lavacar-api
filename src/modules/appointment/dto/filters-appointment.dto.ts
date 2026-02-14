@@ -8,4 +8,5 @@ export interface FindAllFilters {
     endDate?: string;
     page?: number;
     perPage?: number;
+    sortOrder?: 'asc' | 'desc';
 }

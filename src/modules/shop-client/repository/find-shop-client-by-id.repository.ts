@@ -16,6 +16,8 @@ export class FindShopClientByIdRepository {
                         lastName: true,
                         email: true,
                         phone: true,
+                        picture: true,
+                        vehicles: true,
                     },
                 },
                 shop: {

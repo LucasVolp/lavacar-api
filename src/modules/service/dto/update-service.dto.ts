@@ -29,4 +29,8 @@ export class UpdateServiceDto extends PartialType(CreateServiceDto) {
     @IsUUID()
     @IsOptional()
     groupId?: string;
+
+    @IsString()
+    @IsOptional()
+    photoUrl?: string;
 }

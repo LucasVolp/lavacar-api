@@ -24,9 +24,15 @@ import { FipeApiModule } from './modules/fipe-api/fipe-api.module';
 import { SalesGoalModule } from './modules/sales-goal/sales-goal.module';
 import { ChecklistModule } from './modules/checklist/checklist.module';
 import { ShopClientModule } from './modules/shop-client/shop-client.module';
+import { ServeStaticModule } from '@nestjs/serve-static';
+import { join } from 'path';
 
 @Module({
   imports: [
+    ServeStaticModule.forRoot({
+      rootPath: join(__dirname, '..', 'uploads'),
+      serveRoot: '/uploads',
+    }),
     UsersModule,
     AuthModule,
     ShopModule,

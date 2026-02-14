@@ -24,6 +24,7 @@ export class AppointmentController {
         @Query('endDate') endDate?: string,
         @Query('page') page?: string,
         @Query('perPage') perPage?: string,
+        @Query('sortOrder') sortOrder?: string,
     ) {
         let parsedStatus: AppointmentStatus | AppointmentStatus[] | undefined;
 
@@ -45,6 +46,7 @@ export class AppointmentController {
             endDate,
             page: page ? parseInt(page, 10) : undefined,
             perPage: perPage ? parseInt(perPage, 10) : undefined,
+            sortOrder: sortOrder === 'desc' ? 'desc' : sortOrder === 'asc' ? 'asc' : undefined,
         });
     }
 

@@ -28,4 +28,8 @@ export class CreateServiceDto {
     @IsUUID()
     @IsOptional()
     groupId?: string;
+
+    @IsString()
+    @IsOptional()
+    photoUrl?: string;
 }

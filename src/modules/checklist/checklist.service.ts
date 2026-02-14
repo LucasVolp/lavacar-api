@@ -5,6 +5,7 @@ import {
     CreateChecklistUseCase,
     DeleteChecklistUseCase,
     FindChecklistByIdUseCase,
+    FindChecklistsByUserUseCase,
     UpdateChecklistUseCase,
 } from './use-cases';
 
@@ -13,6 +14,7 @@ export class ChecklistService {
     constructor(
         private readonly createChecklistUseCase: CreateChecklistUseCase,
         private readonly findChecklistByIdUseCase: FindChecklistByIdUseCase,
+        private readonly findChecklistsByUserUseCase: FindChecklistsByUserUseCase,
         private readonly updateChecklistUseCase: UpdateChecklistUseCase,
         private readonly deleteChecklistUseCase: DeleteChecklistUseCase,
     ) {}
@@ -27,6 +29,10 @@ export class ChecklistService {
 
     async findByAppointment(appointmentId: string) {
         return await this.findChecklistByIdUseCase.executeByAppointmentId(appointmentId);
+    }
+
+    async findByUser(userId: string, page?: number, perPage?: number) {
+        return await this.findChecklistsByUserUseCase.execute(userId, page, perPage);
     }
 
     async update(id: string, data: UpdateChecklistDto) {
