@@ -7,10 +7,11 @@ import {
     FindAppointmentByIdUseCase,
     UpdateAppointmentUseCase,
     CancelAppointmentUseCase,
+    FindPublicAppointmentsByDateUseCase,
+    FindPublicAvailabilityUseCase,
 } from './use-cases';
 import { FindAllFilters } from './dto/filters-appointment.dto';
 import { JwtPayload } from 'src/shared/types/jwt-payload.interface';
-import { OwnershipService } from 'src/shared/services/ownership.service';
 
 @Injectable()
 export class AppointmentService {
@@ -20,27 +21,35 @@ export class AppointmentService {
         private readonly findAppointmentByIdUseCase: FindAppointmentByIdUseCase,
         private readonly updateAppointmentUseCase: UpdateAppointmentUseCase,
         private readonly cancelAppointmentUseCase: CancelAppointmentUseCase,
-        private readonly ownershipService: OwnershipService,
+        private readonly findPublicAppointmentsByDateUseCase: FindPublicAppointmentsByDateUseCase,
+        private readonly findPublicAvailabilityUseCase: FindPublicAvailabilityUseCase,
     ) {}
 
     async create(data: CreateAppointmentDto, user: JwtPayload) {
-        await this.ownershipService.assertShopAccess(user.id, user.role, data.shopId);
         return await this.createAppointmentUseCase.execute(data, { id: user.id, role: user.role as any });
     }
 
-    async findAll(filters: FindAllFilters = {}) {
-        return await this.findAllAppointmentUseCase.execute(filters);
+    async findAll(filters: FindAllFilters = {}, user: JwtPayload) {
+        return await this.findAllAppointmentUseCase.execute(filters, user);
     }
 
-    async findOne(id: string) {
-        return await this.findAppointmentByIdUseCase.execute(id);
+    async findOne(id: string, user: JwtPayload) {
+        return await this.findAppointmentByIdUseCase.execute(id, user);
     }
 
-    async update(id: string, data: UpdateAppointmentDto) {
-        return await this.updateAppointmentUseCase.execute(id, data);
+    async update(id: string, data: UpdateAppointmentDto, user: JwtPayload) {
+        return await this.updateAppointmentUseCase.execute(id, data, user);
     }
 
     async cancel(id: string, user: JwtPayload, reason?: string) {
-        return await this.cancelAppointmentUseCase.execute(id, reason, user.id);
+        return await this.cancelAppointmentUseCase.execute(id, reason, user);
+    }
+
+    async findPublicByShopAndDate(shopId: string, date: string) {
+        return await this.findPublicAppointmentsByDateUseCase.execute(shopId, new Date(date));
+    }
+
+    async findPublicAvailability(shopId: string, date: string, serviceIds: string[]) {
+        return await this.findPublicAvailabilityUseCase.execute({ shopId, date, serviceIds });
     }
 }

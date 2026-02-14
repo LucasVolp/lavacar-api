@@ -3,6 +3,9 @@ import { CreateSalesGoalDto } from '../dto/create-sales-goal.dto';
 import { CreateSalesGoalRepository } from '../repository';
 import { FindShopByIdRepository } from 'src/modules/shop/repository';
 import { FindOrganizationByIdRepository } from 'src/modules/organization/repository';
+import { JwtPayload } from 'src/shared/types/jwt-payload.interface';
+import { PrismaService } from 'src/shared/databases/prisma.database';
+import { buildShopScope } from 'src/shared/security/shop-scope.util';
 
 @Injectable()
 export class CreateSalesGoalUseCase {
@@ -10,10 +13,11 @@ export class CreateSalesGoalUseCase {
         private readonly createSalesGoalRepository: CreateSalesGoalRepository,
         private readonly findShopByIdRepository: FindShopByIdRepository,
         private readonly findOrganizationByIdRepository: FindOrganizationByIdRepository,
+        private readonly prisma: PrismaService,
         private readonly logger: Logger = new Logger(),
     ) {}
 
-    async execute(data: CreateSalesGoalDto) {
+    async execute(data: CreateSalesGoalDto, user: JwtPayload) {
         try {
             // Validation: Must have either shopId or organizationId
             if (!data.shopId && !data.organizationId) {
@@ -28,6 +32,7 @@ export class CreateSalesGoalUseCase {
 
             // Verify existence
             if (data.shopId) {
+                await buildShopScope(this.prisma, user, data.shopId);
                 const shop = await this.findShopByIdRepository.findById(data.shopId);
                 if (!shop) {
                     this.logger.warn(`Shop not found: ${data.shopId}`, CreateSalesGoalUseCase.name);

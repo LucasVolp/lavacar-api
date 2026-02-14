@@ -2,17 +2,22 @@ import { BadRequestException, ConflictException, Injectable, Logger, NotFoundExc
 import { createScheduleRepository, FindScheduleByWeekdayRepository } from "../repository";
 import { CreateScheduleDto } from "../dto/create-schedule.dto";
 import { timeToMinutes } from "src/shared/utils";
+import { JwtPayload } from "src/shared/types/jwt-payload.interface";
+import { PrismaService } from "src/shared/databases/prisma.database";
+import { buildShopScope } from "src/shared/security/shop-scope.util";
 
 @Injectable()
 export class CreateScheduleUseCase {
     constructor (
         private readonly scheduleRepository: createScheduleRepository, 
         private readonly findScheduleByWeekDayRepository: FindScheduleByWeekdayRepository,       
+        private readonly prisma: PrismaService,
         private readonly logger: Logger = new Logger()
     ) {}
 
-    async execute(data: CreateScheduleDto) {
+    async execute(data: CreateScheduleDto, user: JwtPayload) {
         try {
+            await buildShopScope(this.prisma, user, data.shopId);
             // Validar que endTime > startTime
             this.logger.log('Validating schedule times', CreateScheduleUseCase.name);
             const startMinutes = timeToMinutes(data.startTime);

@@ -6,7 +6,7 @@ import { UpdateBlockedTimeDto } from "../dto/update-blocked-time.dto";
 export class UpdateBlockedTimeRepository {
     constructor (private readonly prisma: PrismaService) {}
 
-    async update(id: string, data: UpdateBlockedTimeDto) {
+    async update(id: string, data: UpdateBlockedTimeDto & { date?: Date | string }) {
         return await this.prisma.blockedTime.update({
             where: { id },
             data,

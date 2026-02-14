@@ -17,15 +17,14 @@ export class UsersController {
   }
 
   @Get()
-  @Public()
   findAll(
-    // @CurrentUser() user: JwtPayload,
+    @CurrentUser() user: JwtPayload,
     @Query('page') page?: string,
     @Query('perPage') perPage?: string,
   ) {
-    // if (user.role !== 'ADMIN') {
-    //   throw new ForbiddenException('Only ADMIN can list all users');
-    // }
+    if (user.role !== 'ADMIN') {
+      throw new ForbiddenException('Only ADMIN can list all users');
+    }
     return this.usersService.findAll({
       page: page ? parseInt(page, 10) : undefined,
       perPage: perPage ? parseInt(perPage, 10) : undefined,
@@ -33,28 +32,34 @@ export class UsersController {
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string, 
-  // @CurrentUser() user: JwtPayload
-) {
-    // if (user.id !== id && user.role !== 'ADMIN') {
-    //   throw new ForbiddenException('You can only view your own profile');
-    // }
+  findOne(@Param('id') id: string, @CurrentUser() user: JwtPayload) {
+    if (user.id !== id && user.role !== 'ADMIN') {
+      throw new ForbiddenException('You can only view your own profile');
+    }
     return this.usersService.findOne(id);
   }
 
   @Get('email/:email')
-  FindOneByEmail(@Param('email') email: string) {
+  FindOneByEmail(@Param('email') email: string, @CurrentUser() user: JwtPayload) {
+    if (user.role !== 'ADMIN') {
+      throw new ForbiddenException('Only ADMIN can search users by email');
+    }
     return this.usersService.FindByEmail(email);
   }
 
+  @Get('phone/:phone')
+  findByPhone(@Param('phone') phone: string, @CurrentUser() user: JwtPayload) {
+    if (user.role !== 'ADMIN') {
+      throw new ForbiddenException('Only ADMIN can search users by phone');
+    }
+    return this.usersService.findByPhone(phone);
+  }
+
   @Patch(':id')
-  @Public()
-  update(@Param('id') id: string, @Body() data: UpdateUserDto, 
-  // @CurrentUser() user: JwtPayload
-) {
-    // if (user.id !== id && user.role !== 'ADMIN') {
-    //   throw new ForbiddenException('You can only update your own profile');
-    // }
+  update(@Param('id') id: string, @Body() data: UpdateUserDto, @CurrentUser() user: JwtPayload) {
+    if (user.id !== id && user.role !== 'ADMIN') {
+      throw new ForbiddenException('You can only update your own profile');
+    }
     return this.usersService.update(id, data);
   }
 

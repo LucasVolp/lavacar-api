@@ -1,5 +1,5 @@
 import { ConflictException, Injectable, Logger, ServiceUnavailableException } from "@nestjs/common";
-import { CreateUserRepository, FindUserByCpfRepository, FindUserByEmailRepository } from "../repository";
+import { CreateUserRepository, FindUserByCpfRepository, FindUserByEmailRepository, FindUserByPhoneRepository } from "../repository";
 import { CreateUserDto } from "../dto/create-user.dto";
 import * as bcrypt from 'bcrypt';
 
@@ -7,23 +7,33 @@ import * as bcrypt from 'bcrypt';
 export class CreateUserUseCase {
     private readonly saltRounds = 10;
     constructor(
-        private readonly UserRepository: CreateUserRepository,
-        private readonly findUserRepository: FindUserByEmailRepository,
-        private readonly findUserByCpfRepósitory: FindUserByCpfRepository,
+        private readonly userRepository: CreateUserRepository,
+        private readonly findUserByEmailRepository: FindUserByEmailRepository,
+        private readonly findUserByCpfRepository: FindUserByCpfRepository,
+        private readonly findUserByPhoneRepository: FindUserByPhoneRepository,
         private readonly logger: Logger = new Logger()
     ) {}
 
     async execute(data: CreateUserDto){
         try {
-            const userExists = await this.findUserRepository.findUserByEmail(data.email);
-            if (userExists) {
-                this.logger.warn('User with this email already exists', CreateUserUseCase.name);
-                throw new ConflictException('User with this email already exists');
+            const existingByPhone = await this.findUserByPhoneRepository.findByPhone(data.phone);
+
+            if (existingByPhone) {
+                this.logger.warn('User with this phone already exists', CreateUserUseCase.name);
+                throw new ConflictException('User with this phone already exists!');
+            }
+
+            if (data.email) {
+                const existingByEmail = await this.findUserByEmailRepository.findUserByEmail(data.email);
+                if (existingByEmail) {
+                    this.logger.warn('User with this email already exists', CreateUserUseCase.name);
+                    throw new ConflictException('User with this email already exists');
+                }
             }
 
             if (data.cpf) {
-                const cpfExists = await this.findUserByCpfRepósitory.findByCpf(data.cpf);
-                if (cpfExists) {
+                const existingByCpf = await this.findUserByCpfRepository.findByCpf(data.cpf);
+                if (existingByCpf) {
                     this.logger.warn('User with this CPF already exists', CreateUserUseCase.name);
                     throw new ConflictException('User with this CPF already exists');
                 }
@@ -31,11 +41,27 @@ export class CreateUserUseCase {
                 data.cpf = data.cpf.replace(/[.-]/g, '');
             }
 
-            this.logger.log('Creating User...', CreateUserUseCase.name);
-            const createHash = await bcrypt.hash(data.password, this.saltRounds);
-            const user = await this.UserRepository.create({
-                ...data,
-                password: createHash,
+            const isGuest = !data.password;
+
+            let hashedPassword: string | undefined;
+            if (data.password) {
+                hashedPassword = await bcrypt.hash(data.password, this.saltRounds) as string;
+            }
+
+            this.logger.log(
+                `Creating ${isGuest ? 'guest' : 'full'} user...`,
+                CreateUserUseCase.name,
+            );
+
+            const user = await this.userRepository.create({
+                firstName: data.firstName,
+                lastName: data.lastName,
+                email: data.email,
+                phone: data.phone,
+                cpf: data.cpf,
+                password: hashedPassword,
+                role: data.role,
+                isGuest,
             });
 
             this.logger.log('User Created', CreateUserUseCase.name);
@@ -49,7 +75,7 @@ export class CreateUserUseCase {
                 description: 'Error creating User'
             });
             this.logger.error(error.message);
-            throw err;
+            throw error;
         }
     }
 }

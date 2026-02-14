@@ -8,6 +8,7 @@ import {
     FindServiceGroupByIdUseCase,
     UpdateServiceGroupUseCase
 } from './use-cases';
+import { JwtPayload } from 'src/shared/types/jwt-payload.interface';
 
 @Injectable()
 export class ServiceGroupService {
@@ -19,23 +20,23 @@ export class ServiceGroupService {
         private readonly deleteServiceGroupUseCase: DeleteServiceGroupUseCase,
     ) {}
 
-    async create(data: CreateServiceGroupDto) {
-        return await this.createServiceGroupUseCase.execute(data);
+    async create(data: CreateServiceGroupDto, user: JwtPayload) {
+        return await this.createServiceGroupUseCase.execute(data, user);
     }
 
-    async findAll(filters?: { shopId?: string; page?: number; perPage?: number }) {
-        return await this.findAllServiceGroupUseCase.execute(filters);
+    async findAll(filters: { shopId?: string; page?: number; perPage?: number } = {}, user: JwtPayload) {
+        return await this.findAllServiceGroupUseCase.execute(filters, user);
     }
 
-    async findOne(id: string) {
-        return await this.findServiceGroupByIdUseCase.execute(id);
+    async findOne(id: string, user: JwtPayload) {
+        return await this.findServiceGroupByIdUseCase.execute(id, user);
     }
 
-    async update(id: string, data: UpdateServiceGroupDto) {
-        return await this.updateServiceGroupUseCase.execute(id, data);
+    async update(id: string, data: UpdateServiceGroupDto, user: JwtPayload) {
+        return await this.updateServiceGroupUseCase.execute(id, data, user);
     }
 
-    async remove(id: string) {
-        return await this.deleteServiceGroupUseCase.execute(id);
+    async remove(id: string, user: JwtPayload) {
+        return await this.deleteServiceGroupUseCase.execute(id, user);
     }
 }

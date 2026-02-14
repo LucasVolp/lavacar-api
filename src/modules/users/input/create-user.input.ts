@@ -4,7 +4,10 @@ export type CreateUserInput = {
     firstName: string,
     lastName?: string,
     picture?: string,
-    email: string,
-    password: string,
-    role?: Role
+    email?: string,
+    cpf?: string,
+    password?: string,
+    phone: string,
+    role?: Role,
+    isGuest?: boolean,
 };

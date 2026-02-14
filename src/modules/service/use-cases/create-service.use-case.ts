@@ -3,6 +3,9 @@ import { CreateServiceRepository } from "../repository";
 import { CreateServiceDto } from "../dto/create-service.dto";
 import { FindShopByIdRepository } from "src/modules/shop/repository";
 import { FindServiceGroupByIdRepository } from "src/modules/service-group/repository";
+import { JwtPayload } from "src/shared/types/jwt-payload.interface";
+import { buildShopScope } from "src/shared/security/shop-scope.util";
+import { PrismaService } from "src/shared/databases/prisma.database";
 
 @Injectable()
 export class CreateServiceUseCase {
@@ -10,11 +13,13 @@ export class CreateServiceUseCase {
         private readonly serviceRepository: CreateServiceRepository,
         private readonly findShopByIdRepository: FindShopByIdRepository,
         private readonly findServiceGroupByIdRepository: FindServiceGroupByIdRepository,
+        private readonly prisma: PrismaService,
         private readonly logger: Logger = new Logger()
     ) {}
 
-    async execute(data: CreateServiceDto) {
+    async execute(data: CreateServiceDto, user: JwtPayload) {
         try {
+            await buildShopScope(this.prisma, user, data.shopId);
             this.logger.log(`Verifying existence of shop with ID: ${data.shopId}`, CreateServiceUseCase.name);
             const shopExists = await this.findShopByIdRepository.findById(data.shopId);
             if (!shopExists) {

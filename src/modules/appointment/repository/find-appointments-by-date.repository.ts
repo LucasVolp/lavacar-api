@@ -1,4 +1,5 @@
 import { Injectable } from "@nestjs/common";
+import { Prisma } from "prisma/generated";
 import { PrismaService } from "src/shared/databases/prisma.database";
 import { AppointmentStatus } from "prisma/generated";
 import { getStartOfDayInTimezone, getEndOfDayInTimezone } from "src/shared/utils";
@@ -6,13 +7,22 @@ import { getStartOfDayInTimezone, getEndOfDayInTimezone } from "src/shared/utils
 @Injectable()
 export class FindAppointmentsByDateRepository {
     constructor(private readonly prisma: PrismaService) {}
-    async findByShopAndDate(shopId: string, date: Date) {
-        const startOfDay = getStartOfDayInTimezone(date);
-        const endOfDay = getEndOfDayInTimezone(date);
+    async findByShopAndDate(
+        shopId: string,
+        date: Date,
+        timeZone?: string,
+        dbClient?: Prisma.TransactionClient,
+    ) {
+        const db = dbClient ?? this.prisma;
+        const startOfDay = getStartOfDayInTimezone(date, timeZone);
+        const endOfDay = getEndOfDayInTimezone(date, timeZone);
 
-        return await this.prisma.appointment.findMany({
+        return await db.appointment.findMany({
             where: {
                 shopId,
+                shop: {
+                    status: 'ACTIVE',
+                },
                 scheduledAt: {
                     gte: startOfDay,
                     lte: endOfDay,
@@ -22,7 +32,6 @@ export class FindAppointmentsByDateRepository {
                 },
             },
             select: {
-                id: true,
                 scheduledAt: true,
                 endTime: true,
                 totalDuration: true,

@@ -1,4 +1,4 @@
-import { IsEmail, IsEnum, IsNotEmpty, IsOptional, IsString } from "class-validator";
+import { IsEmail, IsEnum, IsNotEmpty, IsOptional, IsString, Matches } from "class-validator";
 import { Role } from "../types/Role";
 
 export class CreateUserDto {
@@ -11,16 +11,21 @@ export class CreateUserDto {
     lastName?: string;
 
     @IsEmail()
-    @IsNotEmpty()
-    email: string;
+    @IsOptional()
+    email?: string;
 
     @IsString()
     @IsOptional()
     cpf?: string;
 
     @IsString()
+    @IsOptional()
+    password?: string;
+
+    @IsString()
     @IsNotEmpty()
-    password: string;
+    @Matches(/^\+?[1-9]\d{1,14}$/, { message: 'phone must be a valid phone number' })
+    phone: string;
 
     @IsEnum(Role)
     @IsNotEmpty()

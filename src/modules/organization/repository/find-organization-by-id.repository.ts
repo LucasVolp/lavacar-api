@@ -30,21 +30,13 @@ export class FindOrganizationByIdRepository {
     async findBySlug(slug: string) {
         return await this.prisma.organization.findUnique({
             where: { slug },
-            include: {
-                shops: true,
-                members: {
-                    include: {
-                        user: {
-                            select: {
-                                id: true,
-                                firstName: true,
-                                lastName: true,
-                                email: true,
-                                picture: true,
-                            },
-                        },
-                    },
-                },
+            select: {
+                id: true,
+                name: true,
+                slug: true,
+                logoUrl: true,
+                createdAt: true,
+                updatedAt: true,
             },
         });
     }

@@ -2,8 +2,12 @@ import { Controller, Get, Post, Body, Patch, Param, Delete, Query } from '@nestj
 import { OrganizationService } from './organization.service';
 import { CreateOrganizationDto, UpdateOrganizationDto } from './dto';
 import { OrganizationMetricsPeriod } from './repository';
+import { Roles } from 'src/decorators/roles.decorator';
+import { Role } from 'src/modules/users/types/Role';
+import { Public } from 'src/shared/decorators/public.decorator';
 
 @Controller('organizations')
+@Roles(Role.ADMIN, Role.OWNER, Role.MANAGER)
 export class OrganizationController {
     constructor(private readonly organizationService: OrganizationService) {}
 
@@ -43,6 +47,7 @@ export class OrganizationController {
     }
 
     @Get('slug/:slug')
+    @Public()
     findBySlug(@Param('slug') slug: string) {
         return this.organizationService.findBySlug(slug);
     }

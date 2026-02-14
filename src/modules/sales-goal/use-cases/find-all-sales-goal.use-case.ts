@@ -1,5 +1,6 @@
 import { Injectable, Logger, ServiceUnavailableException } from '@nestjs/common';
 import { FindAllSalesGoalRepository } from '../repository';
+import { JwtPayload } from 'src/shared/types/jwt-payload.interface';
 
 interface FindAllFilters {
     shopId?: string;
@@ -15,9 +16,9 @@ export class FindAllSalesGoalUseCase {
         private readonly logger: Logger = new Logger(),
     ) {}
 
-    async execute(filters: FindAllFilters = {}) {
+    async execute(filters: FindAllFilters = {}, user: JwtPayload) {
         try {
-            return await this.findAllSalesGoalRepository.findAll(filters);
+            return await this.findAllSalesGoalRepository.findAll(filters, user);
         } catch (err) {
             const error = new ServiceUnavailableException('Something bad happened!', {
                 cause: err,
@@ -28,9 +29,9 @@ export class FindAllSalesGoalUseCase {
         }
     }
 
-    async executeByShopId(shopId: string, filters: { page?: number; perPage?: number } = {}) {
+    async executeByShopId(shopId: string, filters: { page?: number; perPage?: number } = {}, user: JwtPayload) {
         try {
-            return await this.findAllSalesGoalRepository.findByShopId(shopId, filters);
+            return await this.findAllSalesGoalRepository.findByShopId(shopId, filters, user);
         } catch (err) {
             const error = new ServiceUnavailableException('Something bad happened!', {
                 cause: err,
@@ -41,9 +42,9 @@ export class FindAllSalesGoalUseCase {
         }
     }
 
-    async executeByOrganizationId(organizationId: string, filters: { page?: number; perPage?: number } = {}) {
+    async executeByOrganizationId(organizationId: string, filters: { page?: number; perPage?: number } = {}, user: JwtPayload) {
         try {
-            return await this.findAllSalesGoalRepository.findByOrganizationId(organizationId, filters);
+            return await this.findAllSalesGoalRepository.findByOrganizationId(organizationId, filters, user);
         } catch (err) {
             const error = new ServiceUnavailableException('Something bad happened!', {
                 cause: err,

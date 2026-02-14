@@ -6,6 +6,7 @@ import {
     ServiceUnavailableException 
 } from "@nestjs/common";
 import { DeleteEvaluationRepository, FindEvaluationByIdRepository } from "../repository";
+import { JwtPayload } from "src/shared/types/jwt-payload.interface";
 
 @Injectable()
 export class DeleteEvaluationUseCase {
@@ -15,9 +16,9 @@ export class DeleteEvaluationUseCase {
         private readonly logger: Logger = new Logger()
     ) {}
 
-    async execute(id: string) {
+    async execute(id: string, user: JwtPayload) {
         try {
-            const existing = await this.findByIdRepository.findById(id);
+            const existing = await this.findByIdRepository.findById(id, user);
 
             if (!existing) {
                 this.logger.warn(`Evaluation not found with ID: ${id}`, DeleteEvaluationUseCase.name);

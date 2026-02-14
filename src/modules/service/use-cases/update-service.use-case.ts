@@ -3,6 +3,7 @@ import { FindServiceByIdRepository, UpdateServiceRepository } from "../repositor
 import { UpdateServiceDto } from "../dto/update-service.dto";
 import { FindShopByIdRepository } from "src/modules/shop/repository";
 import { FindServiceGroupByIdRepository } from "src/modules/service-group/repository";
+import { JwtPayload } from "src/shared/types/jwt-payload.interface";
 
 @Injectable()
 export class UpdateServiceUseCase {
@@ -14,9 +15,9 @@ export class UpdateServiceUseCase {
         private readonly logger: Logger = new Logger(),
     ){}
 
-    async execute(id: string, data: UpdateServiceDto) {
+    async execute(id: string, data: UpdateServiceDto, user: JwtPayload) {
         try{
-            const serviceExists = await this.FindServiceRepository.findById(id);
+            const serviceExists = await this.FindServiceRepository.findById(id, user);
             if (!serviceExists) {
                 this.logger.error('Service not found', UpdateServiceUseCase.name);
                 throw new NotFoundException('Service not found!');

@@ -3,6 +3,8 @@ import { UpdateBlockedTimeRepository, FindBlockedTimeByIdRepository } from '../r
 import { UpdateBlockedTimeDto } from '../dto/update-blocked-time.dto';
 import { BlockedTimeType } from '../types/BlockedTimeType';
 import { timeToMinutes } from 'src/shared/utils';
+import { JwtPayload } from 'src/shared/types/jwt-payload.interface';
+import { formatInTimeZone } from 'date-fns-tz';
 
 @Injectable()
 export class UpdateBlockedTimeUseCase {
@@ -12,13 +14,16 @@ export class UpdateBlockedTimeUseCase {
     private readonly logger: Logger = new Logger(),
   ) {}
 
-  async execute(id: string, data: UpdateBlockedTimeDto) {
+  async execute(id: string, data: UpdateBlockedTimeDto, user: JwtPayload) {
     try {
-      const exists = await this.findBlockedTimeByIdRepository.findById(id);
+      const exists = await this.findBlockedTimeByIdRepository.findById(id, user);
       if (!exists) {
         this.logger.warn(`Blocked time not found with ID: ${id}`, UpdateBlockedTimeUseCase.name);
         throw new NotFoundException('Blocked time not found!');
       }
+
+      const shopTimeZone = exists.shop?.timeZone || 'America/Sao_Paulo';
+      const updateData: Record<string, unknown> = { ...data };
 
       if (data.type === BlockedTimeType.PARTIAL && data.startTime && data.endTime) {
         const startMinutes = timeToMinutes(data.startTime);
@@ -31,17 +36,18 @@ export class UpdateBlockedTimeUseCase {
       }
 
       if (data.date) {
-        const blockedDate = new Date(data.date);
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
-
-        if (blockedDate < today) {
+        const todayKey = formatInTimeZone(new Date(), shopTimeZone, 'yyyy-MM-dd');
+        if (data.date < todayKey) {
           this.logger.warn('Cannot block a date in the past', UpdateBlockedTimeUseCase.name);
           throw new BadRequestException('Cannot block a date in the past');
         }
+        updateData.date = new Date(`${data.date}T00:00:00.000Z`);
       }
 
-      const blockedTime = await this.blockedTimeRepository.update(id, data);
+      const blockedTime = await this.blockedTimeRepository.update(
+        id,
+        updateData as UpdateBlockedTimeDto & { date?: Date | string },
+      );
       this.logger.log('Blocked time updated!', UpdateBlockedTimeUseCase.name);
       return blockedTime;
     } catch (err) {

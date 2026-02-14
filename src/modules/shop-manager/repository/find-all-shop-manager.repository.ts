@@ -37,6 +37,7 @@ export class FindAllShopManagerRepository {
                                     firstName: true,
                                     lastName: true,
                                     email: true,
+                                    picture: true,
                                 },
                             },
                         },

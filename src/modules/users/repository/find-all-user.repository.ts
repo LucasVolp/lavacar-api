@@ -20,10 +20,19 @@ export class FindAllUserRepository {
             this.prisma.user.findMany({
                 skip,
                 take: perPage,
-                include: {
-                    vehicles: true,
-                    appointments: true,
-                    shops: true
+                select: {
+                    id: true,
+                    firstName: true,
+                    lastName: true,
+                    email: true,
+                    phone: true,
+                    cpf: true,
+                    picture: true,
+                    role: true,
+                    isActive: true,
+                    isGuest: true,
+                    createdAt: true,
+                    updatedAt: true,
                 },
             }),
             this.prisma.user.count(),

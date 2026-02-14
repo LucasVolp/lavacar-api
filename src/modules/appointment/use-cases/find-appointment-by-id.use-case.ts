@@ -1,5 +1,6 @@
 import { Injectable, Logger, NotFoundException, ServiceUnavailableException } from "@nestjs/common";
 import { FindAppointmentByIdRepository } from "../repository";
+import { JwtPayload } from "src/shared/types/jwt-payload.interface";
 
 @Injectable()
 export class FindAppointmentByIdUseCase {
@@ -8,9 +9,9 @@ export class FindAppointmentByIdUseCase {
         private readonly logger: Logger = new Logger()
     ) {}
 
-    async execute(id: string) {
+    async execute(id: string, user: JwtPayload) {
         try {
-            const appointment = await this.appointmentRepository.findById(id);
+            const appointment = await this.appointmentRepository.findById(id, user);
 
             if (!appointment) {
                 this.logger.warn(`Appointment not found with ID: ${id}`, FindAppointmentByIdUseCase.name);

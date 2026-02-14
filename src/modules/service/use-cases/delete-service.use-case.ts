@@ -1,5 +1,6 @@
 import { Injectable, Logger, NotFoundException, ServiceUnavailableException } from "@nestjs/common";
 import { DeleteServiceRepository, FindServiceByIdRepository } from "../repository";
+import { JwtPayload } from "src/shared/types/jwt-payload.interface";
 
 @Injectable()
 export class DeleteServiceUseCase {
@@ -9,9 +10,9 @@ export class DeleteServiceUseCase {
         private readonly logger: Logger = new Logger(),
     ){}
 
-    async execute(id: string) {
+    async execute(id: string, user: JwtPayload) {
         try{
-            const serviceExists = await this.FindServiceRepository.findById(id);
+            const serviceExists = await this.FindServiceRepository.findById(id, user);
             if (!serviceExists) {
                 this.logger.error('Service not found', DeleteServiceUseCase.name);
                 throw new NotFoundException('Service not found!');

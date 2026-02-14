@@ -2,6 +2,7 @@ import { BadRequestException, Injectable, Logger, NotFoundException, ServiceUnav
 import { FindScheduleByIdRepository, UpdateScheduleRepository } from "../repository";
 import { UpdateScheduleDto } from "../dto/update-schedule.dto";
 import { timeToMinutes } from "src/shared/utils";
+import { JwtPayload } from "src/shared/types/jwt-payload.interface";
 
 @Injectable()
 export class UpdateScheduleUseCase {
@@ -11,9 +12,9 @@ export class UpdateScheduleUseCase {
         private readonly logger: Logger = new Logger()
     ) {}
 
-    async execute(id: string, data: UpdateScheduleDto) {
+    async execute(id: string, data: UpdateScheduleDto, user: JwtPayload) {
         try {
-            const schedule = await this.FindScheduleByIdRepository.findById(id);
+            const schedule = await this.FindScheduleByIdRepository.findById(id, user);
             if (!schedule) {
                 this.logger.warn(`Schedule with id ${id} not found`, UpdateScheduleUseCase.name);
                 throw new NotFoundException('Schedule not found!');

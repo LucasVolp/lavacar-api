@@ -7,6 +7,7 @@ import {
 } from "@nestjs/common";
 import { FindEvaluationByIdRepository, UpdateEvaluationRepository } from "../repository";
 import { UpdateEvaluationDto } from "../dto/update-evaluation.dto";
+import { JwtPayload } from "src/shared/types/jwt-payload.interface";
 
 @Injectable()
 export class UpdateEvaluationUseCase {
@@ -16,9 +17,9 @@ export class UpdateEvaluationUseCase {
         private readonly logger: Logger = new Logger()
     ) {}
 
-    async execute(id: string, data: UpdateEvaluationDto) {
+    async execute(id: string, data: UpdateEvaluationDto, user: JwtPayload) {
         try {
-            const existing = await this.findByIdRepository.findById(id);
+            const existing = await this.findByIdRepository.findById(id, user);
 
             if (!existing) {
                 this.logger.warn(`Evaluation not found with ID: ${id}`, UpdateEvaluationUseCase.name);

@@ -1,5 +1,6 @@
 import { Injectable, Logger, NotFoundException, ServiceUnavailableException } from '@nestjs/common';
 import { FindSalesGoalByIdRepository } from '../repository';
+import { JwtPayload } from 'src/shared/types/jwt-payload.interface';
 
 @Injectable()
 export class FindSalesGoalByIdUseCase {
@@ -8,9 +9,9 @@ export class FindSalesGoalByIdUseCase {
         private readonly logger: Logger = new Logger(),
     ) {}
 
-    async execute(id: string) {
+    async execute(id: string, user: JwtPayload) {
         try {
-            const salesGoal = await this.findSalesGoalRepository.findById(id);
+            const salesGoal = await this.findSalesGoalRepository.findById(id, user);
             if (!salesGoal) {
                 this.logger.warn(`Sales goal not found: ${id}`, FindSalesGoalByIdUseCase.name);
                 throw new NotFoundException('Sales goal not found');

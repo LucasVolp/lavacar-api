@@ -1,5 +1,6 @@
 import { Injectable, Logger, NotFoundException, ServiceUnavailableException } from '@nestjs/common';
 import { FindBlockedTimeByIdRepository } from '../repository';
+import { JwtPayload } from 'src/shared/types/jwt-payload.interface';
 
 @Injectable()
 export class FindBlockedTimeByIdUseCase {
@@ -8,9 +9,9 @@ export class FindBlockedTimeByIdUseCase {
     private readonly logger: Logger = new Logger(),
   ) {}
 
-  async execute(id: string) {
+  async execute(id: string, user: JwtPayload) {
     try {
-      const blockedTime = await this.blockedTimeRepository.findById(id);
+      const blockedTime = await this.blockedTimeRepository.findById(id, user);
       if (!blockedTime) {
         this.logger.warn(`Blocked time not found with ID: ${id}`, FindBlockedTimeByIdUseCase.name);
         throw new NotFoundException('Blocked time not found!');

@@ -9,7 +9,6 @@ import {
     UpdateSalesGoalUseCase,
 } from './use-cases';
 import { JwtPayload } from 'src/shared/types/jwt-payload.interface';
-import { OwnershipService } from 'src/shared/services/ownership.service';
 
 @Injectable()
 export class SalesGoalService {
@@ -19,40 +18,36 @@ export class SalesGoalService {
         private readonly findSalesGoalByIdUseCase: FindSalesGoalByIdUseCase,
         private readonly updateSalesGoalUseCase: UpdateSalesGoalUseCase,
         private readonly deleteSalesGoalUseCase: DeleteSalesGoalUseCase,
-        private readonly ownershipService: OwnershipService,
     ) {}
 
     async create(data: CreateSalesGoalDto, user: JwtPayload) {
-        if (data.shopId) {
-            await this.ownershipService.assertShopAccess(user.id, user.role, data.shopId);
-        }
         if (!['OWNER', 'MANAGER', 'ADMIN'].includes(user.role)) {
             throw new ForbiddenException('Only OWNER, MANAGER or ADMIN can create sales goals');
         }
-        return await this.createSalesGoalUseCase.execute(data);
+        return await this.createSalesGoalUseCase.execute(data, user);
     }
 
-    async findAll(filters?: { page?: number; perPage?: number }) {
-        return await this.findAllSalesGoalUseCase.execute(filters);
+    async findAll(filters: { page?: number; perPage?: number } = {}, user: JwtPayload) {
+        return await this.findAllSalesGoalUseCase.execute(filters, user);
     }
 
-    async findByShopId(shopId: string, filters?: { page?: number; perPage?: number }) {
-        return await this.findAllSalesGoalUseCase.executeByShopId(shopId, filters);
+    async findByShopId(shopId: string, filters: { page?: number; perPage?: number } = {}, user: JwtPayload) {
+        return await this.findAllSalesGoalUseCase.executeByShopId(shopId, filters, user);
     }
 
-    async findByOrganizationId(organizationId: string, filters?: { page?: number; perPage?: number }) {
-        return await this.findAllSalesGoalUseCase.executeByOrganizationId(organizationId, filters);
+    async findByOrganizationId(organizationId: string, filters: { page?: number; perPage?: number } = {}, user: JwtPayload) {
+        return await this.findAllSalesGoalUseCase.executeByOrganizationId(organizationId, filters, user);
     }
 
-    async findOne(id: string) {
-        return await this.findSalesGoalByIdUseCase.execute(id);
+    async findOne(id: string, user: JwtPayload) {
+        return await this.findSalesGoalByIdUseCase.execute(id, user);
     }
 
-    async update(id: string, data: UpdateSalesGoalDto) {
-        return await this.updateSalesGoalUseCase.execute(id, data);
+    async update(id: string, data: UpdateSalesGoalDto, user: JwtPayload) {
+        return await this.updateSalesGoalUseCase.execute(id, data, user);
     }
 
-    async remove(id: string) {
-        return await this.deleteSalesGoalUseCase.execute(id);
+    async remove(id: string, user: JwtPayload) {
+        return await this.deleteSalesGoalUseCase.execute(id, user);
     }
 }

@@ -18,6 +18,7 @@ export class FindShopManagerByIdRepository {
                                 firstName: true,
                                 lastName: true,
                                 email: true,
+                                picture: true,
                             },
                         },
                     },

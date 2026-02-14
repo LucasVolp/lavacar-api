@@ -8,6 +8,7 @@ import {
 import { FindAppointmentByIdRepository, UpdateAppointmentRepository } from "../repository";
 import { UpdateAppointmentDto } from "../dto/update-appointment.dto";
 import { AppointmentStatus } from "prisma/generated";
+import { JwtPayload } from "src/shared/types/jwt-payload.interface";
 
 @Injectable()
 export class UpdateAppointmentUseCase {
@@ -17,9 +18,9 @@ export class UpdateAppointmentUseCase {
         private readonly logger: Logger = new Logger()
     ) {}
 
-    async execute(id: string, data: UpdateAppointmentDto) {
+    async execute(id: string, data: UpdateAppointmentDto, user: JwtPayload) {
         try {
-            const existing = await this.findByIdRepository.findById(id);
+            const existing = await this.findByIdRepository.findById(id, user);
 
             if (!existing) {
                 this.logger.warn(`Appointment not found with ID: ${id}`, UpdateAppointmentUseCase.name);

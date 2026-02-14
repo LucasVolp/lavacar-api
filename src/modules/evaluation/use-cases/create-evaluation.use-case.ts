@@ -10,6 +10,7 @@ import { CreateEvaluationRepository, FindEvaluationByIdRepository } from "../rep
 import { CreateEvaluationDto } from "../dto/create-evaluation.dto";
 import { AppointmentStatus } from "prisma/generated";
 import { FindAppointmentByIdRepository } from "src/modules/appointment/repository";
+import { JwtPayload } from "src/shared/types/jwt-payload.interface";
 
 @Injectable()
 export class CreateEvaluationUseCase {
@@ -20,10 +21,14 @@ export class CreateEvaluationUseCase {
         private readonly logger: Logger = new Logger()
     ) {}
 
-    async execute(data: CreateEvaluationDto) {
+    async execute(data: CreateEvaluationDto, user: JwtPayload) {
         try {
+            if (user.role === 'USER') {
+                data.userId = user.id;
+            }
+
             this.logger.log(`Creating evaluation for appointment: ${data.appointmentId}`, CreateEvaluationUseCase.name);
-            const appointmentExists = await this.findAppointmentRepository.findById(data.appointmentId);
+            const appointmentExists = await this.findAppointmentRepository.findById(data.appointmentId, user);
             if (!appointmentExists) {
                 this.logger.warn(`Appointment not found with ID: ${data.appointmentId}`, CreateEvaluationUseCase.name);
                 throw new NotFoundException('Appointment not found');

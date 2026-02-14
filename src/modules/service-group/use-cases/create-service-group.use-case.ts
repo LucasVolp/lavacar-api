@@ -2,17 +2,22 @@ import { Injectable, Logger, NotFoundException, ServiceUnavailableException } fr
 import { CreateServiceGroupRepository } from "../repository";
 import { CreateServiceGroupDto } from "../dto/create-service-group.dto";
 import { FindShopByIdRepository } from "src/modules/shop/repository";
+import { JwtPayload } from "src/shared/types/jwt-payload.interface";
+import { PrismaService } from "src/shared/databases/prisma.database";
+import { buildShopScope } from "src/shared/security/shop-scope.util";
 
 @Injectable()
 export class CreateServiceGroupUseCase {
     constructor(
         private readonly serviceGroupRepository: CreateServiceGroupRepository,
         private readonly findShopByIdRepository: FindShopByIdRepository,
+        private readonly prisma: PrismaService,
         private readonly logger: Logger = new Logger()
     ) {}
 
-    async execute(data: CreateServiceGroupDto) {
+    async execute(data: CreateServiceGroupDto, user: JwtPayload) {
         try {
+            await buildShopScope(this.prisma, user, data.shopId);
             const shopExists = await this.findShopByIdRepository.findById(data.shopId);
             if (!shopExists) {
                 this.logger.warn(`Shop not found with ID: ${data.shopId}`, CreateServiceGroupUseCase.name);

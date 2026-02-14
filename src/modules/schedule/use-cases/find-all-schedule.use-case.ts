@@ -1,5 +1,6 @@
 import { Injectable, Logger, ServiceUnavailableException } from "@nestjs/common";
 import { FindAllScheduleRepository } from "../repository";
+import { JwtPayload } from "src/shared/types/jwt-payload.interface";
 
 interface FindAllFilters {
     shopId?: string;
@@ -14,9 +15,9 @@ export class FindAllScheduleUseCase {
         private readonly logger: Logger = new Logger()
     ) {}
 
-    async execute(filters: FindAllFilters = {}) {
+    async execute(filters: FindAllFilters = {}, user: JwtPayload) {
         try {
-            const result = await this.ScheduleRepository.findAll(filters);
+            const result = await this.ScheduleRepository.findAll(filters, user);
             this.logger.log(`Found ${result.meta.total} schedules`, FindAllScheduleUseCase.name);
             return result;
         } catch (err) {

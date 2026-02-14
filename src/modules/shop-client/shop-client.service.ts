@@ -11,7 +11,6 @@ import {
 } from './use-cases';
 import { FindAllShopClientRepository } from './repository';
 import { JwtPayload } from 'src/shared/types/jwt-payload.interface';
-import { OwnershipService } from 'src/shared/services/ownership.service';
 
 @Injectable()
 export class ShopClientService {
@@ -22,35 +21,33 @@ export class ShopClientService {
         private readonly deleteShopClientUseCase: DeleteShopClientUseCase,
         private readonly updateShopClientUseCase: UpdateShopClientUseCase,
         private readonly findAllShopClientRepository: FindAllShopClientRepository,
-        private readonly ownershipService: OwnershipService,
     ) {}
 
     async create(data: CreateShopClientDto, user: JwtPayload) {
-        await this.ownershipService.assertShopAccess(user.id, user.role, data.shopId);
-        return await this.createShopClientUseCase.execute(data);
+        return await this.createShopClientUseCase.execute(data, user);
     }
 
-    async findAll(filters?: FilterShopClientDto) {
-        return await this.findAllShopClientUseCase.execute(filters);
+    async findAll(filters: FilterShopClientDto = {}, user: JwtPayload) {
+        return await this.findAllShopClientUseCase.execute(filters, user);
     }
 
-    async findByShopId(shopId: string, filters?: FilterShopClientDto) {
-        return await this.findAllShopClientUseCase.executeByShopId(shopId, filters);
+    async findByShopId(shopId: string, filters: FilterShopClientDto = {}, user: JwtPayload) {
+        return await this.findAllShopClientUseCase.executeByShopId(shopId, filters, user);
     }
 
-    async countByShopId(shopId: string) {
-        return await this.findAllShopClientRepository.countByShopId(shopId);
+    async countByShopId(shopId: string, user: JwtPayload) {
+        return await this.findAllShopClientRepository.countByShopId(shopId, user);
     }
 
-    async findOne(id: string) {
-        return await this.findShopClientByIdUseCase.execute(id);
+    async findOne(id: string, user: JwtPayload) {
+        return await this.findShopClientByIdUseCase.execute(id, user);
     }
 
-    async update(id: string, data: UpdateShopClientDto) {
-        return await this.updateShopClientUseCase.execute(id, data);
+    async update(id: string, data: UpdateShopClientDto, user: JwtPayload) {
+        return await this.updateShopClientUseCase.execute(id, data, user);
     }
 
-    async remove(id: string) {
-        return await this.deleteShopClientUseCase.execute(id);
+    async remove(id: string, user: JwtPayload) {
+        return await this.deleteShopClientUseCase.execute(id, user);
     }
 }

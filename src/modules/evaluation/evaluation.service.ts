@@ -9,6 +9,7 @@ import {
     GetShopStatsUseCase,
     UpdateEvaluationUseCase,
 } from './use-cases';
+import { JwtPayload } from 'src/shared/types/jwt-payload.interface';
 
 @Injectable()
 export class EvaluationService {
@@ -21,27 +22,35 @@ export class EvaluationService {
         private readonly deleteEvaluationUseCase: DeleteEvaluationUseCase,
     ) {}
 
-    async create(data: CreateEvaluationDto) {
-        return await this.createEvaluationUseCase.execute(data);
+    async create(data: CreateEvaluationDto, user: JwtPayload) {
+        return await this.createEvaluationUseCase.execute(data, user);
     }
 
-    async findAll(filters?: { shopId?: string; userId?: string; rating?: number; page?: number; perPage?: number }) {
-        return await this.findAllEvaluationUseCase.execute(filters);
+    async findAll(filters: { shopId?: string; userId?: string; rating?: number; page?: number; perPage?: number } = {}, user: JwtPayload) {
+        return await this.findAllEvaluationUseCase.execute(filters, user);
     }
 
-    async findOne(id: string) {
-        return await this.findEvaluationByIdUseCase.execute(id);
+    async findPublicByShop(filters: { shopId: string; rating?: number; page?: number; perPage?: number }) {
+        return await this.findAllEvaluationUseCase.executePublic(filters);
     }
 
-    async getShopStats(shopId: string) {
-        return await this.getShopStatsUseCase.execute(shopId);
+    async findOne(id: string, user: JwtPayload) {
+        return await this.findEvaluationByIdUseCase.execute(id, user);
     }
 
-    async update(id: string, data: UpdateEvaluationDto) {
-        return await this.updateEvaluationUseCase.execute(id, data);
+    async getShopStats(shopId: string, user: JwtPayload) {
+        return await this.getShopStatsUseCase.execute(shopId, user);
     }
 
-    async remove(id: string) {
-        return await this.deleteEvaluationUseCase.execute(id);
+    async getPublicShopStats(shopId: string) {
+        return await this.getShopStatsUseCase.executePublic(shopId);
+    }
+
+    async update(id: string, data: UpdateEvaluationDto, user: JwtPayload) {
+        return await this.updateEvaluationUseCase.execute(id, data, user);
+    }
+
+    async remove(id: string, user: JwtPayload) {
+        return await this.deleteEvaluationUseCase.execute(id, user);
     }
 }

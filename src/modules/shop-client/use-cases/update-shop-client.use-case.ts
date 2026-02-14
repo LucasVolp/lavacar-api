@@ -1,6 +1,7 @@
 import { Injectable, Logger, NotFoundException, ServiceUnavailableException } from '@nestjs/common';
 import { UpdateShopClientRepository, FindShopClientByIdRepository } from '../repository';
 import { UpdateShopClientDto } from '../dto/update-shop-client.dto';
+import { JwtPayload } from 'src/shared/types/jwt-payload.interface';
 
 @Injectable()
 export class UpdateShopClientUseCase {
@@ -10,9 +11,9 @@ export class UpdateShopClientUseCase {
         private readonly logger: Logger = new Logger(),
     ) {}
 
-    async execute(id: string, data: UpdateShopClientDto) {
+    async execute(id: string, data: UpdateShopClientDto, user: JwtPayload) {
         try {
-            const shopClient = await this.findShopClientByIdRepository.findById(id);
+            const shopClient = await this.findShopClientByIdRepository.findById(id, user);
             if (!shopClient) {
                 throw new NotFoundException('Shop client not found');
             }

@@ -11,6 +11,7 @@ import { ShopModule } from './modules/shop/shop.module';
 import { ServiceModule } from './modules/service/service.module';
 import { APP_GUARD } from '@nestjs/core';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
+import { RolesGuard } from './guards/role.guard';
 import { VehicleModule } from './modules/vehicle/vehicle.module';
 import { ScheduleModule } from './modules/schedule/schedule.module';
 import { BlockedTimesModule } from './modules/blocked-time/blocked-times.module';
@@ -54,6 +55,7 @@ import { join } from 'path';
   controllers: [AppController],
   providers: [AppService,
     {provide: APP_GUARD, useClass: JwtAuthGuard},
+    {provide: APP_GUARD, useClass: RolesGuard},
     JwtService,
     JwtStrategy,
     Logger,

@@ -1,5 +1,6 @@
 import { Injectable, Logger, NotFoundException, ServiceUnavailableException } from "@nestjs/common";
 import { FindEvaluationByIdRepository } from "../repository";
+import { JwtPayload } from "src/shared/types/jwt-payload.interface";
 
 @Injectable()
 export class FindEvaluationByIdUseCase {
@@ -8,9 +9,9 @@ export class FindEvaluationByIdUseCase {
         private readonly logger: Logger = new Logger()
     ) {}
 
-    async execute(id: string) {
+    async execute(id: string, user: JwtPayload) {
         try {
-            const evaluation = await this.evaluationRepository.findById(id);
+            const evaluation = await this.evaluationRepository.findById(id, user);
 
             if (!evaluation) {
                 this.logger.warn(`Evaluation not found with ID: ${id}`, FindEvaluationByIdUseCase.name);

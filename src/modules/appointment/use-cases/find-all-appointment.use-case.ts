@@ -1,6 +1,7 @@
 import { Injectable, Logger, ServiceUnavailableException } from "@nestjs/common";
 import { FindAllAppointmentRepository } from "../repository";
 import { FindAllFilters } from "../dto/filters-appointment.dto";
+import { JwtPayload } from "src/shared/types/jwt-payload.interface";
 
 @Injectable()
 export class FindAllAppointmentUseCase {
@@ -9,7 +10,7 @@ export class FindAllAppointmentUseCase {
         private readonly logger: Logger = new Logger()
     ) {}
 
-    async execute(filters: FindAllFilters = {}) {
+    async execute(filters: FindAllFilters = {}, user: JwtPayload) {
         try {
             // Parse startDate para início do dia (00:00:00)
             let startDate: Date | undefined;
@@ -31,7 +32,7 @@ export class FindAllAppointmentUseCase {
                 endDate,
             };
 
-            const result = await this.appointmentRepository.findAll(parsedFilters);
+            const result = await this.appointmentRepository.findAll(parsedFilters, user);
             this.logger.log(`Found ${result.meta.total} appointments`, FindAllAppointmentUseCase.name);
             return result;
         } catch (err) {

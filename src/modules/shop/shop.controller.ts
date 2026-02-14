@@ -4,8 +4,12 @@ import { CreateShopDto } from './dto/create-shop.dto';
 import { UpdateShopDto } from './dto/update-shop.dto';
 import { CurrentUser } from 'src/shared/decorators/current-user.decorator';
 import { JwtPayload } from 'src/shared/types/jwt-payload.interface';
+import { Public } from 'src/shared/decorators/public.decorator';
+import { Roles } from 'src/decorators/roles.decorator';
+import { Role } from 'src/modules/users/types/Role';
 
 @Controller('shop')
+@Roles(Role.ADMIN, Role.OWNER, Role.EMPLOYEE, Role.MANAGER)
 export class ShopController {
   constructor(private readonly shopService: ShopService) {}
 
@@ -33,6 +37,7 @@ export class ShopController {
   }
 
   @Get('slug/:slug')
+  @Public()
   findBySlug(@Param('slug') slug: string) {
     return this.shopService.findBySlug(slug);
   }

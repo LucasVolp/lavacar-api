@@ -1,5 +1,6 @@
 import { Injectable, Logger, ServiceUnavailableException } from '@nestjs/common';
 import { FindAllShopClientRepository } from '../repository';
+import { JwtPayload } from 'src/shared/types/jwt-payload.interface';
 
 interface FindAllFilters {
     shopId?: string;
@@ -14,9 +15,9 @@ export class FindAllShopClientUseCase {
         private readonly logger: Logger = new Logger(),
     ) {}
 
-    async execute(filters: FindAllFilters = {}) {
+    async execute(filters: FindAllFilters = {}, user: JwtPayload) {
         try {
-            const result = await this.findAllShopClientRepository.findAll(filters);
+            const result = await this.findAllShopClientRepository.findAll(filters, user);
             this.logger.log(`Found ${result.meta.total} shop clients`, FindAllShopClientUseCase.name);
             return result;
         } catch (err) {
@@ -29,9 +30,9 @@ export class FindAllShopClientUseCase {
         }
     }
 
-    async executeByShopId(shopId: string, filters: { page?: number; perPage?: number } = {}) {
+    async executeByShopId(shopId: string, filters: { page?: number; perPage?: number } = {}, user: JwtPayload) {
         try {
-            const result = await this.findAllShopClientRepository.findByShopId(shopId, filters);
+            const result = await this.findAllShopClientRepository.findByShopId(shopId, filters, user);
             this.logger.log(`Found ${result.meta.total} clients for shop ${shopId}`, FindAllShopClientUseCase.name);
             return result;
         } catch (err) {

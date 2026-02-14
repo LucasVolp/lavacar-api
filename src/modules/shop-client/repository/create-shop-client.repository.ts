@@ -17,6 +17,7 @@ export class CreateShopClientRepository {
                         lastName: true,
                         email: true,
                         phone: true,
+                        picture: true,
                     },
                 },
                 shop: {

@@ -3,7 +3,6 @@ import { CreateBlockedTimeDto } from './dto/create-blocked-time.dto';
 import { UpdateBlockedTimeDto } from './dto/update-blocked-time.dto';
 import { CreateBlockedTimeUseCase, FindAllBlockedTimeUseCase, FindBlockedTimeByIdUseCase, UpdateBlockedTimeUseCase, DeleteBlockedTimeUseCase } from './use-cases';
 import { JwtPayload } from 'src/shared/types/jwt-payload.interface';
-import { OwnershipService } from 'src/shared/services/ownership.service';
 
 @Injectable()
 export class BlockedTimesService {
@@ -13,27 +12,25 @@ export class BlockedTimesService {
     private readonly findBlockedTimeByIdUseCase: FindBlockedTimeByIdUseCase,
     private readonly updateBlockedTimeUseCase: UpdateBlockedTimeUseCase,
     private readonly deleteBlockedTimeUseCase: DeleteBlockedTimeUseCase,
-    private readonly ownershipService: OwnershipService,
   ) {}
 
   async create(data: CreateBlockedTimeDto, user: JwtPayload) {
-    await this.ownershipService.assertShopAccess(user.id, user.role, data.shopId);
-    return await this.createBlockedTimeUseCase.execute(data);
+    return await this.createBlockedTimeUseCase.execute(data, user);
   }
 
-  async findAll(filters?: { shopId?: string; page?: number; perPage?: number }) {
-    return await this.findAllBlockedTimeUseCase.execute(filters);
+  async findAll(filters: { shopId?: string; page?: number; perPage?: number } = {}, user: JwtPayload) {
+    return await this.findAllBlockedTimeUseCase.execute(filters, user);
   }
 
-  async findOne(id: string) {
-    return await this.findBlockedTimeByIdUseCase.execute(id);
+  async findOne(id: string, user: JwtPayload) {
+    return await this.findBlockedTimeByIdUseCase.execute(id, user);
   }
 
-  async update(id: string, data: UpdateBlockedTimeDto) {
-    return await this.updateBlockedTimeUseCase.execute(id, data);
+  async update(id: string, data: UpdateBlockedTimeDto, user: JwtPayload) {
+    return await this.updateBlockedTimeUseCase.execute(id, data, user);
   }
 
-  async remove(id: string) {
-    return await this.deleteBlockedTimeUseCase.execute(id);
+  async remove(id: string, user: JwtPayload) {
+    return await this.deleteBlockedTimeUseCase.execute(id, user);
   }
 }

@@ -15,6 +15,7 @@ export class AuthService {
     const payload = {
       sub: user.id,
       email: user.email,
+      phone: user.phone,
       role: user.role,
     };
     return this.jwtService.sign(payload);
@@ -28,6 +29,7 @@ export class AuthService {
     const payload = {
       sub: req.user.id,
       email: req.user.email,
+      phone: req.user.phone,
       role: req.user.role,
     };
 
@@ -45,8 +47,10 @@ export class AuthService {
         firstName: true,
         lastName: true,
         email: true,
+        phone: true,
         picture: true,
         role: true,
+        isGuest: true,
         createdAt: true,
       },
     });

@@ -2,6 +2,8 @@ import { Injectable } from "@nestjs/common";
 import { PrismaService } from "src/shared/databases/prisma.database";
 import { AppointmentStatus } from "prisma/generated";
 import { PaginatedResult } from "src/shared/dto/pagination.dto";
+import { JwtPayload } from "src/shared/types/jwt-payload.interface";
+import { buildShopScope, isAdminRole } from "src/shared/security/shop-scope.util";
 
 interface FindAllFilters {
     shopId?: string;
@@ -18,14 +20,13 @@ interface FindAllFilters {
 export class FindAllAppointmentRepository {
     constructor(private readonly prisma: PrismaService) {}
 
-    async findAll(filters: FindAllFilters = {}): Promise<PaginatedResult<any>> {
+    async findAll(filters: FindAllFilters = {}, user: JwtPayload): Promise<PaginatedResult<any>> {
         const page = filters.page || 1;
         const perPage = filters.perPage || 10;
         const skip = (page - 1) * perPage;
 
         const where: any = {};
 
-        if (filters.shopId) where.shopId = filters.shopId;
         if (filters.userId) where.userId = filters.userId;
         if (filters.status) {
             if (Array.isArray(filters.status)) {
@@ -39,6 +40,18 @@ export class FindAllAppointmentRepository {
             where.scheduledAt = {};
             if (filters.startDate) where.scheduledAt.gte = filters.startDate;
             if (filters.endDate) where.scheduledAt.lte = filters.endDate;
+        }
+
+        if (user.role === 'USER') {
+            where.userId = user.id;
+            if (filters.shopId) {
+                where.shopId = filters.shopId;
+            }
+        } else if (!isAdminRole(user.role)) {
+            const scope = await buildShopScope(this.prisma, user, filters.shopId);
+            Object.assign(where, scope);
+        } else if (filters.shopId) {
+            where.shopId = filters.shopId;
         }
 
         const [data, total] = await Promise.all([
@@ -56,6 +69,7 @@ export class FindAllAppointmentRepository {
                             lastName: true,
                             email: true,
                             phone: true,
+                            picture: true,
                         }
                     },
                     shop: {

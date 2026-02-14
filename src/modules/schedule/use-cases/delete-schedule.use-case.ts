@@ -1,5 +1,6 @@
 import { Injectable, Logger, NotFoundException, ServiceUnavailableException } from "@nestjs/common";
 import { DeleteScheduleRepository, FindScheduleByIdRepository } from "../repository";
+import { JwtPayload } from "src/shared/types/jwt-payload.interface";
 
 @Injectable()
 export class DeleteScheduleUseCase {
@@ -9,9 +10,9 @@ export class DeleteScheduleUseCase {
         private readonly logger: Logger = new Logger()
     ) {}
 
-    async execute(id: string) {
+    async execute(id: string, user: JwtPayload) {
         try {
-            const scheduleExists = await this.FindScheduleByIdRepository.findById(id);
+            const scheduleExists = await this.FindScheduleByIdRepository.findById(id, user);
             if (!scheduleExists) {
                 this.logger.warn(`Schedule with id ${id} not found`, DeleteScheduleUseCase.name);
                 throw new NotFoundException('Schedule not found!');

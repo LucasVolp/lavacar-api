@@ -1,6 +1,7 @@
 import { Injectable, Logger, NotFoundException, ConflictException, ServiceUnavailableException } from "@nestjs/common";
 import { FindServiceGroupByIdRepository, UpdateServiceGroupRepository } from "../repository";
 import { UpdateServiceGroupDto } from "../dto/update-service-group.dto";
+import { JwtPayload } from "src/shared/types/jwt-payload.interface";
 
 @Injectable()
 export class UpdateServiceGroupUseCase {
@@ -10,9 +11,9 @@ export class UpdateServiceGroupUseCase {
         private readonly logger: Logger = new Logger()
     ) {}
 
-    async execute(id: string, data: UpdateServiceGroupDto) {
+    async execute(id: string, data: UpdateServiceGroupDto, user: JwtPayload) {
         try {
-            const serviceGroupExists = await this.findByIdRepository.findById(id);
+            const serviceGroupExists = await this.findByIdRepository.findById(id, user);
             
             if (!serviceGroupExists) {
                 throw new NotFoundException('Service group not found');

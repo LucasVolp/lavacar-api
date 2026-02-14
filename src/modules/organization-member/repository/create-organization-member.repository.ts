@@ -16,6 +16,7 @@ export class CreateOrganizationMemberRepository {
                         firstName: true,
                         lastName: true,
                         email: true,
+                        picture: true,
                     },
                 },
                 organization: true,

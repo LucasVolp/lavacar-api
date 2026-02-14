@@ -1,5 +1,6 @@
 import { Injectable, Logger, NotFoundException, ServiceUnavailableException } from '@nestjs/common';
 import { FindShopClientByIdRepository } from '../repository';
+import { JwtPayload } from 'src/shared/types/jwt-payload.interface';
 
 @Injectable()
 export class FindShopClientByIdUseCase {
@@ -8,9 +9,9 @@ export class FindShopClientByIdUseCase {
         private readonly logger: Logger = new Logger(),
     ) {}
 
-    async execute(id: string) {
+    async execute(id: string, user: JwtPayload) {
         try {
-            const shopClient = await this.findShopClientRepository.findById(id);
+            const shopClient = await this.findShopClientRepository.findById(id, user);
             if (!shopClient) {
                 this.logger.warn(`Shop client not found: ${id}`, FindShopClientByIdUseCase.name);
                 throw new NotFoundException('Shop client not found');

@@ -3,6 +3,9 @@ import { CreateShopClientDto } from '../dto/create-shop-client.dto';
 import { CreateShopClientRepository, FindShopClientByIdRepository } from '../repository';
 import { FindShopByIdRepository } from 'src/modules/shop/repository';
 import { FindUserRepository } from 'src/modules/users/repository';
+import { JwtPayload } from 'src/shared/types/jwt-payload.interface';
+import { PrismaService } from 'src/shared/databases/prisma.database';
+import { buildShopScope } from 'src/shared/security/shop-scope.util';
 
 @Injectable()
 export class CreateShopClientUseCase {
@@ -11,19 +14,21 @@ export class CreateShopClientUseCase {
         private readonly findShopClientRepository: FindShopClientByIdRepository,
         private readonly findShopByIdRepository: FindShopByIdRepository,
         private readonly findUserRepository: FindUserRepository,
+        private readonly prisma: PrismaService,
         private readonly logger: Logger = new Logger(),
     ) {}
 
-    async execute(data: CreateShopClientDto) {
+    async execute(data: CreateShopClientDto, user: JwtPayload) {
         try {
+            await buildShopScope(this.prisma, user, data.shopId);
             const shop = await this.findShopByIdRepository.findById(data.shopId);
             if (!shop) {
                 this.logger.warn(`Shop not found: ${data.shopId}`, CreateShopClientUseCase.name);
                 throw new NotFoundException('Shop not found');
             }
 
-            const user = await this.findUserRepository.findById(data.userId);
-            if (!user) {
+            const targetUser = await this.findUserRepository.findById(data.userId);
+            if (!targetUser) {
                 this.logger.warn(`User not found: ${data.userId}`, CreateShopClientUseCase.name);
                 throw new NotFoundException('User not found');
             }

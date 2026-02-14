@@ -9,7 +9,7 @@ import {
 import { CreateAppointmentRepository, FindAppointmentsByDateRepository } from "../repository";
 import { CreateAppointmentDto } from "../dto/create-appointment.dto";
 import { timeToMinutes, extractTimeFromDateTime, extractWeekdayFromDateTime, isTimeOverlapping, addMinutesToTime, getStartOfDayInTimezone } from "src/shared/utils";
-import { Weekday, BlockedTimeType, Role } from "prisma/generated";
+import { Prisma, Weekday, BlockedTimeType, Role } from "prisma/generated";
 import { FindUserRepository } from "src/modules/users/repository";
 import { FindShopByIdRepository } from "src/modules/shop/repository";
 import { ShopStatus } from "src/modules/shop/types/ShopStatus";
@@ -17,7 +17,8 @@ import { FindServicesByIdsRepository } from "src/modules/service/repository";
 import { FindScheduleByWeekdayRepository } from "src/modules/schedule/repository";
 import { FindVehicleByIdRepository } from "src/modules/vehicle/repository";
 import { FindBlockedTimeByShopIdRepository } from "src/modules/blocked-time/repository";
-import { FindShopClientByShopAndUserRepository, CreateShopClientRepository } from "src/modules/shop-client/repository";
+import { fromZonedTime } from "date-fns-tz";
+import { PrismaService } from "src/shared/databases/prisma.database";
 
 @Injectable()
 export class CreateAppointmentUseCase {
@@ -30,10 +31,153 @@ export class CreateAppointmentUseCase {
         private readonly findScheduleByIdRepository: FindScheduleByWeekdayRepository,
         private readonly findVehicleByIdRepository: FindVehicleByIdRepository,
         private readonly findBlockedTimeByShopRepository: FindBlockedTimeByShopIdRepository,
-        private readonly findShopClientRepository: FindShopClientByShopAndUserRepository,
-        private readonly createShopClientRepository: CreateShopClientRepository,
+        private readonly prisma: PrismaService,
         private readonly logger: Logger = new Logger()
     ) {}
+
+    private hasConflictWithBuffer(
+        newStartTime: string,
+        newEndTime: string,
+        existingStartTime: string,
+        existingEndTime: string,
+        bufferBetweenSlots: number,
+    ) {
+        const newStart = timeToMinutes(newStartTime);
+        const newEnd = timeToMinutes(newEndTime);
+        const existingStart = timeToMinutes(existingStartTime) - bufferBetweenSlots;
+        const existingEnd = timeToMinutes(existingEndTime) + bufferBetweenSlots;
+
+        return newStart < existingEnd && newEnd > existingStart;
+    }
+
+    async getPublicAvailableSlots(params: { shopId: string; date: string; serviceIds: string[] }) {
+        const { shopId, date, serviceIds } = params;
+
+        if (!shopId || !date || !Array.isArray(serviceIds) || serviceIds.length === 0) {
+            return {
+                date,
+                totalDuration: 0,
+                slotInterval: 30,
+                availableSlots: [],
+            };
+        }
+
+        const shopExists = await this.findShopByIdRepository.findById(shopId);
+        if (!shopExists || shopExists.status !== ShopStatus.ACTIVE) {
+            return {
+                date,
+                totalDuration: 0,
+                slotInterval: shopExists?.slotInterval || 30,
+                availableSlots: [],
+            };
+        }
+
+        const servicesExists = await this.findServicesRepository.findByIds(serviceIds, shopId);
+        if (servicesExists.length !== serviceIds.length) {
+            throw new NotFoundException('One or more services not found for this shop');
+        }
+
+        const totalDuration = servicesExists.reduce((total, service) => total + service.duration, 0);
+        const slotInterval = shopExists.slotInterval || 30;
+        const bufferBetweenSlots = shopExists.bufferBetweenSlots || 0;
+        const shopTimeZone = shopExists.timeZone || 'America/Campo_Grande';
+
+        // Usa meio-dia local para evitar drift de dia por timezone
+        const dateRef = fromZonedTime(`${date}T12:00:00`, shopTimeZone);
+        const weekday = extractWeekdayFromDateTime(dateRef, shopTimeZone) as Weekday;
+        const schedule = await this.findScheduleByIdRepository.findScheduleByWeekday(weekday, shopId);
+
+        if (!schedule || schedule.isOpen !== 'ACTIVE') {
+            return {
+                date,
+                totalDuration,
+                slotInterval,
+                availableSlots: [],
+            };
+        }
+
+        const shopOpenMinutes = timeToMinutes(schedule.startTime);
+        const shopCloseMinutes = timeToMinutes(schedule.endTime);
+        const dateOnly = getStartOfDayInTimezone(dateRef, shopTimeZone);
+        const blockedTime = await this.findBlockedTimeByShopRepository.findByShopAndDate(shopId, dateOnly, undefined, shopTimeZone);
+        const existingAppointments = await this.findByDateRepository.findByShopAndDate(shopId, dateRef, shopTimeZone);
+
+        if (blockedTime?.type === BlockedTimeType.FULL_DAY) {
+            return {
+                date,
+                totalDuration,
+                slotInterval,
+                availableSlots: [],
+            };
+        }
+
+        const availableSlots: string[] = [];
+        const now = new Date();
+
+        for (let startMinutes = shopOpenMinutes; startMinutes < shopCloseMinutes; startMinutes += slotInterval) {
+            const startTime = `${Math.floor(startMinutes / 60).toString().padStart(2, '0')}:${(startMinutes % 60).toString().padStart(2, '0')}`;
+            const endMinutes = startMinutes + totalDuration;
+
+            if (endMinutes + bufferBetweenSlots > shopCloseMinutes) {
+                continue;
+            }
+
+            const endTime = addMinutesToTime(startTime, totalDuration);
+
+            if (schedule.breakStartTime && schedule.breakEndTime) {
+                if (isTimeOverlapping(startTime, endTime, schedule.breakStartTime, schedule.breakEndTime)) {
+                    continue;
+                }
+            }
+
+            const scheduledAt = fromZonedTime(`${date}T${startTime}:00`, shopTimeZone);
+            const diffMinutes = (scheduledAt.getTime() - now.getTime()) / 60000;
+            const diffDays = (scheduledAt.getTime() - now.getTime()) / (1000 * 3600 * 24);
+
+            if (scheduledAt <= now) {
+                continue;
+            }
+
+            if (diffMinutes < shopExists.minAdvanceMinutes) {
+                continue;
+            }
+
+            if (diffDays > shopExists.maxAdvanceDays) {
+                continue;
+            }
+
+            if (blockedTime?.type === BlockedTimeType.PARTIAL && blockedTime.startTime && blockedTime.endTime) {
+                if (isTimeOverlapping(startTime, endTime, blockedTime.startTime, blockedTime.endTime)) {
+                    continue;
+                }
+            }
+
+            const hasConflict = existingAppointments.some((appointment) => {
+                const existingStart = extractTimeFromDateTime(appointment.scheduledAt, shopTimeZone);
+                const existingEnd = extractTimeFromDateTime(appointment.endTime, shopTimeZone);
+                return this.hasConflictWithBuffer(
+                    startTime,
+                    endTime,
+                    existingStart,
+                    existingEnd,
+                    bufferBetweenSlots,
+                );
+            });
+
+            if (hasConflict) {
+                continue;
+            }
+
+            availableSlots.push(startTime);
+        }
+
+        return {
+            date,
+            totalDuration,
+            slotInterval,
+            availableSlots,
+        };
+    }
 
     async execute(data: CreateAppointmentDto, currentUser?: { id?: string; role?: Role }) {
         try {
@@ -83,22 +227,20 @@ export class CreateAppointmentUseCase {
                 throw new NotFoundException('One or more services not found for this shop');
             }
 
-            // Calcular duração total e preço total dos serviços
             const totalDuration = servicesExists.reduce((total, service) => total + service.duration, 0);
             const totalPrice = servicesExists.reduce((total, service) => total + Number(service.price), 0);
+            const shopTimeZone = shopExists.timeZone || 'America/Campo_Grande';
+            const bufferBetweenSlots = shopExists.bufferBetweenSlots || 0;
 
-            // Extrair horários do agendamento
             const scheduledAt = new Date(data.scheduledAt);
-            const startTime = extractTimeFromDateTime(scheduledAt);
+            const startTime = extractTimeFromDateTime(scheduledAt, shopTimeZone);
             const startMinutes = timeToMinutes(startTime);
             const endMinutes = startMinutes + totalDuration;
             const endTime = addMinutesToTime(startTime, totalDuration);
             const endDateTime = new Date(scheduledAt.getTime() + totalDuration * 60000);
-            const weekday = extractWeekdayFromDateTime(scheduledAt) as Weekday;
+            const weekday = extractWeekdayFromDateTime(scheduledAt, shopTimeZone) as Weekday;
 
-            // Verifica se o shop tem horário cadastrado para o dia da semana
             const schedule = await this.findScheduleByIdRepository.findScheduleByWeekday(weekday, data.shopId);
-            
             if (!schedule || schedule.isOpen !== 'ACTIVE') {
                 this.logger.warn(`No schedule found for shop ID: ${data.shopId} on weekday: ${weekday}`, CreateAppointmentUseCase.name);
                 throw new BadRequestException('Shop is closed on the selected day');
@@ -107,126 +249,136 @@ export class CreateAppointmentUseCase {
             const shopOpenMinutes = timeToMinutes(schedule.startTime);
             const shopCloseMinutes = timeToMinutes(schedule.endTime);
 
-            // Debug logs
-            this.logger.debug(`
-                Appointment Time Debug:
-                ScheduledAt (UTC): ${data.scheduledAt}
-                Local Time: ${startTime}
-                Local Weekday: ${weekday}
-                Duration: ${totalDuration}
-                Start Minutes: ${startMinutes}
-                End Minutes: ${endMinutes}
-                Shop Open: ${schedule.startTime} (${shopOpenMinutes})
-                Shop Close: ${schedule.endTime} (${shopCloseMinutes})
-            `, CreateAppointmentUseCase.name);
-
-            // Verifica se o agendamento começa dentro do horário
             if (startMinutes < shopOpenMinutes) {
-                this.logger.warn(`Appointment starts before shop opens for shop ID: ${data.shopId}`, CreateAppointmentUseCase.name);
                 throw new BadRequestException('Appointment starts before shop opens');
             }
 
-            // Verifica se o agendamento TERMINA dentro do horário
-            if (!isInternalOperation && endMinutes > shopCloseMinutes) {
-                this.logger.warn(`Appointment ends after shop closes for shop ID: ${data.shopId}`, CreateAppointmentUseCase.name);
+            if (!isInternalOperation && (endMinutes + bufferBetweenSlots) > shopCloseMinutes) {
                 throw new BadRequestException('Appointment ends after shop closes');
             }
 
-            // Verifica conflito com horário de intervalo (sobreposição completa)
             if (!isInternalOperation && schedule.breakStartTime && schedule.breakEndTime) {
                 if (isTimeOverlapping(startTime, endTime, schedule.breakStartTime, schedule.breakEndTime)) {
-                    this.logger.warn(`Appointment overlaps with shop break time for shop ID: ${data.shopId}`, CreateAppointmentUseCase.name);
                     throw new BadRequestException('Appointment time overlaps with shop break time');
                 }
             }
 
-            // Verificar se não é no passado
             const now = new Date();
-            // Allow internal staff to schedule in the past (e.g. retroactive entry)
             if (!isInternalOperation && scheduledAt <= now) {
                 throw new BadRequestException('Cannot schedule appointments in the past');
             }
 
-            // Verificar antecedência mínima (Skip for internal operations)
             const diffMinutes = (scheduledAt.getTime() - now.getTime()) / 60000;
-
             if (!isInternalOperation && diffMinutes < shopExists.minAdvanceMinutes) {
-                this.logger.warn(`Appointment does not meet minimum advance time for shop ID: ${data.shopId}`, CreateAppointmentUseCase.name);
                 throw new BadRequestException(
                     `Appointment must be scheduled at least ${shopExists.minAdvanceMinutes} minutes in advance`
                 );
             }
 
-            // Verificar máximo de dias à frente
             const diffDays = (scheduledAt.getTime() - now.getTime()) / (1000 * 3600 * 24);
-
             if (diffDays > shopExists.maxAdvanceDays) {
                 throw new BadRequestException(
                     `Appointment cannot be scheduled more than ${shopExists.maxAdvanceDays} days in advance`
                 );
             }
 
-            // Verificar BlockedTime (feriados, bloqueios)
-            const dateOnly = getStartOfDayInTimezone(scheduledAt);
+            const dateOnly = getStartOfDayInTimezone(scheduledAt, shopTimeZone);
 
-            const blockedTime = await this.findBlockedTimeByShopRepository.findByShopAndDate(data.shopId, dateOnly);
+            const MAX_RETRIES = 2;
+            let attempt = 0;
+            let appointment: Awaited<ReturnType<CreateAppointmentRepository['create']>>;
 
-            if (blockedTime && !isInternalOperation) {
-                if (blockedTime.type === BlockedTimeType.FULL_DAY) {
-                    throw new BadRequestException(`Shop is closed on this date: ${blockedTime.reason || 'Blocked'}`);
-                }
+            while (true) {
+                try {
+                    appointment = await this.prisma.$transaction(async (tx) => {
+                        const blockedTime = await this.findBlockedTimeByShopRepository.findByShopAndDate(
+                            data.shopId,
+                            dateOnly,
+                            tx,
+                            shopTimeZone,
+                        );
 
-                if (!isInternalOperation && blockedTime.type === BlockedTimeType.PARTIAL && blockedTime.startTime && blockedTime.endTime) {
-                    if (isTimeOverlapping(startTime, endTime, blockedTime.startTime, blockedTime.endTime)) {
-                        throw new BadRequestException(`Time slot is blocked: ${blockedTime.reason || 'Unavailable'}`);
-                    }
-                }
-            }
+                        if (blockedTime && !isInternalOperation) {
+                            if (blockedTime.type === BlockedTimeType.FULL_DAY) {
+                                throw new BadRequestException(`Shop is closed on this date: ${blockedTime.reason || 'Blocked'}`);
+                            }
 
-            // Verificar conflito com agendamentos existentes
-            const existingAppointments = await this.findByDateRepository.findByShopAndDate(data.shopId, scheduledAt);
-            
-            for (const appointment of existingAppointments) {
-                const existingStart = extractTimeFromDateTime(appointment.scheduledAt);
-                const existingEnd = extractTimeFromDateTime(appointment.endTime);
+                            if (blockedTime.type === BlockedTimeType.PARTIAL && blockedTime.startTime && blockedTime.endTime) {
+                                if (isTimeOverlapping(startTime, endTime, blockedTime.startTime, blockedTime.endTime)) {
+                                    throw new BadRequestException(`Time slot is blocked: ${blockedTime.reason || 'Unavailable'}`);
+                                }
+                            }
+                        }
 
-                if (!isInternalOperation && isTimeOverlapping(startTime, endTime, existingStart, existingEnd)) {
-                    this.logger.warn(`Appointment overlaps with existing appointment for shop ID: ${data.shopId}`, CreateAppointmentUseCase.name);
-                    throw new ConflictException('Appointment time overlaps with an existing appointment');
-                }
-            }
+                        const existingAppointments = await this.findByDateRepository.findByShopAndDate(
+                            data.shopId,
+                            scheduledAt,
+                            shopTimeZone,
+                            tx,
+                        );
 
-            const appointment = await this.appointmentRepository.create({
-                scheduledAt: scheduledAt.toISOString(),
-                endTime: endDateTime.toISOString(),
-                totalDuration,
-                totalPrice,
-                notes: data.notes,
-                userId: data.userId,
-                shopId: data.shopId,
-                vehicleId: data.vehicleId,
-                serviceIds: servicesExists.map(service => ({
-                    serviceId: service.id,
-                    serviceName: service.name,
-                    servicePrice: Number(service.price),
-                    duration: service.duration,
-                })),
-            });
+                        for (const appointment of existingAppointments) {
+                            const existingStart = extractTimeFromDateTime(appointment.scheduledAt, shopTimeZone);
+                            const existingEnd = extractTimeFromDateTime(appointment.endTime, shopTimeZone);
 
-            // Auto-cadastrar cliente na loja se não existir (CRM)
-            try {
-                const existingShopClient = await this.findShopClientRepository.findByShopAndUser(data.shopId, data.userId);
-                
-                if (!existingShopClient) {
-                    await this.createShopClientRepository.create({
-                        shopId: data.shopId,
-                        userId: data.userId,
+                            if (
+                                !isInternalOperation &&
+                                this.hasConflictWithBuffer(
+                                    startTime,
+                                    endTime,
+                                    existingStart,
+                                    existingEnd,
+                                    bufferBetweenSlots,
+                                )
+                            ) {
+                                throw new ConflictException('Appointment time overlaps with an existing appointment');
+                            }
+                        }
+
+                        const created = await this.appointmentRepository.create({
+                            scheduledAt: scheduledAt.toISOString(),
+                            endTime: endDateTime.toISOString(),
+                            totalDuration,
+                            totalPrice,
+                            notes: data.notes,
+                            userId: data.userId,
+                            shopId: data.shopId,
+                            vehicleId: data.vehicleId,
+                            serviceIds: servicesExists.map(service => ({
+                                serviceId: service.id,
+                                serviceName: service.name,
+                                servicePrice: Number(service.price),
+                                duration: service.duration,
+                            })),
+                        }, tx);
+
+                        await tx.shopClient.upsert({
+                            where: {
+                                shopId_userId: {
+                                    shopId: data.shopId,
+                                    userId: data.userId,
+                                },
+                            },
+                            update: {},
+                            create: {
+                                shopId: data.shopId,
+                                userId: data.userId,
+                            },
+                        });
+
+                        return created;
+                    }, {
+                        isolationLevel: Prisma.TransactionIsolationLevel.Serializable,
                     });
-                    this.logger.log(`Client auto-registered to shop. UserId: ${data.userId}, ShopId: ${data.shopId}`, CreateAppointmentUseCase.name);
+                    break;
+                } catch (txErr) {
+                    const isSerializationError = (txErr as { code?: string })?.code === 'P2034';
+                    if (isSerializationError && attempt < MAX_RETRIES) {
+                        attempt += 1;
+                        continue;
+                    }
+                    throw txErr;
                 }
-            } catch (clientError) {
-                // Silently ignore if client already exists or other non-critical error
-                this.logger.debug(`Auto-register client skipped/failed: ${clientError.message}`, CreateAppointmentUseCase.name);
             }
 
             this.logger.log(`Appointment created with ID: ${appointment.id}`, CreateAppointmentUseCase.name);

@@ -1,5 +1,6 @@
 import { Injectable, Logger, NotFoundException, ServiceUnavailableException } from "@nestjs/common";
 import { FindServiceByIdRepository } from "../repository";
+import { JwtPayload } from "src/shared/types/jwt-payload.interface";
 
 @Injectable()
 export class FindServiceByIdUseCase {
@@ -8,9 +9,9 @@ export class FindServiceByIdUseCase {
         private readonly logger: Logger = new Logger(),
     ){}
 
-    async execute(id: string) {
+    async execute(id: string, user: JwtPayload) {
         try {
-            const service = await this.ServiceRepository.findById(id);
+            const service = await this.ServiceRepository.findById(id, user);
             if (!service) {
                 throw new NotFoundException('Service not found!');
             }

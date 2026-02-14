@@ -7,10 +7,11 @@ import { Prisma } from "prisma/generated";
 export class CreateAppointmentRepository {
     constructor(private readonly prisma: PrismaService) {}
 
-    async create(data: CreateAppointmentDto) {
+    async create(data: CreateAppointmentDto, dbClient?: Prisma.TransactionClient) {
+        const db = dbClient ?? this.prisma;
         const { serviceIds, ...appointmentData } = data;
 
-        return await this.prisma.appointment.create({
+        return await db.appointment.create({
             data: {
                 ...appointmentData,
                 services: {

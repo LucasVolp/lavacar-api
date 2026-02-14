@@ -19,8 +19,15 @@ export class AuthController {
   @UseGuards(AuthGuard('google'))
   googleAuthRedirect(@Req() req, @Res() res) {
     const user = req.user;
-    const accessToken = this.authService.generateJwt(user);
 
+    // Usuário novo via Google — precisa completar cadastro com telefone
+    if (user.needsRegistration) {
+      const profile = encodeURIComponent(JSON.stringify(user.googleProfile));
+      const redirectUrl = `${process.env.FRONTEND_URL}/auth/complete-registration?profile=${profile}`;
+      return res.redirect(redirectUrl);
+    }
+
+    const accessToken = this.authService.generateJwt(user);
     const redirectUrl = `${process.env.FRONTEND_URL}/auth/callback?access_token=${accessToken}`;
     res.redirect(redirectUrl);
   }

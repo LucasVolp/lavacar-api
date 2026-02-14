@@ -16,6 +16,7 @@ export class UpdateEvaluationRepository {
                         id: true,
                         firstName: true,
                         lastName: true,
+                        picture: true,
                     }
                 },
                 appointment: {

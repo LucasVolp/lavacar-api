@@ -5,8 +5,12 @@ import { UpdateAppointmentDto } from './dto/update-appointment.dto';
 import { AppointmentStatus } from './types/AppointmentStatus';
 import { CurrentUser } from 'src/shared/decorators/current-user.decorator';
 import { JwtPayload } from 'src/shared/types/jwt-payload.interface';
+import { Roles } from 'src/decorators/roles.decorator';
+import { Role } from 'src/modules/users/types/Role';
+import { Public } from 'src/shared/decorators/public.decorator';
 
 @Controller('appointments')
+@Roles(Role.ADMIN, Role.OWNER, Role.EMPLOYEE, Role.MANAGER, Role.USER)
 export class AppointmentController {
     constructor(private readonly appointmentService: AppointmentService) {}
 
@@ -17,6 +21,7 @@ export class AppointmentController {
 
     @Get()
     findAll(
+        @CurrentUser() user: JwtPayload,
         @Query('shopId') shopId?: string,
         @Query('userId') userId?: string,
         @Query('status') status?: string | string[],
@@ -47,17 +52,44 @@ export class AppointmentController {
             page: page ? parseInt(page, 10) : undefined,
             perPage: perPage ? parseInt(perPage, 10) : undefined,
             sortOrder: sortOrder === 'desc' ? 'desc' : sortOrder === 'asc' ? 'asc' : undefined,
-        });
+        }, user);
+    }
+
+    @Public()
+    @Get('public/by-date')
+    findPublicByShopAndDate(
+        @Query('shopId') shopId: string,
+        @Query('date') date: string,
+    ) {
+        return this.appointmentService.findPublicByShopAndDate(shopId, date);
+    }
+
+    @Public()
+    @Get('public/availability')
+    findPublicAvailability(
+        @Query('shopId') shopId: string,
+        @Query('date') date: string,
+        @Query('serviceIds') serviceIds: string,
+    ) {
+        const parsedServiceIds = serviceIds
+            ? serviceIds.split(',').map((id) => id.trim()).filter(Boolean)
+            : [];
+
+        return this.appointmentService.findPublicAvailability(shopId, date, parsedServiceIds);
     }
 
     @Get(':id')
-    findOne(@Param('id') id: string) {
-        return this.appointmentService.findOne(id);
+    findOne(@Param('id') id: string, @CurrentUser() user: JwtPayload) {
+        return this.appointmentService.findOne(id, user);
     }
 
     @Patch(':id')
-    update(@Param('id') id: string, @Body() updateAppointmentDto: UpdateAppointmentDto) {
-        return this.appointmentService.update(id, updateAppointmentDto);
+    update(
+        @Param('id') id: string,
+        @Body() updateAppointmentDto: UpdateAppointmentDto,
+        @CurrentUser() user: JwtPayload,
+    ) {
+        return this.appointmentService.update(id, updateAppointmentDto, user);
     }
 
     @Delete(':id')

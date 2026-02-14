@@ -6,20 +6,33 @@ export class FindShopBySlugRepository {
     constructor(private readonly prisma: PrismaService) {}
 
     async findBySlug(slug: string) {
-        return await this.prisma.shop.findUnique({
-            where: { slug },
-            include: {
-                serviceGroups: {
-                    select: {
-                        name: true,
-                        services: true,
-                    }
-                },
-                organization: true,
-                owner: true,
-                schedules: true,
-                blockedTimes: true,
-                appointments: true,
+        return await this.prisma.shop.findFirst({
+            where: { slug, status: 'ACTIVE' },
+            select: {
+                id: true,
+                name: true,
+                slug: true,
+                description: true,
+                phone: true,
+                email: true,
+                status: true,
+                logoUrl: true,
+                bannerUrl: true,
+                socialLinks: true,
+                zipCode: true,
+                street: true,
+                number: true,
+                complement: true,
+                neighborhood: true,
+                city: true,
+                state: true,
+                timeZone: true,
+                slotInterval: true,
+                bufferBetweenSlots: true,
+                maxAdvanceDays: true,
+                minAdvanceMinutes: true,
+                createdAt: true,
+                updatedAt: true,
             },
         });
     }

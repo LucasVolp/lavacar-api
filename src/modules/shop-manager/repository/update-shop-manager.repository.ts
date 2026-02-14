@@ -20,6 +20,7 @@ export class UpdateShopManagerRepository {
                                 firstName: true,
                                 lastName: true,
                                 email: true,
+                                picture: true,
                             },
                         },
                     },

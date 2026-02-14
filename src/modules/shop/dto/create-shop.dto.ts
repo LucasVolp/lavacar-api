@@ -2,6 +2,7 @@ import {
   IsEmail, 
   IsEnum, 
   IsInt, 
+  IsJSON, 
   IsNotEmpty, 
   IsOptional, 
   IsString, 
@@ -54,6 +55,10 @@ export class CreateShopDto {
   @IsString()
   @IsOptional()
   bannerUrl?: string;
+
+  @IsJSON()
+  @IsOptional()
+  socialLinks?: JSON;
 
   // Endereço
   @IsString()

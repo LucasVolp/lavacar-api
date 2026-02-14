@@ -19,6 +19,7 @@ export class CreateShopManagerRepository {
                                 firstName: true,
                                 lastName: true,
                                 email: true,
+                                picture: true,
                             },
                         },
                     },

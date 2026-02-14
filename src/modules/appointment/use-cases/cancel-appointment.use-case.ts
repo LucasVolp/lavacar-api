@@ -7,6 +7,7 @@ import {
 } from "@nestjs/common";
 import { CancelAppointmentRepository, FindAppointmentByIdRepository } from "../repository";
 import { AppointmentStatus } from "prisma/generated";
+import { JwtPayload } from "src/shared/types/jwt-payload.interface";
 
 @Injectable()
 export class CancelAppointmentUseCase {
@@ -16,9 +17,13 @@ export class CancelAppointmentUseCase {
         private readonly logger: Logger = new Logger()
     ) {}
 
-    async execute(id: string, reason?: string, userId?: string) {
+    async execute(id: string, reason?: string, user?: JwtPayload) {
         try {
-            const existing = await this.findByIdRepository.findById(id);
+            if (!user) {
+                throw new BadRequestException('User context is required');
+            }
+
+            const existing = await this.findByIdRepository.findById(id, user);
 
             if (!existing) {
                 this.logger.warn(`Appointment not found: ${id}`, CancelAppointmentUseCase.name);
@@ -35,7 +40,7 @@ export class CancelAppointmentUseCase {
                 throw new BadRequestException(`Cannot cancel appointment with status ${existing.status}`);
             }
 
-            if (userId && existing.userId !== userId) {
+            if (user.role === 'USER' && existing.userId !== user.id) {
                 throw new BadRequestException('You can only cancel your own appointments');
             }
 
