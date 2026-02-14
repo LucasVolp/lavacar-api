@@ -1,4 +1,10 @@
-import { Injectable, Logger, NotFoundException, ServiceUnavailableException } from '@nestjs/common';
+import {
+    ForbiddenException,
+    Injectable,
+    Logger,
+    NotFoundException,
+    ServiceUnavailableException,
+} from '@nestjs/common';
 import { DeleteOrganizationMemberRepository, FindOrganizationMemberByIdRepository } from '../repository';
 
 @Injectable()
@@ -9,7 +15,7 @@ export class DeleteOrganizationMemberUseCase {
         private readonly logger: Logger = new Logger(),
     ) {}
 
-    async execute(id: string) {
+    async execute(id: string, currentUserId: string) {
         try {
             const member = await this.findOrganizationMemberByIdRepository.findById(id);
 
@@ -18,11 +24,19 @@ export class DeleteOrganizationMemberUseCase {
                 throw new NotFoundException('Organization member not found!');
             }
 
+            if (member.userId === currentUserId) {
+                this.logger.warn(
+                    `User ${currentUserId} attempted to delete own organization membership`,
+                    DeleteOrganizationMemberUseCase.name,
+                );
+                throw new ForbiddenException('You cannot remove yourself from the organization');
+            }
+
             const deleted = await this.deleteOrganizationMemberRepository.delete(id);
             this.logger.log('Organization member deleted!', DeleteOrganizationMemberUseCase.name);
             return deleted;
         } catch (err) {
-            if (err instanceof NotFoundException) {
+            if (err instanceof NotFoundException || err instanceof ForbiddenException) {
                 throw err;
             }
             const error = new ServiceUnavailableException({

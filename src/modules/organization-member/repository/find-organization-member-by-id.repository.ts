@@ -15,6 +15,7 @@ export class FindOrganizationMemberByIdRepository {
                         firstName: true,
                         lastName: true,
                         email: true,
+                        picture: true,
                     },
                 },
                 organization: true,

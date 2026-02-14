@@ -7,6 +7,7 @@ import {
     DeleteOrganizationMemberUseCase,
 } from './use-cases';
 import { CreateOrganizationMemberDto, UpdateOrganizationMemberDto } from './dto';
+import { JwtPayload } from 'src/shared/types/jwt-payload.interface';
 
 @Injectable()
 export class OrganizationMemberService {
@@ -34,11 +35,11 @@ export class OrganizationMemberService {
         return this.findOrganizationMemberByIdUseCase.execute(id);
     }
 
-    update(id: string, data: UpdateOrganizationMemberDto) {
-        return this.updateOrganizationMemberUseCase.execute(id, data);
+    update(id: string, data: UpdateOrganizationMemberDto, user: JwtPayload) {
+        return this.updateOrganizationMemberUseCase.execute(id, data, user.id);
     }
 
-    delete(id: string) {
-        return this.deleteOrganizationMemberUseCase.execute(id);
+    delete(id: string, user: JwtPayload) {
+        return this.deleteOrganizationMemberUseCase.execute(id, user.id);
     }
 }

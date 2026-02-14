@@ -17,6 +17,7 @@ export class UsersController {
   }
 
   @Get()
+  @Public()
   findAll(
     // @CurrentUser() user: JwtPayload,
     @Query('page') page?: string,
@@ -47,6 +48,7 @@ export class UsersController {
   }
 
   @Patch(':id')
+  @Public()
   update(@Param('id') id: string, @Body() data: UpdateUserDto, 
   // @CurrentUser() user: JwtPayload
 ) {

@@ -32,6 +32,7 @@ export class FindAllOrganizationMemberRepository {
                             firstName: true,
                             lastName: true,
                             email: true,
+                            picture: true,
                         },
                     },
                     organization: true,

@@ -4,3 +4,4 @@ export * from './find-organization-by-id.repository';
 export * from './update-organization.repository';
 export * from './delete-organization.repository';
 export * from './find-organization-by-owner.repository';
+export * from './find-organization-dashboard-metrics.repository';

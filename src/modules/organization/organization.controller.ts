@@ -1,6 +1,7 @@
 import { Controller, Get, Post, Body, Patch, Param, Delete, Query } from '@nestjs/common';
 import { OrganizationService } from './organization.service';
 import { CreateOrganizationDto, UpdateOrganizationDto } from './dto';
+import { OrganizationMetricsPeriod } from './repository';
 
 @Controller('organizations')
 export class OrganizationController {
@@ -25,6 +26,20 @@ export class OrganizationController {
     @Get(':id')
     findById(@Param('id') id: string) {
         return this.organizationService.findById(id);
+    }
+
+    @Get(':id/dashboard-metrics')
+    findDashboardMetrics(
+        @Param('id') id: string,
+        @Query('period') period?: OrganizationMetricsPeriod,
+        @Query('startDate') startDate?: string,
+        @Query('endDate') endDate?: string,
+    ) {
+        return this.organizationService.findDashboardMetrics(id, {
+            period,
+            startDate: startDate ? new Date(startDate) : undefined,
+            endDate: endDate ? new Date(endDate) : undefined,
+        });
     }
 
     @Get('slug/:slug')

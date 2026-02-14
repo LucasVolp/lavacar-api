@@ -6,8 +6,10 @@ import {
     UpdateOrganizationUseCase,
     DeleteOrganizationUseCase,
     FindOrganizationByOwnerUseCase,
+    FindOrganizationDashboardMetricsUseCase,
 } from './use-cases';
 import { CreateOrganizationDto, UpdateOrganizationDto } from './dto';
+import { OrganizationDashboardMetricsFilters } from './repository';
 
 @Injectable()
 export class OrganizationService {
@@ -18,6 +20,7 @@ export class OrganizationService {
         private readonly updateOrganizationUseCase: UpdateOrganizationUseCase,
         private readonly deleteOrganizationUseCase: DeleteOrganizationUseCase,
         private readonly findOrganizationByOwnerUseCase: FindOrganizationByOwnerUseCase,
+        private readonly findOrganizationDashboardMetricsUseCase: FindOrganizationDashboardMetricsUseCase,
     ) {}
 
     create(data: CreateOrganizationDto) {
@@ -38,6 +41,10 @@ export class OrganizationService {
 
     findByOwner(ownerId: string) {
         return this.findOrganizationByOwnerUseCase.execute(ownerId);
+    }
+
+    findDashboardMetrics(id: string, filters: OrganizationDashboardMetricsFilters = {}) {
+        return this.findOrganizationDashboardMetricsUseCase.execute(id, filters);
     }
 
     update(id: string, data: UpdateOrganizationDto) {

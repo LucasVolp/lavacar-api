@@ -1,6 +1,6 @@
 import { BadRequestException, ConflictException, Injectable, Logger, NotFoundException, ServiceUnavailableException } from '@nestjs/common';
 import { CreateSalesGoalDto } from '../dto/create-sales-goal.dto';
-import { CreateSalesGoalRepository, FindConflictingSalesGoalRepository } from '../repository';
+import { CreateSalesGoalRepository } from '../repository';
 import { FindShopByIdRepository } from 'src/modules/shop/repository';
 import { FindOrganizationByIdRepository } from 'src/modules/organization/repository';
 
@@ -10,7 +10,6 @@ export class CreateSalesGoalUseCase {
         private readonly createSalesGoalRepository: CreateSalesGoalRepository,
         private readonly findShopByIdRepository: FindShopByIdRepository,
         private readonly findOrganizationByIdRepository: FindOrganizationByIdRepository,
-        private readonly findConflictingSalesGoalRepository: FindConflictingSalesGoalRepository,
         private readonly logger: Logger = new Logger(),
     ) {}
 
@@ -61,19 +60,6 @@ export class CreateSalesGoalUseCase {
             if (endDate <= startDate) {
                 this.logger.warn('End date must be after start date', CreateSalesGoalUseCase.name);
                 throw new BadRequestException('End date must be after start date');
-            }
-
-            // --- Overlap Logic with Completion Check ---
-            const conflictingGoal = await this.findConflictingSalesGoalRepository.findConflicting(
-                data.shopId,
-                data.organizationId,
-                startDate,
-                endDate,
-            );
-
-            if (conflictingGoal) {
-                this.logger.warn('Conflito de Meta detectado (Meta existente não concluída)', { newGoal: data, conflictingGoal });
-                throw new ConflictException('Já existe uma meta em andamento para este período. Complete-a antes de criar uma nova ou ajuste as datas.');
             }
 
             const salesGoal = await this.createSalesGoalRepository.create(data);
