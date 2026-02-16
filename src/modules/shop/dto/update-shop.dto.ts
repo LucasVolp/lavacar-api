@@ -1,6 +1,6 @@
 import { PartialType } from '@nestjs/mapped-types';
 import { CreateShopDto } from './create-shop.dto';
-import { IsEmail, IsEnum, IsInt, IsJSON, IsOptional, IsString, IsUUID, Length, Matches, Max, Min } from 'class-validator';
+import { IsArray, IsEmail, IsEnum, IsInt, IsJSON, IsOptional, IsString, IsUUID, Length, Matches, Max, Min } from 'class-validator';
 import { ShopStatus } from '../types/ShopStatus';
 
 // OwnerId não pode ser alterado após criação
@@ -112,4 +112,8 @@ export class UpdateShopDto extends PartialType(CreateShopDto) {
     @IsUUID()
     @IsOptional()
     ownerId?: string;
+
+    @IsOptional()
+    @IsArray()
+    gallery?: string[]
 }

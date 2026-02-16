@@ -1,4 +1,16 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, Query } from '@nestjs/common';
+import {
+    BadRequestException,
+    Body,
+    Controller,
+    Delete,
+    Get,
+    Param,
+    Patch,
+    Post,
+    Query,
+    UploadedFiles,
+    UseInterceptors,
+} from '@nestjs/common';
 import { EvaluationService } from './evaluation.service';
 import { CreateEvaluationDto } from './dto/create-evaluation.dto';
 import { UpdateEvaluationDto } from './dto/update-evaluation.dto';
@@ -7,15 +19,63 @@ import { JwtPayload } from 'src/shared/types/jwt-payload.interface';
 import { Roles } from 'src/decorators/roles.decorator';
 import { Role } from 'src/modules/users/types/Role';
 import { Public } from 'src/shared/decorators/public.decorator';
+import { FilesInterceptor } from '@nestjs/platform-express';
+import { memoryStorage } from 'multer';
+import { StorageService } from '../storage/storage.service';
 
 @Controller('evaluations')
 @Roles(Role.ADMIN, Role.OWNER, Role.EMPLOYEE, Role.MANAGER, Role.USER)
 export class EvaluationController {
-    constructor(private readonly evaluationService: EvaluationService) {}
+    constructor(
+        private readonly evaluationService: EvaluationService,
+        private readonly storageService: StorageService,
+    ) {}
 
     @Post()
     create(@Body() createEvaluationDto: CreateEvaluationDto, @CurrentUser() user: JwtPayload) {
         return this.evaluationService.create(createEvaluationDto, user);
+    }
+
+    @Post('upload/photos')
+    @UseInterceptors(
+        FilesInterceptor('photos', 5, {
+            storage: memoryStorage(),
+            limits: {
+                fileSize: 12 * 1024 * 1024,
+            },
+            fileFilter: (_req, file, cb) => {
+                if (!file.mimetype.startsWith('image/')) {
+                    return cb(new BadRequestException('Apenas imagens sao permitidas'), false);
+                }
+                cb(null, true);
+            },
+        }),
+    )
+    async uploadPhotos(
+        @UploadedFiles() files: Array<Express.Multer.File>,
+        @CurrentUser() user: JwtPayload,
+        @Query('appointmentId') appointmentId?: string,
+    ) {
+        if (!files?.length) {
+            throw new BadRequestException('Nenhuma imagem enviada');
+        }
+
+        const urls = await Promise.all(
+            files.map((file) =>
+                this.storageService.uploadFile({
+                    file,
+                    fileType: 'IMAGE',
+                    context: {
+                        type: 'USER',
+                        userId: user.id,
+                        category: 'evaluation',
+                        appointmentId,
+                    },
+                }),
+            ),
+        );
+
+        return { urls };
     }
 
     @Get()

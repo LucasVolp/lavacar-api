@@ -21,7 +21,7 @@ async function bootstrap() {
     origin: ['http://localhost:3001', 'http://localhost:3000'], // Frontend URLs
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'Accept', 'Origin', 'X-Requested-With'],
   });
 
   // Habilitar validação global

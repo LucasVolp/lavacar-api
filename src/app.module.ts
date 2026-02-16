@@ -10,6 +10,7 @@ import { GoogleStrategy } from './shared/strategies/google.strategy';
 import { ShopModule } from './modules/shop/shop.module';
 import { ServiceModule } from './modules/service/service.module';
 import { APP_GUARD } from '@nestjs/core';
+import { ConfigModule } from '@nestjs/config';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { RolesGuard } from './guards/role.guard';
 import { VehicleModule } from './modules/vehicle/vehicle.module';
@@ -25,15 +26,12 @@ import { FipeApiModule } from './modules/fipe-api/fipe-api.module';
 import { SalesGoalModule } from './modules/sales-goal/sales-goal.module';
 import { ChecklistModule } from './modules/checklist/checklist.module';
 import { ShopClientModule } from './modules/shop-client/shop-client.module';
-import { ServeStaticModule } from '@nestjs/serve-static';
-import { join } from 'path';
+import { StorageModule } from './modules/storage/storage.module';
 
 @Module({
   imports: [
-    ServeStaticModule.forRoot({
-      rootPath: join(__dirname, '..', 'uploads'),
-      serveRoot: '/uploads',
-    }),
+    ConfigModule.forRoot({ isGlobal: true }),
+    StorageModule,
     UsersModule,
     AuthModule,
     ShopModule,

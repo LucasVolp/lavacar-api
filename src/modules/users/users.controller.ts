@@ -1,14 +1,33 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, Query, ForbiddenException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Body,
+  Controller,
+  Delete,
+  ForbiddenException,
+  Get,
+  Param,
+  Patch,
+  Post,
+  Query,
+  UploadedFile,
+  UseInterceptors,
+} from '@nestjs/common';
 import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { Public } from 'src/shared/decorators/public.decorator';
 import { CurrentUser } from 'src/shared/decorators/current-user.decorator';
 import { JwtPayload } from 'src/shared/types/jwt-payload.interface';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { memoryStorage } from 'multer';
+import { StorageService } from '../storage/storage.service';
 
 @Controller('users')
 export class UsersController {
-  constructor(private readonly usersService: UsersService) {}
+  constructor(
+    private readonly usersService: UsersService,
+    private readonly storageService: StorageService,
+  ) {}
 
   @Public()
   @Post()
@@ -61,6 +80,63 @@ export class UsersController {
       throw new ForbiddenException('You can only update your own profile');
     }
     return this.usersService.update(id, data);
+  }
+
+  @Post(':id/upload/avatar')
+  @UseInterceptors(
+    FileInterceptor('file', {
+      storage: memoryStorage(),
+      limits: { fileSize: 8 * 1024 * 1024 },
+      fileFilter: (_req, file, cb) => {
+        if (!file.mimetype.startsWith('image/')) {
+          return cb(new BadRequestException('Apenas imagens sao permitidas'), false);
+        }
+        cb(null, true);
+      },
+    }),
+  )
+  async uploadAvatar(
+    @Param('id') id: string,
+    @UploadedFile() file: Express.Multer.File,
+    @CurrentUser() user: JwtPayload,
+  ) {
+    if (user.id !== id && user.role !== 'ADMIN') {
+      throw new ForbiddenException('You can only update your own profile');
+    }
+    if (!file) throw new BadRequestException('Arquivo nao enviado');
+
+    const current = await this.usersService.findOne(id);
+    const url = await this.storageService.uploadFile({
+      file,
+      fileType: 'IMAGE',
+      context: {
+        type: 'USER',
+        userId: id,
+        category: 'avatar',
+      },
+    });
+
+    if (current?.picture) {
+      await this.storageService.deleteFile(current.picture).catch(() => undefined);
+    }
+
+    await this.usersService.update(id, { picture: url });
+    return { url };
+  }
+
+  @Delete(':id/upload/avatar')
+  async deleteAvatar(@Param('id') id: string, @CurrentUser() user: JwtPayload) {
+    if (user.id !== id && user.role !== 'ADMIN') {
+      throw new ForbiddenException('You can only update your own profile');
+    }
+
+    const current = await this.usersService.findOne(id);
+    if (current?.picture) {
+      await this.storageService.deleteFile(current.picture);
+    }
+
+    await this.usersService.update(id, { picture: null as any });
+    return { success: true };
   }
 
   @Delete(':id')

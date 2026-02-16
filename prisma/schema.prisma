@@ -177,6 +177,7 @@ model Shop {
   logoUrl     String?
   bannerUrl   String?
   socialLinks Json?
+  gallery  String[] @default([])
 
   // Endereço
   zipCode      String // CEP - campo obrigatório, usado para buscar o resto

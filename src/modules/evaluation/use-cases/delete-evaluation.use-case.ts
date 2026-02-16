@@ -7,12 +7,14 @@ import {
 } from "@nestjs/common";
 import { DeleteEvaluationRepository, FindEvaluationByIdRepository } from "../repository";
 import { JwtPayload } from "src/shared/types/jwt-payload.interface";
+import { StorageService } from "src/modules/storage/storage.service";
 
 @Injectable()
 export class DeleteEvaluationUseCase {
     constructor(
         private readonly evaluationRepository: DeleteEvaluationRepository,
         private readonly findByIdRepository: FindEvaluationByIdRepository,
+        private readonly storageService: StorageService,
         private readonly logger: Logger = new Logger()
     ) {}
 
@@ -23,6 +25,10 @@ export class DeleteEvaluationUseCase {
             if (!existing) {
                 this.logger.warn(`Evaluation not found with ID: ${id}`, DeleteEvaluationUseCase.name);
                 throw new NotFoundException('Evaluation not found');
+            }
+
+            if (existing.photos?.length) {
+                await Promise.allSettled(existing.photos.map((photoUrl) => this.storageService.deleteFile(photoUrl)));
             }
 
             const deletedEvaluation = await this.evaluationRepository.delete(id);

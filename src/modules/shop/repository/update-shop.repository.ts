@@ -8,9 +8,11 @@ export class UpdateShopRepository{
     constructor(private readonly prisma: PrismaService){}
 
     async update(id: string, data: UpdateShopDto) {
+        const uniqueGallery = data.gallery ? Array.from(new Set(data.gallery)) : undefined;
         const updateData: Prisma.ShopUncheckedUpdateInput = {
             ...data,
             socialLinks: data.socialLinks as Prisma.InputJsonValue | undefined,
+            gallery: uniqueGallery ? { set: uniqueGallery } : undefined,
         };
 
         return await this.prisma.shop.update({

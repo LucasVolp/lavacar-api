@@ -1,4 +1,5 @@
 import { 
+  IsArray,
   IsEmail, 
   IsEnum, 
   IsInt, 
@@ -122,4 +123,9 @@ export class CreateShopDto {
   @IsUUID()
   @IsOptional()
   ownerId?: string;
+
+  @IsString({each: true})
+  @IsOptional()
+  @IsArray()
+  gallery?: string[]
 }

@@ -8,12 +8,14 @@ import {
 import { FindEvaluationByIdRepository, UpdateEvaluationRepository } from "../repository";
 import { UpdateEvaluationDto } from "../dto/update-evaluation.dto";
 import { JwtPayload } from "src/shared/types/jwt-payload.interface";
+import { StorageService } from "src/modules/storage/storage.service";
 
 @Injectable()
 export class UpdateEvaluationUseCase {
     constructor(
         private readonly evaluationRepository: UpdateEvaluationRepository,
         private readonly findByIdRepository: FindEvaluationByIdRepository,
+        private readonly storageService: StorageService,
         private readonly logger: Logger = new Logger()
     ) {}
 
@@ -24,6 +26,14 @@ export class UpdateEvaluationUseCase {
             if (!existing) {
                 this.logger.warn(`Evaluation not found with ID: ${id}`, UpdateEvaluationUseCase.name);
                 throw new NotFoundException('Evaluation not found');
+            }
+
+            if (Array.isArray(data.photos)) {
+                const nextPhotos = new Set(data.photos);
+                const removedPhotos = (existing.photos || []).filter((url) => !nextPhotos.has(url));
+                if (removedPhotos.length) {
+                    await Promise.allSettled(removedPhotos.map((photoUrl) => this.storageService.deleteFile(photoUrl)));
+                }
             }
 
             const evaluation = await this.evaluationRepository.update(id, data);
