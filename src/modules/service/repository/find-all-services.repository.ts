@@ -5,7 +5,6 @@ import { PaginatedResult } from "src/shared/dto/pagination.dto";
 import { JwtPayload } from "src/shared/types/jwt-payload.interface";
 import { buildShopScope } from "src/shared/security/shop-scope.util";
 
-
 interface FindAllFilters {
     shopId?: string;
     groupId?: string;
@@ -46,6 +45,7 @@ export class FindAllServicesRepository {
                 include: {
                     shop: true,
                     group: true,
+                    variants: true,
                 },
                 orderBy: { name: 'asc' },
             }),
@@ -97,11 +97,14 @@ export class FindAllServicesRepository {
                     price: true,
                     duration: true,
                     isActive: true,
+                    isBudgetOnly: true,
+                    hasVariants: true,
                     shopId: true,
                     groupId: true,
                     createdAt: true,
                     updatedAt: true,
                     group: true,
+                    variants: true,
                 },
                 orderBy: { name: 'asc' },
             }),

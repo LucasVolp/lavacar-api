@@ -38,7 +38,17 @@ export class ShopService {
     return await this.UpdateShopUseCase.execute(id, data);
   }
 
-  async remove(id: string) {
+  async remove(id: string, user: JwtPayload) {
+    if (user.role !== 'ADMIN') {
+      const shop = await this.FindShopByIdUseCase.execute(id);
+      const org = await this.prisma.organization.findUnique({
+        where: { id: shop.organizationId },
+        select: { ownerId: true },
+      });
+      if (!org || org.ownerId !== user.id) {
+        throw new ForbiddenException('Only the organization owner can delete shops');
+      }
+    }
     return await this.DeleteShopUseCase.execute(id);
   }
 

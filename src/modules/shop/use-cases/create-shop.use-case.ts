@@ -1,5 +1,5 @@
-import { BadRequestException, Injectable, Logger, NotFoundException, ServiceUnavailableException } from "@nestjs/common";
-import { CreateShopRepository, FindShopBySlugRepository } from "../repository";
+import { BadRequestException, ConflictException, Injectable, Logger, NotFoundException, ServiceUnavailableException } from "@nestjs/common";
+import { CreateShopRepository, FindShopByDocumentRepository, FindShopBySlugRepository } from "../repository";
 import { CreateShopDto } from "../dto/create-shop.dto";
 import { generateUniqueSlug } from "src/shared/utils";
 import { FindUserRepository } from "src/modules/users/repository";
@@ -10,6 +10,7 @@ export class CreateShopUseCase {
     constructor(
         private readonly shopRepository: CreateShopRepository,
         private readonly findBySlugRepository: FindShopBySlugRepository,
+        private readonly findShopByDocumentRepository: FindShopByDocumentRepository,
         private readonly findUserRepository: FindUserRepository,
         private readonly findOrganizationRepository: FindOrganizationByIdRepository,
         private readonly logger: Logger = new Logger(),
@@ -47,6 +48,21 @@ export class CreateShopUseCase {
                 data.document = organizationExists.document ?? user?.cpf ?? undefined;
             }
 
+            if (data.document) {
+                const documentAlreadyUsedOutsideOrg =
+                    await this.findShopByDocumentRepository.findByDocumentOutsideOrganization(
+                        data.document,
+                        data.organizationId,
+                    );
+
+                if (documentAlreadyUsedOutsideOrg) {
+                    this.logger.warn(
+                        `Document already used in another organization. document=${data.document}`,
+                        CreateShopUseCase.name,
+                    );
+                    throw new ConflictException('Documento já utilizado por loja de outra organização');
+                }
+            }
 
             const shop = await this.shopRepository.create({
                 ...data,
@@ -55,7 +71,7 @@ export class CreateShopUseCase {
             this.logger.log(`Shop created with slug: ${shop.slug}`, CreateShopUseCase.name);
             return shop;
         } catch (err) {
-            if (err instanceof NotFoundException) {
+            if (err instanceof NotFoundException || err instanceof BadRequestException || err instanceof ConflictException) {
                 throw err;
             }
             const error = new ServiceUnavailableException('Something bad happened!', {

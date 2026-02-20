@@ -9,8 +9,11 @@ export class FindServicesByIdsRepository {
         return await this.prisma.service.findMany({
             where: {
                 id: { in: ids },
-                shopId: shopId, // Garante que pertencem ao shop
-                isActive: true, // Só serviços ativos
+                shopId,
+                isActive: true,
+            },
+            include: {
+                variants: true,
             },
         });
     }

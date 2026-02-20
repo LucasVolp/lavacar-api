@@ -136,7 +136,7 @@ export class ServiceController {
       await this.storageService.deleteFile(service.photoUrl);
     }
 
-    await this.serviceService.update(id, { photoUrl: null as any }, user);
+    await this.serviceService.update(id, { photoUrl: null as unknown as string }, user);
     return { success: true };
   }
 

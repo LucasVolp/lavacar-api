@@ -27,6 +27,7 @@ import { SalesGoalModule } from './modules/sales-goal/sales-goal.module';
 import { ChecklistModule } from './modules/checklist/checklist.module';
 import { ShopClientModule } from './modules/shop-client/shop-client.module';
 import { StorageModule } from './modules/storage/storage.module';
+import { ServiceVariantModule } from './modules/service-variant/service-variant.module';
 
 @Module({
   imports: [
@@ -48,7 +49,8 @@ import { StorageModule } from './modules/storage/storage.module';
     FipeApiModule,
     SalesGoalModule,
     ChecklistModule,
-    ShopClientModule
+    ShopClientModule,
+    ServiceVariantModule
   ],
   controllers: [AppController],
   providers: [AppService,

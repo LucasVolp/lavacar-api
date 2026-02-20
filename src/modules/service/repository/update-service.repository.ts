@@ -5,6 +5,7 @@ import { UpdateServiceDto } from "../dto/update-service.dto";
 @Injectable()
 export class UpdateServiceRepository {
     constructor(private readonly prisma: PrismaService){}
+
     async update(id: string, data: UpdateServiceDto){
         return await this.prisma.service.update({
             where: {id},
@@ -12,6 +13,7 @@ export class UpdateServiceRepository {
             include: {
                 group: true,
                 shop: true,
+                variants: true,
             }
         })
     }

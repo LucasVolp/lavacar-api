@@ -1,5 +1,5 @@
 import { ConflictException, Injectable, Logger, NotFoundException, ServiceUnavailableException } from "@nestjs/common";
-import { FindShopByIdRepository, FindShopBySlugRepository, UpdateShopRepository } from "../repository";
+import { FindShopByDocumentRepository, FindShopByIdRepository, FindShopBySlugRepository, UpdateShopRepository } from "../repository";
 import { UpdateShopDto } from "../dto/update-shop.dto";
 import { FindUserRepository } from "src/modules/users/repository";
 import { FindOrganizationByIdRepository } from "src/modules/organization/repository";
@@ -9,6 +9,7 @@ export class UpdateShopUseCase {
     constructor(
         private readonly ShopRepository: UpdateShopRepository,
         private readonly FindShopByIdRepository: FindShopByIdRepository,
+        private readonly findShopByDocumentRepository: FindShopByDocumentRepository,
         private readonly findUserByIdRepository: FindUserRepository,
         private readonly findShopBySlugRepository: FindShopBySlugRepository,
         private readonly findOrganizationRepository: FindOrganizationByIdRepository,
@@ -43,6 +44,24 @@ export class UpdateShopUseCase {
                 if (slugInUse && slugInUse.id !== id) {
                     this.logger.warn(`Slug already in use: ${data.slug}`, UpdateShopUseCase.name);
                     throw new ConflictException('Slug already in use');
+                }
+            }
+
+            if (data.document) {
+                const targetOrganizationId = data.organizationId || shopExists.organizationId;
+                const documentAlreadyUsedOutsideOrg =
+                    await this.findShopByDocumentRepository.findByDocumentOutsideOrganization(
+                        data.document,
+                        targetOrganizationId,
+                        id,
+                    );
+
+                if (documentAlreadyUsedOutsideOrg) {
+                    this.logger.warn(
+                        `Document already used in another organization. document=${data.document}`,
+                        UpdateShopUseCase.name,
+                    );
+                    throw new ConflictException('Documento já utilizado por loja de outra organização');
                 }
             }
 

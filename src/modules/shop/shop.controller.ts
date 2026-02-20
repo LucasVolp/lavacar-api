@@ -204,7 +204,7 @@ export class ShopController {
   }
 
   @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.shopService.remove(id);
+  remove(@Param('id') id: string, @CurrentUser() user: JwtPayload) {
+    return this.shopService.remove(id, user);
   }
 }

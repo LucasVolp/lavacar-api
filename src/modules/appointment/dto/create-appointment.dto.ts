@@ -1,15 +1,18 @@
-import { 
-    ArrayMinSize, 
-    IsArray, 
-    IsDateString, 
-    IsNotEmpty, 
-    IsNumber, 
-    IsOptional, 
-    IsString, 
+import {
+    ArrayMinSize,
+    IsArray,
+    IsBoolean,
+    IsDateString,
+    IsEnum,
+    IsNotEmpty,
+    IsNumber,
+    IsOptional,
+    IsString,
     IsUUID,
     ValidateNested
 } from "class-validator";
 import { Type } from "class-transformer";
+import { VehicleSize } from "prisma/generated";
 
 export class CreateAppointmentServiceData {
     @IsUUID()
@@ -27,6 +30,14 @@ export class CreateAppointmentServiceData {
     @IsNumber()
     @IsNotEmpty()
     duration: number;
+
+    @IsBoolean()
+    @IsOptional()
+    isBudget?: boolean;
+
+    @IsEnum(VehicleSize)
+    @IsOptional()
+    vehicleSize?: VehicleSize;
 }
 
 export class CreateAppointmentDto {

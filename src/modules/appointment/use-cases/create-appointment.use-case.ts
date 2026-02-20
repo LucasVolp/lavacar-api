@@ -208,15 +208,14 @@ export class CreateAppointmentUseCase {
 
             const isInternalOperation = isShopOwner || resolvedRole === Role.ADMIN;
 
-            if (data.vehicleId) {
-                const vehicleExists = await this.findVehicleByIdRepository.findById(data.vehicleId);
-                if (!vehicleExists) {
-                    this.logger.warn(`Vehicle not found with ID: ${data.vehicleId}`, CreateAppointmentUseCase.name);
-                    throw new NotFoundException('Vehicle not found');
-                } else if (vehicleExists.userId !== data.userId) {
-                    this.logger.warn(`Vehicle with ID: ${data.vehicleId} does not belong to user ID: ${data.userId}`, CreateAppointmentUseCase.name);
-                    throw new BadRequestException('Vehicle does not belong to the user');
-                }
+            const vehicleExists = await this.findVehicleByIdRepository.findById(data.vehicleId);
+            if (!vehicleExists) {
+                this.logger.warn(`Vehicle not found with ID: ${data.vehicleId}`, CreateAppointmentUseCase.name);
+                throw new NotFoundException('Vehicle not found');
+            }
+            if (vehicleExists.userId !== data.userId) {
+                this.logger.warn(`Vehicle with ID: ${data.vehicleId} does not belong to user ID: ${data.userId}`, CreateAppointmentUseCase.name);
+                throw new BadRequestException('Vehicle does not belong to the user');
             }
 
             const serviceIds = data.serviceIds.map(service => service.serviceId);
@@ -227,8 +226,45 @@ export class CreateAppointmentUseCase {
                 throw new NotFoundException('One or more services not found for this shop');
             }
 
-            const totalDuration = servicesExists.reduce((total, service) => total + service.duration, 0);
-            const totalPrice = servicesExists.reduce((total, service) => total + Number(service.price), 0);
+            const selectedVehicleSize = vehicleExists?.size;
+
+            const appointmentServicesSnapshot = servicesExists.map((service) => {
+                let servicePrice = Number(service.price);
+                let duration = service.duration;
+                let vehicleSize = vehicleExists?.size;
+
+                if (service.hasVariants) {
+                    if (!selectedVehicleSize) {
+                        throw new BadRequestException(`Vehicle size is required for service ${service.name}`);
+                    }
+
+                    const matchedVariant = service.variants?.find((variant) => variant.size === selectedVehicleSize);
+                    if (!matchedVariant) {
+                        throw new BadRequestException(`No variant found for service ${service.name} and vehicle size ${selectedVehicleSize}`);
+                    }
+
+                    servicePrice = Number(matchedVariant.price);
+                    duration = matchedVariant.duration;
+                    vehicleSize = matchedVariant.size;
+                }
+
+                const isBudget = Boolean(service.isBudgetOnly);
+                if (isBudget) {
+                    servicePrice = 0;
+                }
+
+                return {
+                    serviceId: service.id,
+                    serviceName: service.name,
+                    servicePrice,
+                    duration,
+                    isBudget,
+                    vehicleSize,
+                };
+            });
+
+            const totalDuration = appointmentServicesSnapshot.reduce((total, service) => total + service.duration, 0);
+            const totalPrice = appointmentServicesSnapshot.reduce((total, service) => total + service.servicePrice, 0);
             const shopTimeZone = shopExists.timeZone || 'America/Campo_Grande';
             const bufferBetweenSlots = shopExists.bufferBetweenSlots || 0;
 
@@ -344,12 +380,7 @@ export class CreateAppointmentUseCase {
                             userId: data.userId,
                             shopId: data.shopId,
                             vehicleId: data.vehicleId,
-                            serviceIds: servicesExists.map(service => ({
-                                serviceId: service.id,
-                                serviceName: service.name,
-                                servicePrice: Number(service.price),
-                                duration: service.duration,
-                            })),
+                            serviceIds: appointmentServicesSnapshot,
                         }, tx);
 
                         await tx.shopClient.upsert({

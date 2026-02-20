@@ -20,6 +20,8 @@ export class CreateAppointmentRepository {
                         serviceName: service.serviceName,
                         servicePrice: new Prisma.Decimal(service.servicePrice),
                         duration: service.duration,
+                        isBudget: Boolean(service.isBudget),
+                        vehicleSize: service.vehicleSize,
                     })),
                 },
             },

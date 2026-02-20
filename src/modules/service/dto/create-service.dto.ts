@@ -15,7 +15,7 @@ export class CreateServiceDto {
 
     @IsInt()
     @Min(1)
-    duration: number; // Em minutos
+    duration: number;
 
     @IsBoolean()
     @IsOptional()
@@ -32,4 +32,12 @@ export class CreateServiceDto {
     @IsString()
     @IsOptional()
     photoUrl?: string;
+
+    @IsBoolean()
+    @IsOptional()
+    isBudgetOnly?: boolean;
+
+    @IsBoolean()
+    @IsOptional()
+    hasVariants?: boolean;
 }

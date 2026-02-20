@@ -14,6 +14,7 @@ export class FindServiceByIdRepository {
                 include: {
                     shop: true,
                     group: true,
+                    variants: true,
                 }
             });
         }
@@ -28,6 +29,7 @@ export class FindServiceByIdRepository {
             include: {
                 shop: true,
                 group: true,
+                variants: true,
             }
         })
     }
