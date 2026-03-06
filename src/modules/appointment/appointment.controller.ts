@@ -15,7 +15,8 @@ export class AppointmentController {
     constructor(private readonly appointmentService: AppointmentService) {}
 
     @Post()
-    create(@Body() createAppointmentDto: CreateAppointmentDto, @CurrentUser() user: JwtPayload) {
+    @Public()
+    create(@Body() createAppointmentDto: CreateAppointmentDto, @CurrentUser() user?: JwtPayload) {
         return this.appointmentService.create(createAppointmentDto, user);
     }
 

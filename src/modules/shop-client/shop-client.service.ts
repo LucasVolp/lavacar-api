@@ -7,6 +7,7 @@ import {
     DeleteShopClientUseCase,
     FindAllShopClientUseCase,
     FindShopClientByIdUseCase,
+    FindShopClientByShopAndUserUseCase,
     UpdateShopClientUseCase,
 } from './use-cases';
 import { FindAllShopClientRepository } from './repository';
@@ -21,6 +22,7 @@ export class ShopClientService {
         private readonly deleteShopClientUseCase: DeleteShopClientUseCase,
         private readonly updateShopClientUseCase: UpdateShopClientUseCase,
         private readonly findAllShopClientRepository: FindAllShopClientRepository,
+        private readonly findShopClientByShopAndUserUseCase: FindShopClientByShopAndUserUseCase,
     ) {}
 
     async create(data: CreateShopClientDto, user: JwtPayload) {
@@ -37,6 +39,10 @@ export class ShopClientService {
 
     async countByShopId(shopId: string, user: JwtPayload) {
         return await this.findAllShopClientRepository.countByShopId(shopId, user);
+    }
+
+    async findByShopAndUser(shopId: string, userId: string) {
+        return await this.findShopClientByShopAndUserUseCase.execute(shopId, userId);
     }
 
     async findOne(id: string, user: JwtPayload) {

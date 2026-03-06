@@ -1,9 +1,10 @@
-import { Controller, Get, UseGuards, Req, Res } from '@nestjs/common';
+import { Controller, Get, Post, Body, UseGuards, Req, Res } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { AuthGuard } from '@nestjs/passport';
 import { Public } from 'src/shared/decorators/public.decorator';
 import { CurrentUser } from 'src/shared/decorators/current-user.decorator';
 import { JwtPayload } from 'src/shared/types/jwt-payload.interface';
+import { GuestLoginDto } from './dto/guest-login.dto';
 
 @Controller('auth')
 export class AuthController {
@@ -13,6 +14,12 @@ export class AuthController {
   @Get('google')
   @UseGuards(AuthGuard('google'))
   async googleAuth() {}
+
+  @Public()
+  @Post('guest')
+  async guestLogin(@Body() dto: GuestLoginDto) {
+    return this.authService.guestLogin(dto);
+  }
 
   @Public()
   @Get('google/redirect')

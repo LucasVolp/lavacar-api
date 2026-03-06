@@ -25,8 +25,8 @@ export class AppointmentService {
         private readonly findPublicAvailabilityUseCase: FindPublicAvailabilityUseCase,
     ) {}
 
-    async create(data: CreateAppointmentDto, user: JwtPayload) {
-        return await this.createAppointmentUseCase.execute(data, { id: user.id, role: user.role as any });
+    async create(data: CreateAppointmentDto, user?: JwtPayload) {
+        return await this.createAppointmentUseCase.execute(data, user ? { id: user.id, role: user.role as any } : undefined);
     }
 
     async findAll(filters: FindAllFilters = {}, user: JwtPayload) {

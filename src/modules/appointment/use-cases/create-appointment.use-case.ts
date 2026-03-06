@@ -19,6 +19,7 @@ import { FindVehicleByIdRepository } from "src/modules/vehicle/repository";
 import { FindBlockedTimeByShopIdRepository } from "src/modules/blocked-time/repository";
 import { fromZonedTime } from "date-fns-tz";
 import { PrismaService } from "src/shared/databases/prisma.database";
+import { CreateShopClientRepository, FindShopClientByShopAndUserRepository } from "src/modules/shop-client/repository";
 
 @Injectable()
 export class CreateAppointmentUseCase {
@@ -31,6 +32,8 @@ export class CreateAppointmentUseCase {
         private readonly findScheduleByIdRepository: FindScheduleByWeekdayRepository,
         private readonly findVehicleByIdRepository: FindVehicleByIdRepository,
         private readonly findBlockedTimeByShopRepository: FindBlockedTimeByShopIdRepository,
+        private readonly findShopClienteRepository: FindShopClientByShopAndUserRepository,
+        private readonly createShopClientRepository: CreateShopClientRepository,
         private readonly prisma: PrismaService,
         private readonly logger: Logger = new Logger()
     ) {}
@@ -183,8 +186,6 @@ export class CreateAppointmentUseCase {
         try {
             const resolvedRole: Role | undefined = currentUser?.role;
 
-
-
             const userExists = await this.findUserByIdRepository.findById(data.userId);
             if (!userExists) {
                 this.logger.warn(`User not found with ID: ${data.userId}`, CreateAppointmentUseCase.name);
@@ -200,6 +201,18 @@ export class CreateAppointmentUseCase {
             if (shopExists.status !== ShopStatus.ACTIVE) {
                 this.logger.warn(`Shop with ID: ${data.shopId} is not active`, CreateAppointmentUseCase.name);
                 throw new BadRequestException('Shop is not active');
+            }
+
+            const shopClientExists = await this.findShopClienteRepository.findByShopAndUser(data.shopId, data.userId);
+            if (!shopClientExists) {
+                this.logger.warn(`User with ID: ${data.userId} is not a client of shop ID: ${data.shopId}`, CreateAppointmentUseCase.name);
+                this.logger.log(`Creating shop client relationship for user ID: ${data.userId} and shop ID: ${data.shopId}`, CreateAppointmentUseCase.name);
+                const shopClient = await this.createShopClientRepository.create({
+                    shopId: data.shopId,
+                    userId: data.userId,
+                });
+                this.logger.log(`Shop client relationship created with ID: ${shopClient.id}`, CreateAppointmentUseCase.name);
+                
             }
 
             const isShopOwner = currentUser?.id

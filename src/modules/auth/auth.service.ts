@@ -1,7 +1,8 @@
-import { Injectable, Logger, UnauthorizedException } from '@nestjs/common';
+import { BadRequestException, Injectable, Logger, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import axios from 'axios';
 import { PrismaService } from 'src/shared/databases/prisma.database';
+import { GuestLoginDto } from './dto/guest-login.dto';
 
 @Injectable()
 export class AuthService {
@@ -19,6 +20,55 @@ export class AuthService {
       role: user.role,
     };
     return this.jwtService.sign(payload);
+  }
+
+  async guestLogin(dto: GuestLoginDto) {
+    let user = await this.prisma.user.findUnique({ where: { phone: dto.phone } });
+    
+    if (user && !user.isGuest) {
+        throw new UnauthorizedException('Por favor, faça login com sua conta para continuar.');
+    }
+
+    if (!user) {
+        if (!dto.firstName) throw new BadRequestException('O nome é obrigatório para novos clientes.');
+        
+        user = await this.prisma.$transaction(async (tx) => {
+             const newUser = await tx.user.create({
+                 data: {
+                     firstName: dto.firstName as string,
+                     lastName: dto.lastName,
+                     phone: dto.phone,
+                     isGuest: true,
+                     role: 'USER',
+                 }
+             });
+             
+             if (dto.vehicle) {
+                 await tx.vehicle.create({
+                     data: {
+                         ...dto.vehicle,
+                         userId: newUser.id
+                     }
+                 });
+             }
+             
+             return newUser;
+        });
+    } else if (dto.vehicle) {
+        await this.prisma.vehicle.create({
+            data: {
+                ...dto.vehicle,
+                userId: user.id
+            }
+        });
+    }
+    
+    const token = this.generateJwt(user);
+    
+    return {
+        user,
+        access_token: token,
+    };
   }
 
   googleLogin(req) {

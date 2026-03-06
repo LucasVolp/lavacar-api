@@ -1,4 +1,4 @@
-import { IsEmail, IsEnum, IsNotEmpty, IsOptional, IsString, Matches } from "class-validator";
+import { IsBoolean, IsEmail, IsEnum, IsNotEmpty, IsOptional, IsString, Matches } from "class-validator";
 import { Role } from "../types/Role";
 
 export class CreateUserDto {
@@ -30,4 +30,8 @@ export class CreateUserDto {
     @IsEnum(Role)
     @IsNotEmpty()
     role: Role
+
+    @IsBoolean()
+    @IsOptional()
+    isGuest?: boolean;
 }

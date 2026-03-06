@@ -28,9 +28,30 @@ services:
       - postgres
     networks:
       - lavacar_network
+  
+  n8n:
+    image: docker.n8n.io/n8nio/n8n:latest
+    container_name: lavacar_n8n
+    restart: unless-stopped
+    ports:
+      - "5678:5678"
+    environment:
+      - NODE_ENV=production
+      - GENERIC_TIMEZONE=${TZ:-America/Sao_Paulo}
+      - N8N_HOST=${N8N_HOST:-localhost}
+      - N8N_PORT=5678
+      - N8N_PROTOCOL=${N8N_PROTOCOL:-http}
+      - WEBHOOK_URL=${WEBHOOK_URL:-http://localhost:5678}
+    volumes:
+      - n8n_data:/home/node/.n8n
+    networks:
+      - lavacar_network
+    depends_on:
+      - postgres
 
 volumes:
   postgres_data:
+  n8n_data:
 
 networks:
   lavacar_network:

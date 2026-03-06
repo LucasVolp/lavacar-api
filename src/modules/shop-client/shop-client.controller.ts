@@ -6,6 +6,7 @@ import { CurrentUser } from 'src/shared/decorators/current-user.decorator';
 import { JwtPayload } from 'src/shared/types/jwt-payload.interface';
 import { Roles } from 'src/decorators/roles.decorator';
 import { Role } from 'src/modules/users/types/Role';
+import { Public } from 'src/shared/decorators/public.decorator';
 
 @Controller('shop-clients')
 @Roles(Role.ADMIN, Role.OWNER, Role.EMPLOYEE, Role.MANAGER)
@@ -44,6 +45,15 @@ export class ShopClientController {
             perPage: perPage ? parseInt(perPage, 10) : undefined,
             search,
         }, user);
+    }
+
+    @Get('shop-and-user')
+    @Public()
+    findByShopAndUser(
+        @Query('shopId') shopId: string,
+        @Query('userId') userId: string,
+    ) {
+        return this.shopClientService.findByShopAndUser(shopId, userId);
     }
 
     @Get('shop/:shopId/count')

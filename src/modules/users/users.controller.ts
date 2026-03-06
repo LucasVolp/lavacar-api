@@ -74,6 +74,12 @@ export class UsersController {
     return this.usersService.findByPhone(phone);
   }
 
+  @Get('public/phone/:phone')
+  @Public()
+  findPublicUser(@Param('phone') phone: string) {
+    return this.usersService.findPublicUser(phone);
+  }
+
   @Patch(':id')
   update(@Param('id') id: string, @Body() data: UpdateUserDto, @CurrentUser() user: JwtPayload) {
     if (user.id !== id && user.role !== 'ADMIN') {
