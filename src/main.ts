@@ -17,6 +17,17 @@ async function bootstrap() {
     /^https:\/\/[a-z0-9-]+\.localhost\.run$/,
   ];
   
+  if (process.env.FRONTEND_URL) {
+    // Add exact match or regex depending on format, but simple literal match is safer, 
+    // or we can convert it to a safe regex
+    try {
+      const url = new URL(process.env.FRONTEND_URL);
+      allowedOriginPatterns.push(new RegExp('^' + process.env.FRONTEND_URL.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '$'));
+    } catch (e) {
+      console.error('Invalid FRONTEND_URL environment variable', process.env.FRONTEND_URL);
+    }
+  }
+  
   app.use((req, res, next) => {
     console.log(`[${new Date().toISOString()}] ${req.method} ${req.url}`);
     if (req.method === 'POST' || req.method === 'PATCH') {

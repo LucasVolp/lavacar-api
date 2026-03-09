@@ -15,12 +15,13 @@ RUN pnpm install --frozen-lockfile
 
 COPY --chown=node:node . .
 
-RUN echo '#!/bin/sh\n\
-    echo "Running database migrations..."\n\
-    npx prisma generate\n\
-    npx prisma migrate deploy\n\
-    echo "Starting application..."\n\
-    pnpm run start:prod' > /app/start.sh && chmod +x /app/start.sh
+RUN echo '#!/bin/sh' > /app/start.sh && \
+    echo 'echo "Running database migrations..."' >> /app/start.sh && \
+    echo 'npx prisma generate' >> /app/start.sh && \
+    echo 'npx prisma migrate deploy' >> /app/start.sh && \
+    echo 'echo "Starting application..."' >> /app/start.sh && \
+    echo 'exec pnpm run start:prod' >> /app/start.sh && \
+    chmod +x /app/start.sh
 
 EXPOSE 3000
 
