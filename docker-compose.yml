@@ -1,7 +1,8 @@
 services:
   postgres:
-    image: postgres:15
+    image: postgres:15-alpine
     container_name: lavacar_postgres
+    restart: unless-stopped
     env_file:
       - ./.env
     ports:
@@ -10,25 +11,40 @@ services:
       - postgres_data:/var/lib/postgresql/data
     networks:
       - lavacar_network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    # Harden: drop all capabilities, read-only root where possible
+    security_opt:
+      - no-new-privileges:true
 
   backend:
     build:
       context: .
       dockerfile: Dockerfile
+      target: builder          # dev uses the builder stage (has devDeps)
     container_name: lavacar_backend
+    restart: unless-stopped
     entrypoint: ["/app/entrypoint.sh"]
     env_file:
       - ./.env
+    environment:
+      - NODE_ENV=development
     ports:
       - "3000:3000"
     volumes:
       - .:/app
       - /app/node_modules
     depends_on:
-      - postgres
+      postgres:
+        condition: service_healthy
     networks:
       - lavacar_network
-  
+    security_opt:
+      - no-new-privileges:true
+
   n8n:
     image: docker.n8n.io/n8nio/n8n:latest
     container_name: lavacar_n8n
@@ -47,7 +63,10 @@ services:
     networks:
       - lavacar_network
     depends_on:
-      - postgres
+      postgres:
+        condition: service_healthy
+    security_opt:
+      - no-new-privileges:true
 
 volumes:
   postgres_data:

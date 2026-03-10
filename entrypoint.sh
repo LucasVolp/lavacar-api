@@ -1,14 +1,34 @@
 #!/bin/sh
 set -e
 
-echo "📦 Gerando Prisma Client..."
+# -----------------------------------------------------------
+#  Entrypoint — works for BOTH local dev and Railway prod
+# -----------------------------------------------------------
+#  NODE_ENV is set by docker-compose (dev) or Railway (prod).
+#  The script detects the environment and runs accordingly.
+# -----------------------------------------------------------
+
+echo "==> Environment: ${NODE_ENV:-development}"
+
+# --- Prisma generate (always, ensures client matches schema) ---
+echo "==> Generating Prisma client..."
 npx prisma generate
 
-echo "📄 Aplicando migrations existentes..."
-npx prisma migrate deploy
+# --- Migrations (only in production / staging) ---
+if [ "$NODE_ENV" = "production" ] || [ "$NODE_ENV" = "staging" ]; then
+  echo "==> Running database migrations..."
+  npx prisma migrate deploy
+  echo "==> Migrations applied."
 
-echo "🌱 Populando banco de dados com dados iniciais..."
-pnpm run db:seed
+  echo "==> Starting application (production)..."
+  exec node dist/main
+else
+  echo "==> Running database migrations..."
+  npx prisma migrate deploy
 
-echo "🚀 Iniciando NestJS..."
-pnpm run start:dev
+  echo "==> Seeding database..."
+  pnpm run db:seed || echo "==> Seed skipped or already applied."
+
+  echo "==> Starting application (development)..."
+  exec pnpm run start:dev
+fi
