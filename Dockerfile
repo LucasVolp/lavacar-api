@@ -15,9 +15,6 @@ RUN pnpm run build
 RUN pnpm prune --prod && \
     pnpm store prune
 
-RUN cp -r node_modules/.pnpm/prisma@*/node_modules/prisma /app/_prisma_cli && \
-    cp -r node_modules/.pnpm/@prisma+engines@*/node_modules/@prisma/engines /app/_prisma_engines
-
 FROM node:22-alpine AS production
 
 RUN apk --no-cache add dumb-init
@@ -31,8 +28,6 @@ COPY --from=builder /app/node_modules      ./node_modules
 COPY --from=builder /app/package.json      ./package.json
 COPY --from=builder /app/prisma            ./prisma
 COPY --from=builder /app/prisma.config.ts  ./prisma.config.ts
-COPY --from=builder /app/_prisma_cli       ./node_modules/prisma
-COPY --from=builder /app/_prisma_engines   ./node_modules/@prisma/engines
 
 COPY entrypoint.sh ./entrypoint.sh
 RUN chmod +x ./entrypoint.sh
