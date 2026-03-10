@@ -15,6 +15,9 @@ RUN pnpm install --frozen-lockfile
 
 COPY --chown=node:node . .
 
+RUN npx prisma generate
+RUN pnpm run build
+
 RUN echo '#!/bin/sh' > /app/start.sh && \
     echo 'echo "Running database migrations..."' >> /app/start.sh && \
     echo 'npx prisma generate' >> /app/start.sh && \
