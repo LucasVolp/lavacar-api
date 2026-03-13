@@ -9,8 +9,13 @@ import {
     CancelAppointmentUseCase,
     FindPublicAppointmentsByDateUseCase,
     FindPublicAvailabilityUseCase,
+    CreateWalkInAppointmentUseCase,
+    FindAppointmentsByVehiclePlateUseCase,
+    ConfirmAppointmentByTrackingUseCase,
+    CancelAppointmentByTrackingUseCase,
 } from './use-cases';
 import { FindAllFilters } from './dto/filters-appointment.dto';
+import { CreateWalkInDto } from './dto/create-walk-in.dto';
 import { JwtPayload } from 'src/shared/types/jwt-payload.interface';
 
 @Injectable()
@@ -23,6 +28,10 @@ export class AppointmentService {
         private readonly cancelAppointmentUseCase: CancelAppointmentUseCase,
         private readonly findPublicAppointmentsByDateUseCase: FindPublicAppointmentsByDateUseCase,
         private readonly findPublicAvailabilityUseCase: FindPublicAvailabilityUseCase,
+        private readonly createWalkInAppointmentUseCase: CreateWalkInAppointmentUseCase,
+        private readonly findAppointmentsByVehiclePlateUseCase: FindAppointmentsByVehiclePlateUseCase,
+        private readonly confirmAppointmentByTrackingUseCase: ConfirmAppointmentByTrackingUseCase,
+        private readonly cancelAppointmentByTrackingUseCase: CancelAppointmentByTrackingUseCase,
     ) {}
 
     async create(data: CreateAppointmentDto, user?: JwtPayload) {
@@ -45,11 +54,27 @@ export class AppointmentService {
         return await this.cancelAppointmentUseCase.execute(id, reason, user);
     }
 
+    async createWalkIn(data: CreateWalkInDto) {
+        return await this.createWalkInAppointmentUseCase.execute(data);
+    }
+
+    async findByVehiclePlate(plate: string, shopId: string) {
+        return await this.findAppointmentsByVehiclePlateUseCase.execute(plate, shopId);
+    }
+
     async findPublicByShopAndDate(shopId: string, date: string) {
         return await this.findPublicAppointmentsByDateUseCase.execute(shopId, new Date(date));
     }
 
     async findPublicAvailability(shopId: string, date: string, serviceIds: string[]) {
         return await this.findPublicAvailabilityUseCase.execute({ shopId, date, serviceIds });
+    }
+
+    async confirmByTracking(token: string) {
+        return await this.confirmAppointmentByTrackingUseCase.execute(token);
+    }
+
+    async cancelByTracking(token: string, reason?: string) {
+        return await this.cancelAppointmentByTrackingUseCase.execute(token, reason);
     }
 }

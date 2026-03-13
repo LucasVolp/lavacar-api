@@ -5,3 +5,7 @@ export * from './find-public-appointments-by-date.use-case';
 export * from './find-public-availability.use-case';
 export * from './update-appointment.use-case';
 export * from './cancel-appointment.use-case';
+export * from './create-walk-in-appointment.use-case';
+export * from './find-appointments-by-vehicle-plate.use-case';
+export * from './confirm-appointment-by-tracking.use-case';
+export * from './cancel-appointment-by-tracking.use-case';

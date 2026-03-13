@@ -32,12 +32,6 @@ export class UpdateAppointmentUseCase {
                 this.validateStatusTransition(existing.status, data.status);
             }
 
-            // Se estiver cancelando, exigir motivo
-            if (data.status === AppointmentStatus.CANCELED && !data.cancellationReason) {
-                this.logger.warn(`Cancellation reason required for appointment ID: ${id}`, UpdateAppointmentUseCase.name);
-                throw new BadRequestException('Cancellation reason is required');
-            }
-
             const updateData: any = { ...data };
 
             // Side Effect: Atualizar endTime ao completar

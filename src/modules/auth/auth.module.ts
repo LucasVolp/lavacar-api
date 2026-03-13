@@ -3,8 +3,13 @@ import { AuthService } from './auth.service';
 import { AuthController } from './auth.controller';
 import { JwtModule, JwtSignOptions } from '@nestjs/jwt';
 import { JwtStrategy } from 'src/shared/strategies/jwt.strategy';
-import { GoogleStrategy } from 'src/shared/strategies/google.strategy'; // Descomentado
+import { GoogleStrategy } from 'src/shared/strategies/google.strategy';
 import { UsersModule } from '../users/users.module';
+import * as Repositories from './repository';
+import * as UseCases from './use-cases';
+
+const repositories = Object.values(Repositories);
+const usecases = Object.values(UseCases);
 
 @Module({
   imports: [
@@ -15,9 +20,14 @@ import { UsersModule } from '../users/users.module';
     forwardRef(() => UsersModule),
   ],
   controllers: [AuthController],
-  providers: [AuthService, 
-    GoogleStrategy, // Descomentado
-    Logger, 
-    JwtStrategy],
+  providers: [
+    AuthService,
+    GoogleStrategy,
+    Logger,
+    JwtStrategy,
+    ...repositories,
+    ...usecases,
+  ],
+  exports: [AuthService],
 })
 export class AuthModule {}

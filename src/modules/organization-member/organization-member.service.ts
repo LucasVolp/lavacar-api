@@ -3,6 +3,7 @@ import {
     CreateOrganizationMemberUseCase,
     FindAllOrganizationMemberUseCase,
     FindOrganizationMemberByIdUseCase,
+    FindOrganizationMembersByShopUseCase,
     UpdateOrganizationMemberUseCase,
     DeleteOrganizationMemberUseCase,
 } from './use-cases';
@@ -15,6 +16,7 @@ export class OrganizationMemberService {
         private readonly createOrganizationMemberUseCase: CreateOrganizationMemberUseCase,
         private readonly findAllOrganizationMemberUseCase: FindAllOrganizationMemberUseCase,
         private readonly findOrganizationMemberByIdUseCase: FindOrganizationMemberByIdUseCase,
+        private readonly findOrganizationMembersByShopUseCase: FindOrganizationMembersByShopUseCase,
         private readonly updateOrganizationMemberUseCase: UpdateOrganizationMemberUseCase,
         private readonly deleteOrganizationMemberUseCase: DeleteOrganizationMemberUseCase,
     ) {}
@@ -29,6 +31,10 @@ export class OrganizationMemberService {
 
     findByOrganizationId(organizationId: string, filters?: { page?: number; perPage?: number }) {
         return this.findAllOrganizationMemberUseCase.executeByOrganizationId(organizationId, filters);
+    }
+
+    findByShopId(shopId: string) {
+        return this.findOrganizationMembersByShopUseCase.execute(shopId);
     }
 
     findById(id: string) {

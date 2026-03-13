@@ -36,6 +36,11 @@ export class OrganizationMemberController {
         });
     }
 
+    @Get('shop/:shopId')
+    findByShopId(@Param('shopId') shopId: string) {
+        return this.organizationMemberService.findByShopId(shopId);
+    }
+
     @Get(':id')
     findById(@Param('id') id: string) {
         return this.organizationMemberService.findById(id);

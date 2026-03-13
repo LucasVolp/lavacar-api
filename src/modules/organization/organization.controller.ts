@@ -22,7 +22,7 @@ import { memoryStorage } from 'multer';
 import { StorageService } from '../storage/storage.service';
 
 @Controller('organizations')
-@Roles(Role.ADMIN, Role.OWNER, Role.MANAGER)
+// @Roles(Role.ADMIN, Role.OWNER, Role.MANAGER)
 export class OrganizationController {
   constructor(
     private readonly organizationService: OrganizationService,
@@ -74,7 +74,7 @@ export class OrganizationController {
   findByOwner(@Param('ownerId') ownerId: string) {
     return this.organizationService.findByOwner(ownerId);
   }
-
+  
   @Patch(':id')
   update(@Param('id') id: string, @Body() data: UpdateOrganizationDto) {
     return this.organizationService.update(id, data);

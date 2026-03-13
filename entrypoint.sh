@@ -9,6 +9,8 @@ if [ "$NODE_ENV" = "production" ] || [ "$NODE_ENV" = "staging" ]; then
   echo "==> Starting application..."
   exec node dist/src/main
 else
+  echo "==> Installing dependencies..."
+  CI=true pnpm install --frozen-lockfile
   echo "==> Generating Prisma client..."
   npx prisma generate
   echo "==> Running database migrations..."

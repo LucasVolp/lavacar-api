@@ -1,6 +1,7 @@
 import { Controller, Get, Post, Body, Patch, Param, Delete, Query } from '@nestjs/common';
 import { AppointmentService } from './appointment.service';
 import { CreateAppointmentDto } from './dto/create-appointment.dto';
+import { CreateWalkInDto } from './dto/create-walk-in.dto';
 import { UpdateAppointmentDto } from './dto/update-appointment.dto';
 import { AppointmentStatus } from './types/AppointmentStatus';
 import { CurrentUser } from 'src/shared/decorators/current-user.decorator';
@@ -8,16 +9,33 @@ import { JwtPayload } from 'src/shared/types/jwt-payload.interface';
 import { Roles } from 'src/decorators/roles.decorator';
 import { Role } from 'src/modules/users/types/Role';
 import { Public } from 'src/shared/decorators/public.decorator';
+import { AuthService } from 'src/modules/auth/auth.service';
 
 @Controller('appointments')
 @Roles(Role.ADMIN, Role.OWNER, Role.EMPLOYEE, Role.MANAGER, Role.USER)
 export class AppointmentController {
-    constructor(private readonly appointmentService: AppointmentService) {}
+    constructor(
+        private readonly appointmentService: AppointmentService,
+        private readonly authService: AuthService,
+    ) {}
 
     @Post()
     @Public()
-    create(@Body() createAppointmentDto: CreateAppointmentDto, @CurrentUser() user?: JwtPayload) {
-        return this.appointmentService.create(createAppointmentDto, user);
+    async create(@Body() createAppointmentDto: CreateAppointmentDto, @CurrentUser() user?: JwtPayload) {
+        const appointment = await this.appointmentService.create(createAppointmentDto, user);
+        return {
+            ...appointment,
+            trackingUrl: this.authService.buildTrackingUrl(appointment.id),
+        };
+    }
+
+    @Post('walk-in')
+    async createWalkIn(@Body() createWalkInDto: CreateWalkInDto) {
+        const appointment = await this.appointmentService.createWalkIn(createWalkInDto);
+        return {
+            ...appointment,
+            trackingUrl: this.authService.buildTrackingUrl(appointment.id),
+        };
     }
 
     @Get()
@@ -56,6 +74,14 @@ export class AppointmentController {
         }, user);
     }
 
+    @Get('vehicle-plate/:plate')
+    findByVehiclePlate(
+        @Param('plate') plate: string,
+        @Query('shopId') shopId: string,
+    ) {
+        return this.appointmentService.findByVehiclePlate(plate, shopId);
+    }
+
     @Public()
     @Get('public/by-date')
     findPublicByShopAndDate(
@@ -77,6 +103,21 @@ export class AppointmentController {
             : [];
 
         return this.appointmentService.findPublicAvailability(shopId, date, parsedServiceIds);
+    }
+
+    @Public()
+    @Patch('track/confirm')
+    confirmByTracking(@Query('token') token: string) {
+        return this.appointmentService.confirmByTracking(token);
+    }
+
+    @Public()
+    @Patch('track/cancel')
+    cancelByTracking(
+        @Query('token') token: string,
+        @Body('reason') reason?: string,
+    ) {
+        return this.appointmentService.cancelByTracking(token, reason);
     }
 
     @Get(':id')

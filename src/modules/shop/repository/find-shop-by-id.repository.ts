@@ -15,6 +15,25 @@ export class FindShopByIdRepository {
                         services: true,
                     }
                 },
+                managers: {
+                    include: {
+                        member: {
+                            include: {
+                                user: {
+                                    select: {
+                                        id: true,
+                                        firstName: true,
+                                        lastName: true,
+                                        email: true,
+                                        phone: true,
+                                        picture: true,
+                                        role: true,
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
                 organization: true,
                 owner: true,
                 schedules: true,

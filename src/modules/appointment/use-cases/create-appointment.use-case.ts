@@ -219,7 +219,11 @@ export class CreateAppointmentUseCase {
                 ? shopExists.ownerId === currentUser.id || shopExists.organization?.ownerId === currentUser.id
                 : false;
 
-            const isInternalOperation = isShopOwner || resolvedRole === Role.ADMIN;
+            const isShopStaff = currentUser?.id
+                ? shopExists.managers?.some((m: { member?: { userId?: string } }) => m.member?.userId === currentUser.id)
+                : false;
+
+            const isInternalOperation = isShopOwner || isShopStaff || resolvedRole === Role.ADMIN;
 
             const vehicleExists = await this.findVehicleByIdRepository.findById(data.vehicleId);
             if (!vehicleExists) {

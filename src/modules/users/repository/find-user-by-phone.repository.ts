@@ -14,15 +14,19 @@ export class FindUserByPhoneRepository {
                 id: true,
                 firstName: true,
                 lastName: true,
-                email: true,
                 phone: true,
-                cpf: true,
                 picture: true,
-                role: true,
-                isActive: true,
-                isGuest: true,
-                createdAt: true,
-                updatedAt: true,
+                vehicles: {
+                    select: {
+                        id: true,
+                        plate: true,
+                        brand: true,
+                        model: true,
+                        color: true,
+                        type: true,
+                        size: true,
+                    }
+                }
             },
         })
     }

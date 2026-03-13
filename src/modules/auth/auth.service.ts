@@ -1,14 +1,28 @@
 import { BadRequestException, Injectable, Logger, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
+import { ConfigService } from '@nestjs/config';
 import axios from 'axios';
 import { PrismaService } from 'src/shared/databases/prisma.database';
 import { GuestLoginDto } from './dto/guest-login.dto';
+import { RegisterDto } from './dto/register.dto';
+import { LoginDto } from './dto/login.dto';
+import { CompleteRegistrationDto } from './dto/complete-registration.dto';
+import { RegisterUseCase } from './use-cases/register.use-case';
+import { LoginUseCase } from './use-cases/login.use-case';
+import { CompleteRegistrationUseCase } from './use-cases/complete-registration.use-case';
+
+const TRACKING_TOKEN_ISSUER = 'nexocar:tracking';
+const TRACKING_TOKEN_EXPIRY = '30d';
 
 @Injectable()
 export class AuthService {
   constructor(
     private readonly jwtService: JwtService,
     private readonly prisma: PrismaService,
+    private readonly configService: ConfigService,
+    private readonly registerUseCase: RegisterUseCase,
+    private readonly loginUseCase: LoginUseCase,
+    private readonly completeRegistrationUseCase: CompleteRegistrationUseCase,
     private readonly logger: Logger = new Logger()
   ){}
 
@@ -115,6 +129,24 @@ export class AuthService {
     };
   }
 
+  async register(dto: RegisterDto) {
+    const user = await this.registerUseCase.execute(dto);
+    const token = this.generateJwt(user);
+    return { user, access_token: token };
+  }
+
+  async login(dto: LoginDto) {
+    const user = await this.loginUseCase.execute(dto);
+    const token = this.generateJwt(user);
+    return { user, access_token: token };
+  }
+
+  async completeRegistration(dto: CompleteRegistrationDto) {
+    const user = await this.completeRegistrationUseCase.execute(dto);
+    const token = this.generateJwt(user);
+    return { user, access_token: token };
+  }
+
   async validateGoogleAccessToken(accessToken: string): Promise<any> {
     const googleUserInfoUrl = process.env.GOOGLE_USERINFO_URL;
 
@@ -131,5 +163,56 @@ export class AuthService {
       this.logger.error('Error validating Google access token', error);
       throw new UnauthorizedException('Invalid Google access token');
     }
+  }
+
+  generateTrackingToken(appointmentId: string): string {
+    return this.jwtService.sign(
+      { sub: appointmentId, purpose: 'tracking', iss: TRACKING_TOKEN_ISSUER },
+      { expiresIn: TRACKING_TOKEN_EXPIRY },
+    );
+  }
+
+  buildTrackingUrl(appointmentId: string): string {
+    const token = this.generateTrackingToken(appointmentId);
+    const frontendUrl = this.configService.get<string>('FRONTEND_URL', 'http://localhost:3001');
+    return `${frontendUrl}/track?token=${token}`;
+  }
+
+  async validateTrackingToken(token: string) {
+    let payload: { sub: string; purpose?: string; iss?: string };
+
+    try {
+      payload = this.jwtService.verify(token);
+    } catch {
+      throw new UnauthorizedException('Token expirado ou inválido.');
+    }
+
+    if (payload.purpose !== 'tracking' || payload.iss !== TRACKING_TOKEN_ISSUER) {
+      throw new UnauthorizedException('Token inválido.');
+    }
+
+    const appointment = await this.prisma.appointment.findUnique({
+      where: { id: payload.sub },
+      include: {
+        vehicle: {
+          select: { id: true, brand: true, model: true, plate: true, color: true, type: true },
+        },
+        shop: {
+          select: {
+            id: true, name: true, slug: true, phone: true, logoUrl: true,
+            street: true, number: true, neighborhood: true, city: true, state: true,
+          },
+        },
+        services: {
+          select: { id: true, serviceName: true, servicePrice: true, duration: true },
+        },
+      },
+    });
+
+    if (!appointment) {
+      throw new UnauthorizedException('Agendamento não encontrado.');
+    }
+
+    return appointment;
   }
 }

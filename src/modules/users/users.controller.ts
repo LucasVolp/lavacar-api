@@ -21,6 +21,7 @@ import { JwtPayload } from 'src/shared/types/jwt-payload.interface';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { memoryStorage } from 'multer';
 import { StorageService } from '../storage/storage.service';
+import { Role } from './types/Role';
 
 @Controller('users')
 export class UsersController {
@@ -35,6 +36,7 @@ export class UsersController {
     return this.usersService.create(data);
   }
 
+  @Public()
   @Get()
   findAll(
     @CurrentUser() user: JwtPayload,
@@ -68,8 +70,8 @@ export class UsersController {
 
   @Get('phone/:phone')
   findByPhone(@Param('phone') phone: string, @CurrentUser() user: JwtPayload) {
-    if (user.role !== 'ADMIN') {
-      throw new ForbiddenException('Only ADMIN can search users by phone');
+    if (user.role !== Role.OWNER && user.role !== Role.ADMIN) {
+      throw new ForbiddenException('You cant search users by phone');
     }
     return this.usersService.findByPhone(phone);
   }

@@ -11,12 +11,13 @@ import { ScheduleModule } from '../schedule/schedule.module';
 import { VehicleModule } from '../vehicle/vehicle.module';
 import { BlockedTimesModule } from '../blocked-time/blocked-times.module';
 import { ShopClientModule } from '../shop-client/shop-client.module';
+import { AuthModule } from '../auth/auth.module';
 
 const repositories = Object.values(Repositories);
 const usecases = Object.values(UseCases);
 
 @Module({
-    imports: [SharedModule, UsersModule, ShopModule, ServiceModule, ScheduleModule, VehicleModule, BlockedTimesModule, ShopClientModule],
+    imports: [SharedModule, UsersModule, ShopModule, ServiceModule, ScheduleModule, VehicleModule, BlockedTimesModule, ShopClientModule, AuthModule],
     controllers: [AppointmentController],
     providers: [AppointmentService, Logger, ...repositories, ...usecases],
     exports: [...repositories],

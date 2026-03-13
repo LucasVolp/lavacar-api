@@ -5,8 +5,6 @@ import { UsersModule } from './modules/users/users.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { JwtService } from '@nestjs/jwt';
 import { JwtStrategy } from './shared/strategies/jwt.strategy';
-import { AuthService } from './modules/auth/auth.service';
-import { GoogleStrategy } from './shared/strategies/google.strategy';
 import { ShopModule } from './modules/shop/shop.module';
 import { ServiceModule } from './modules/service/service.module';
 import { APP_GUARD } from '@nestjs/core';
@@ -59,8 +57,6 @@ import { ServiceVariantModule } from './modules/service-variant/service-variant.
     JwtService,
     JwtStrategy,
     Logger,
-    AuthService,
-    GoogleStrategy,
   ],
 })
 export class AppModule {}
