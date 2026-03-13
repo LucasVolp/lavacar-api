@@ -1,19 +1,29 @@
 import { PassportStrategy } from '@nestjs/passport';
 import { Strategy, VerifyCallback } from 'passport-google-oauth20';
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { FindUserByEmailRepository } from '../../modules/users/repository/find-user-by-email.repository';
 import { AuthService } from '../../modules/auth/auth.service';
 
 @Injectable()
 export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
+  private readonly logger = new Logger(GoogleStrategy.name);
+
   constructor(
     private readonly findUserByEmailRepository: FindUserByEmailRepository,
     private readonly authService: AuthService,
   ) {
+    const clientID = process.env.GOOGLE_CLIENT_ID;
+    const clientSecret = process.env.GOOGLE_CLIENT_SECRET;
+    const callbackURL = process.env.GOOGLE_CALLBACK_URL;
+
+    if (!clientID || !clientSecret || !callbackURL) {
+      throw new Error('Google OAuth credentials not configured: GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, GOOGLE_CALLBACK_URL required');
+    }
+
     super({
-      clientID: process.env.GOOGLE_CLIENT_ID || '',
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET || '',
-      callbackURL: process.env.GOOGLE_CALLBACK_URL || '',
+      clientID,
+      clientSecret,
+      callbackURL,
       scope: ['email', 'profile'],
     });
   }
@@ -30,17 +40,13 @@ export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
       const lastName = profile.name.familyName;
       const picture = profile.photos[0].value;
 
-      // Busca usuário existente pelo e-mail
       const user = await this.findUserByEmailRepository.findUserByEmail(email);
 
       if (user) {
-        // Usuário já existe — prossegue com login
         done(null, user);
         return;
       }
 
-      // Usuário não existe — retorna dados do Google para o frontend
-      // completar o cadastro (informar telefone obrigatório)
       done(null, {
         needsRegistration: true,
         googleProfile: {
@@ -51,7 +57,7 @@ export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
         },
       });
     } catch (error) {
-      console.error('Error in GoogleStrategy validate:', error);
+      this.logger.error('Google OAuth validation error', error instanceof Error ? error.stack : undefined);
       done(error, false);
     }
   }

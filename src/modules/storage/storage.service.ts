@@ -111,7 +111,7 @@ export class StorageService {
         throw new BadRequestException('Tipo de imagem nao permitido');
       }
 
-      if (!file.size || file.size > StorageService.MAX_IMAGE_BYTES) {
+      if (!file.size || file.size <= 0 || file.size > StorageService.MAX_IMAGE_BYTES) {
         throw new BadRequestException('Imagem excede o limite de 12MB');
       }
 

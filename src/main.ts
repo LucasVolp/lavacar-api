@@ -1,6 +1,7 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { ValidationPipe } from '@nestjs/common';
+import helmet from 'helmet';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -13,10 +14,8 @@ async function bootstrap() {
     /^https:\/\/[a-z0-9-]+\.lhr\.life$/,
     /^https:\/\/[a-z0-9-]+\.localhost\.run$/,
   ];
-  
+
   if (process.env.FRONTEND_URL) {
-    // Add exact match or regex depending on format, but simple literal match is safer, 
-    // or we can convert it to a safe regex
     try {
       const url = new URL(process.env.FRONTEND_URL);
       allowedOriginPatterns.push(new RegExp('^' + process.env.FRONTEND_URL.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '$'));
@@ -24,16 +23,9 @@ async function bootstrap() {
       console.error('Invalid FRONTEND_URL environment variable', process.env.FRONTEND_URL);
     }
   }
-  
-  app.use((req, res, next) => {
-    console.log(`[${new Date().toISOString()}] ${req.method} ${req.url}`);
-    if (req.method === 'POST' || req.method === 'PATCH') {
-      console.log('Body:', req.body);
-    }
-    next();
-  });
 
-  // Habilitar CORS
+  app.use(helmet());
+
   app.enableCors({
     origin: (origin, callback) => {
       if (!origin) {
@@ -57,13 +49,12 @@ async function bootstrap() {
     allowedHeaders: ['Content-Type', 'Authorization', 'Accept', 'Origin', 'X-Requested-With'],
   });
 
-  // Habilitar validação global
   app.useGlobalPipes(new ValidationPipe({
     whitelist: true,
     forbidNonWhitelisted: true,
     transform: true,
   }));
-  
+
   await app.listen(process.env.PORT ?? 3000, '0.0.0.0');
 }
 bootstrap();

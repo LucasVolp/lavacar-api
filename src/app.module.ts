@@ -20,16 +20,20 @@ import { EvaluationModule } from './modules/evaluation/evaluation.module';
 import { OrganizationModule } from './modules/organization/organization.module';
 import { OrganizationMemberModule } from './modules/organization-member/organization-member.module';
 import { ShopManagerModule } from './modules/shop-manager/shop-manager.module';
-import { FipeApiModule } from './modules/fipe-api/fipe-api.module';
 import { SalesGoalModule } from './modules/sales-goal/sales-goal.module';
 import { ChecklistModule } from './modules/checklist/checklist.module';
 import { ShopClientModule } from './modules/shop-client/shop-client.module';
 import { StorageModule } from './modules/storage/storage.module';
 import { ServiceVariantModule } from './modules/service-variant/service-variant.module';
+import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
+    ThrottlerModule.forRoot({
+      ttl: 60000,
+      limit: 100,
+    }),
     StorageModule,
     UsersModule,
     AuthModule,
@@ -44,16 +48,17 @@ import { ServiceVariantModule } from './modules/service-variant/service-variant.
     OrganizationModule,
     OrganizationMemberModule,
     ShopManagerModule,
-    FipeApiModule,
     SalesGoalModule,
     ChecklistModule,
     ShopClientModule,
     ServiceVariantModule
   ],
   controllers: [AppController],
-  providers: [AppService,
-    {provide: APP_GUARD, useClass: JwtAuthGuard},
-    {provide: APP_GUARD, useClass: RolesGuard},
+  providers: [
+    AppService,
+    { provide: APP_GUARD, useClass: JwtAuthGuard },
+    { provide: APP_GUARD, useClass: RolesGuard },
+    { provide: APP_GUARD, useClass: ThrottlerGuard },
     JwtService,
     JwtStrategy,
     Logger,
