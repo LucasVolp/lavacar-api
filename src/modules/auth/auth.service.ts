@@ -85,7 +85,7 @@ export class AuthService {
     };
   }
 
-  googleLogin(req) {
+  googleLogin(req: { user?: { id: string; email: string; phone: string; role: string } }) {
     if (!req.user) {
       return 'No user from google';
     }

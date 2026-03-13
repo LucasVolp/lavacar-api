@@ -407,7 +407,7 @@ describe('AuthService', () => {
   // =========================================================================
   describe('googleLogin', () => {
     it('should return message when no user in request', () => {
-      const result = service.googleLogin({ user: null });
+      const result = service.googleLogin({ user: null as any });
       expect(result).toBe('No user from google');
     });
 

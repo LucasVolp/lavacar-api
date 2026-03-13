@@ -30,10 +30,10 @@ import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
-    ThrottlerModule.forRoot({
+    ThrottlerModule.forRoot([{
       ttl: 60000,
       limit: 100,
-    }),
+    }]),
     StorageModule,
     UsersModule,
     AuthModule,

@@ -169,7 +169,7 @@ describe('AuthController', () => {
       const res = { redirect: jest.fn() };
       process.env.FRONTEND_URL = 'http://localhost:3000';
 
-      controller.googleAuthRedirect(req, res);
+      controller.googleAuthRedirect(req as any, res as any);
 
       expect(res.redirect).toHaveBeenCalledWith(
         expect.stringContaining('/auth/complete-registration?profile='),
@@ -183,7 +183,7 @@ describe('AuthController', () => {
       const res = { redirect: jest.fn() };
       process.env.FRONTEND_URL = 'http://localhost:3000';
 
-      controller.googleAuthRedirect(req, res);
+      controller.googleAuthRedirect(req as any, res as any);
 
       expect(mockAuthService.generateJwt).toHaveBeenCalledWith(req.user);
       expect(res.redirect).toHaveBeenCalledWith(

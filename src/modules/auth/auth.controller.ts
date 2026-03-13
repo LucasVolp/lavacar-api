@@ -8,6 +8,7 @@ import { GuestLoginDto } from './dto/guest-login.dto';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
 import { CompleteRegistrationDto } from './dto/complete-registration.dto';
+import { Request, Response } from 'express';
 
 @Controller('auth')
 export class AuthController {
@@ -45,8 +46,8 @@ export class AuthController {
   @Public()
   @Get('google/redirect')
   @UseGuards(AuthGuard('google'))
-  googleAuthRedirect(@Req() req, @Res() res) {
-    const user = req.user;
+  googleAuthRedirect(@Req() req: Request, @Res() res: Response) {
+    const user = req.user as any;
 
     // Usuário novo via Google — precisa completar cadastro com telefone
     if (user.needsRegistration) {
