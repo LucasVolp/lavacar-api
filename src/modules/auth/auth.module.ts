@@ -7,6 +7,7 @@ import { GoogleStrategy } from 'src/shared/strategies/google.strategy';
 import { UsersModule } from '../users/users.module';
 import * as Repositories from './repository';
 import * as UseCases from './use-cases';
+import * as fs from 'fs';
 
 const repositories = Object.values(Repositories);
 const usecases = Object.values(UseCases);
@@ -14,8 +15,9 @@ const usecases = Object.values(UseCases);
 @Module({
   imports: [
     JwtModule.register({
-      secret: process.env.JWT_SECRET,
-      signOptions: { expiresIn: process.env.JWT_EXPIRES_IN || '1d' } as JwtSignOptions,
+      privateKey: fs.readFileSync('private.key'),
+      publicKey: fs.readFileSync('public.key'),
+      signOptions: { expiresIn: process.env.JWT_EXPIRES_IN || '1d', algorithm: 'RS256' } as JwtSignOptions,
     }),
     forwardRef(() => UsersModule),
   ],

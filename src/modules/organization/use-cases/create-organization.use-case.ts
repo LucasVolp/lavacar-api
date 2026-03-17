@@ -3,6 +3,7 @@ import { CreateOrganizationRepository } from '../repository/create-organization.
 import { FindOrganizationByIdRepository } from '../repository/find-organization-by-id.repository';
 import { CreateOrganizationDto } from '../dto';
 import { FindUserRepository } from 'src/modules/users/repository';
+import { Role } from 'prisma/generated';
 
 @Injectable()
 export class CreateOrganizationUseCase {
@@ -29,7 +30,14 @@ export class CreateOrganizationUseCase {
                     this.logger.warn(`Attempt to create organization with non-existing ownerId: ${data.ownerId}`);
                     throw new BadRequestException('Owner user does not exist.');
                 }
-                
+
+                if (userExists.role !== Role.OWNER) {
+                    this.logger.warn(`Attempt to create organization with user that is not an owner: ${data.ownerId}`);
+                    throw new BadRequestException('User must have OWNER role to be assigned as organization owner.');
+                }
+            } else {
+                this.logger.warn('Attempt to create organization without ownerId');
+                throw new BadRequestException('OwnerId is required to create an organization.');
             }
 
             return await this.createOrganizationRepository.create(data);
