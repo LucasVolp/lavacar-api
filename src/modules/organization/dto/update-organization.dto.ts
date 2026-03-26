@@ -17,6 +17,10 @@ export class UpdateOrganizationDto {
     ownerId?: string;
 
     @IsOptional()
+    @IsString()
+    customerId?: string;
+
+    @IsOptional()
     @IsUrl()
     logoUrl?: string;
 

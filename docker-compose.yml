@@ -32,6 +32,7 @@ services:
       - ./.env
     environment:
       - NODE_ENV=development
+      - ASAAS_API_SANDBOX_KEY=${ASAAS_API_SANDBOX_KEY}
     ports:
       - "3000:3000"
     volumes:

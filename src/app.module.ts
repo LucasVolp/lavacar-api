@@ -26,6 +26,7 @@ import { ShopClientModule } from './modules/shop-client/shop-client.module';
 import { StorageModule } from './modules/storage/storage.module';
 import { ServiceVariantModule } from './modules/service-variant/service-variant.module';
 import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
+import { BillingModule } from './modules/billing/billing.module';
 
 @Module({
   imports: [
@@ -51,7 +52,8 @@ import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
     SalesGoalModule,
     ChecklistModule,
     ShopClientModule,
-    ServiceVariantModule
+    ServiceVariantModule,
+    BillingModule
   ],
   controllers: [AppController],
   providers: [

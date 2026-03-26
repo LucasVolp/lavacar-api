@@ -61,6 +61,21 @@ enum VehicleSize {
   SMALL
   MEDIUM
   LARGE
+  MOTORCYCLE
+}
+
+enum Status {
+  ACTIVE
+  PENDING
+  OVERDUE
+  EXPIRED
+  CANCELLED
+}
+
+enum PaymentMethod {
+  CREDIT_CARD
+  BOLETO
+  PIX
 }
 
 // ==================== USUÁRIO ====================
@@ -119,21 +134,46 @@ model Vehicle {
 }
 
 model Organization {
-  id        String   @id @default(uuid())
-  name      String
-  slug      String   @unique
-  document  String?  @unique
-  logoUrl   String?
-  ownerId   String
-  owner     User     @relation(fields: [ownerId], references: [id])
-  isActive  Boolean  @default(true)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id         String   @id @default(uuid())
+  name       String
+  slug       String   @unique
+  document   String?  @unique
+  logoUrl    String?
+  ownerId    String
+  owner      User     @relation(fields: [ownerId], references: [id])
+  customerId String? // Para integração com sistemas de pagamento
+  isActive   Boolean  @default(true)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
 
   // Relacionamentos
   shops   Shop[]
   members OrganizationMember[]
   goals   SalesGoal[]
+
+  subscriptions Subscriptions[]
+}
+
+model Subscriptions {
+  id             String       @id @default(uuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  subscriptionId     String        @unique
+  status             Status
+  plan               String
+  billingType        PaymentMethod
+  price              Float
+  currentPeriodStart DateTime
+  currentPeriodEnd   DateTime
+
+  nextDueDate DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([organizationId])
+  @@index([status])
 }
 
 model OrganizationMember {

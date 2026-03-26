@@ -1,0 +1,38 @@
+meta {
+  name: Untitled
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{base_url}}/billing/checkout/9a1f19f1-8ac3-4a8c-bdcc-7ecac961454b
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI5ZjkwZjdkNC0yYjQyLTQ1NDktYmU4OC0xZWQ1NTY2Y2ZlZDEiLCJlbWFpbCI6Imx1Y2FzZ2FicmllbHZtYkBnbWFpbC5jb20iLCJwaG9uZSI6Iis1NTY3OTkyNDQ4MjA0Iiwicm9sZSI6Ik9XTkVSIiwiaWF0IjoxNzc0NDg3NzAxLCJleHAiOjE3NzQ1NzQxMDF9.eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI5ZTVhNjdjMC1lZmRlLTQwYzAtYTcyZS01MmI1MjNhMmFhYzQiLCJlbWFpbCI6Imx1Y2FzZ2FicmllbHZtYkBnbWFpbC5jb20iLCJwaG9uZSI6Iis1NTY3OTkyNDQ4MjA0Iiwicm9sZSI6Ik9XTkVSIiwiaWF0IjoxNzc0NTI2MzEwLCJleHAiOjE3NzQ2MTI3MTB9.eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI5ZTVhNjdjMC1lZmRlLTQwYzAtYTcyZS01MmI1MjNhMmFhYzQiLCJlbWFpbCI6Imx1Y2FzZ2FicmllbHZtYkBnbWFpbC5jb20iLCJwaG9uZSI6Iis1NTY3OTkyNDQ4MjA0Iiwicm9sZSI6Ik9XTkVSIiwiaWF0IjoxNzc0NTI2MzEwLCJleHAiOjE3NzQ2MTI3MTB9.BGzsqp3al97jqpFkAs2FmfXN47iA9o5KHE4F6OcN2Jc
+}
+
+body:json {
+  {
+    "billing": {
+      "billingType": "CREDIT_CARD",
+      "ownerName": "João Silva",
+      "ownerDocument": "12345678900",
+      "ownerEmail": "joao@email.com",
+      "ownerPhone": "+5511999999999"
+    },
+    "asaas": {
+      "customerId": "cus_123456",
+      "value": 99.90,
+      "cycle": "MONTHLY",
+      "billingType": "CREDIT_CARD"
+    }
+  }
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}
