@@ -10,6 +10,7 @@ import {
   Query,
   UploadedFile,
   UseInterceptors,
+  UseGuards,
 } from '@nestjs/common';
 import { OrganizationService } from './organization.service';
 import { CreateOrganizationDto, UpdateOrganizationDto } from './dto';
@@ -20,6 +21,7 @@ import { Public } from 'src/shared/decorators/public.decorator';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { memoryStorage } from 'multer';
 import { StorageService } from '../storage/storage.service';
+import { CanAccessOrganizationWithBillingGuard } from 'src/guards/can-access-organization-with-billing.guard';
 
 @Controller('organizations')
 // @Roles(Role.ADMIN, Role.OWNER, Role.MANAGER)
@@ -46,11 +48,13 @@ export class OrganizationController {
   }
 
   @Get(':id')
+  @UseGuards(CanAccessOrganizationWithBillingGuard)
   findById(@Param('id') id: string) {
     return this.organizationService.findById(id);
   }
 
   @Get(':id/dashboard-metrics')
+  @UseGuards(CanAccessOrganizationWithBillingGuard)
   findDashboardMetrics(
     @Param('id') id: string,
     @Query('period') period?: OrganizationMetricsPeriod,
@@ -76,11 +80,15 @@ export class OrganizationController {
   }
   
   @Patch(':id')
+  @Roles(Role.ADMIN, Role.OWNER)
+  @UseGuards(CanAccessOrganizationWithBillingGuard)
   update(@Param('id') id: string, @Body() data: UpdateOrganizationDto) {
     return this.organizationService.update(id, data);
   }
 
   @Post(':id/upload/logo')
+  @Roles(Role.ADMIN, Role.OWNER)
+  @UseGuards(CanAccessOrganizationWithBillingGuard)
   @UseInterceptors(
     FileInterceptor('file', {
       storage: memoryStorage(),
@@ -116,6 +124,8 @@ export class OrganizationController {
   }
 
   @Delete(':id/upload/logo')
+  @Roles(Role.ADMIN, Role.OWNER)
+  @UseGuards(CanAccessOrganizationWithBillingGuard)
   async deleteLogo(@Param('id') id: string) {
     const org = await this.organizationService.findById(id);
     if (org.logoUrl) {
@@ -127,6 +137,8 @@ export class OrganizationController {
   }
 
   @Delete(':id')
+  @Roles(Role.ADMIN, Role.OWNER)
+  @UseGuards(CanAccessOrganizationWithBillingGuard)
   delete(@Param('id') id: string) {
     return this.organizationService.delete(id);
   }

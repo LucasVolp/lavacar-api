@@ -9,6 +9,7 @@ import {
   Post,
   Query,
   UploadedFile,
+  UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
 import { ShopService } from './shop.service';
@@ -22,9 +23,9 @@ import { Role } from 'src/modules/users/types/Role';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { memoryStorage } from 'multer';
 import { StorageService } from '../storage/storage.service';
+import { CanAccessShopGuard } from 'src/guards/can-access-shop.guard';
 
 @Controller('shop')
-@Roles(Role.ADMIN, Role.OWNER, Role.EMPLOYEE, Role.MANAGER)
 export class ShopController {
   constructor(
     private readonly shopService: ShopService,
@@ -32,6 +33,7 @@ export class ShopController {
   ) {}
 
   @Post()
+  @Roles(Role.ADMIN, Role.OWNER)
   create(@Body() data: CreateShopDto, @CurrentUser() user: JwtPayload) {
     return this.shopService.create(data, user);
   }
@@ -50,6 +52,7 @@ export class ShopController {
   }
 
   @Get(':id')
+  @UseGuards(CanAccessShopGuard)
   findOne(@Param('id') id: string) {
     return this.shopService.findOne(id);
   }
@@ -61,11 +64,13 @@ export class ShopController {
   }
 
   @Patch(':id')
+  @UseGuards(CanAccessShopGuard)
   update(@Param('id') id: string, @Body() data: UpdateShopDto) {
     return this.shopService.update(id, data);
   }
 
   @Post(':id/upload/logo')
+  @UseGuards(CanAccessShopGuard)
   @UseInterceptors(
     FileInterceptor('file', {
       storage: memoryStorage(),
@@ -102,6 +107,7 @@ export class ShopController {
   }
 
   @Delete(':id/upload/logo')
+  @UseGuards(CanAccessShopGuard)
   async deleteLogo(@Param('id') id: string) {
     const shop = await this.shopService.findOne(id);
     if (shop.logoUrl) {
@@ -112,6 +118,7 @@ export class ShopController {
   }
 
   @Post(':id/upload/banner')
+  @UseGuards(CanAccessShopGuard)
   @UseInterceptors(
     FileInterceptor('file', {
       storage: memoryStorage(),
@@ -148,6 +155,7 @@ export class ShopController {
   }
 
   @Delete(':id/upload/banner')
+  @UseGuards(CanAccessShopGuard)
   async deleteBanner(@Param('id') id: string) {
     const shop = await this.shopService.findOne(id);
     if (shop.bannerUrl) {
@@ -158,6 +166,7 @@ export class ShopController {
   }
 
   @Post(':id/upload/gallery')
+  @UseGuards(CanAccessShopGuard)
   @UseInterceptors(
     FileInterceptor('file', {
       storage: memoryStorage(),
@@ -191,6 +200,7 @@ export class ShopController {
   }
 
   @Delete(':id/upload/gallery')
+  @UseGuards(CanAccessShopGuard)
   async deleteGalleryImage(@Param('id') id: string, @Query('url') url: string) {
     if (!url) throw new BadRequestException('Informe a url na querystring');
 
@@ -204,6 +214,8 @@ export class ShopController {
   }
 
   @Delete(':id')
+  @Roles(Role.ADMIN, Role.OWNER)
+  @UseGuards(CanAccessShopGuard)
   remove(@Param('id') id: string, @CurrentUser() user: JwtPayload) {
     return this.shopService.remove(id, user);
   }

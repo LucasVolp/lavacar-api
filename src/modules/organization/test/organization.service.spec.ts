@@ -420,6 +420,7 @@ describe('OrganizationService', () => {
     it('should pass through SQL injection-like strings to use case (use case handles validation)', async () => {
       const maliciousDto = {
         name: "'; DROP TABLE organizations; --",
+        document: '12345678000195',
         ownerId: 'valid-uuid',
       };
       mockCreateOrganizationUseCase.execute.mockResolvedValue({ id: 'org-1', ...maliciousDto });
@@ -432,6 +433,7 @@ describe('OrganizationService', () => {
     it('should pass XSS-like strings to use case layer (DTO validation guards)', async () => {
       const xssDto = {
         name: '<script>alert("xss")</script>',
+        document: '12345678000195',
         ownerId: 'valid-uuid',
       };
       mockCreateOrganizationUseCase.execute.mockResolvedValue({ id: 'org-1' });
@@ -464,7 +466,7 @@ describe('OrganizationService', () => {
   // -----------------------------------------------------------
   describe('Edge cases', () => {
     it('should handle create with minimal required fields', async () => {
-      const minDto = { name: 'AB', ownerId: 'uuid-1' };
+      const minDto = { name: 'AB', document: '12345678000195', ownerId: 'uuid-1' };
       mockCreateOrganizationUseCase.execute.mockResolvedValue({ id: 'org-1', ...minDto });
 
       const result = await service.create(minDto);
@@ -504,7 +506,7 @@ describe('OrganizationService', () => {
       mockUpdateOrganizationUseCase.execute.mockResolvedValue({});
       mockDeleteOrganizationUseCase.execute.mockResolvedValue({});
 
-      await service.create({ name: 'Test', ownerId: 'u1' });
+      await service.create({ name: 'Test', document: '12345678000195', ownerId: 'u1' });
       await service.findAll();
       await service.findById('id');
       await service.findBySlug('slug');

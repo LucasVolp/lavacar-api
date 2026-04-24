@@ -1,8 +1,9 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, Query } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, Query, UseGuards } from '@nestjs/common';
 import { OrganizationMemberService } from './organization-member.service';
 import { CreateOrganizationMemberDto, UpdateOrganizationMemberDto } from './dto';
 import { CurrentUser } from 'src/shared/decorators/current-user.decorator';
 import { JwtPayload } from 'src/shared/types/jwt-payload.interface';
+import { CanAccessOrganizationWithBillingGuard } from 'src/guards/can-access-organization-with-billing.guard';
 
 @Controller('organization-members')
 export class OrganizationMemberController {
@@ -25,6 +26,7 @@ export class OrganizationMemberController {
     }
 
     @Get('organization/:organizationId')
+    @UseGuards(CanAccessOrganizationWithBillingGuard)
     findByOrganizationId(
         @Param('organizationId') organizationId: string,
         @Query('page') page?: string,

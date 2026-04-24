@@ -1,10 +1,10 @@
-import { 
-    BadRequestException, 
-    Injectable, 
-    Logger, 
-    NotFoundException, 
-    ConflictException, 
-    ServiceUnavailableException 
+import {
+    BadRequestException,
+    Injectable,
+    Logger,
+    NotFoundException,
+    ConflictException,
+    ServiceUnavailableException
 } from "@nestjs/common";
 import { CreateAppointmentRepository, FindAppointmentsByDateRepository } from "../repository";
 import { CreateAppointmentDto } from "../dto/create-appointment.dto";
@@ -17,9 +17,13 @@ import { FindServicesByIdsRepository } from "src/modules/service/repository";
 import { FindScheduleByWeekdayRepository } from "src/modules/schedule/repository";
 import { FindVehicleByIdRepository } from "src/modules/vehicle/repository";
 import { FindBlockedTimeByShopIdRepository } from "src/modules/blocked-time/repository";
-import { fromZonedTime } from "date-fns-tz";
+import { fromZonedTime, toZonedTime } from "date-fns-tz";
+import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
 import { PrismaService } from "src/shared/databases/prisma.database";
 import { CreateShopClientRepository, FindShopClientByShopAndUserRepository } from "src/modules/shop-client/repository";
+import { AuthService } from "src/modules/auth/auth.service";
+import { MailService } from "src/shared/mail/mail.service";
 
 @Injectable()
 export class CreateAppointmentUseCase {
@@ -35,6 +39,8 @@ export class CreateAppointmentUseCase {
         private readonly findShopClienteRepository: FindShopClientByShopAndUserRepository,
         private readonly createShopClientRepository: CreateShopClientRepository,
         private readonly prisma: PrismaService,
+        private readonly authService: AuthService,
+        private readonly mailService: MailService,
         private readonly logger: Logger = new Logger()
     ) {}
 
@@ -180,6 +186,57 @@ export class CreateAppointmentUseCase {
             slotInterval,
             availableSlots,
         };
+    }
+
+    private async sendConfirmationEmail(params: {
+        appointmentId: string;
+        userEmail: string;
+        userFirstName: string;
+        shopName: string;
+        shopLogoUrl?: string;
+        scheduledAt: Date;
+        shopTimeZone: string;
+        totalDuration: number;
+        totalPrice: number;
+        services: { serviceName: string; servicePrice: number; duration: number }[];
+        vehicle: { brand: string; model: string; plate?: string | null };
+    }): Promise<void> {
+        const { appointmentId, userEmail, userFirstName, shopName, shopLogoUrl, scheduledAt, shopTimeZone, totalDuration, totalPrice, services, vehicle } = params;
+
+        const zonedDate = toZonedTime(scheduledAt, shopTimeZone);
+        const scheduledDate = format(zonedDate, "dd 'de' MMMM 'de' yyyy", { locale: ptBR });
+        const scheduledTime = format(zonedDate, 'HH:mm');
+
+        const durationHours = Math.floor(totalDuration / 60);
+        const durationMinutes = totalDuration % 60;
+        const duration = durationHours > 0
+            ? durationMinutes > 0 ? `${durationHours}h ${durationMinutes}min` : `${durationHours}h`
+            : `${durationMinutes}min`;
+
+        const totalPriceFormatted = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(totalPrice);
+
+        const trackUrl = this.authService.buildTrackingUrl(appointmentId);
+        const confirmUrl = `${trackUrl}&action=confirm`;
+
+        await this.mailService.sendAppointmentConfirmation({
+            to: userEmail,
+            clientFirstName: userFirstName,
+            shopName,
+            shopLogoUrl,
+            scheduledDate,
+            scheduledTime,
+            duration,
+            services: services.map((s) => ({
+                name: s.serviceName,
+                price: new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(s.servicePrice),
+            })),
+            totalPrice: totalPriceFormatted,
+            vehicleBrand: vehicle.brand,
+            vehicleModel: vehicle.model,
+            vehiclePlate: vehicle.plate ?? undefined,
+            confirmUrl,
+            trackUrl,
+        });
     }
 
     async execute(data: CreateAppointmentDto, currentUser?: { id?: string; role?: Role }) {
@@ -430,6 +487,30 @@ export class CreateAppointmentUseCase {
             }
 
             this.logger.log(`Appointment created with ID: ${appointment.id}`, CreateAppointmentUseCase.name);
+
+            setImmediate(() => {
+                if (!userExists.email) return;
+                this.sendConfirmationEmail({
+                    appointmentId: appointment.id,
+                    userEmail: userExists.email,
+                    userFirstName: userExists.firstName,
+                    shopName: shopExists.name,
+                    shopLogoUrl: shopExists.logoUrl ?? undefined,
+                    scheduledAt,
+                    shopTimeZone,
+                    totalDuration,
+                    totalPrice,
+                    services: appointmentServicesSnapshot,
+                    vehicle: vehicleExists,
+                }).catch((err) =>
+                    this.logger.error(
+                        `Failed to send appointment confirmation email for appointment ${appointment.id}`,
+                        err?.stack,
+                        CreateAppointmentUseCase.name,
+                    ),
+                );
+            });
+
             return appointment;
         } catch (err) {
             if (

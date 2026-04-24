@@ -27,6 +27,9 @@ import { StorageModule } from './modules/storage/storage.module';
 import { ServiceVariantModule } from './modules/service-variant/service-variant.module';
 import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 import { BillingModule } from './modules/billing/billing.module';
+import { OrganizationInviteModule } from './modules/organization-invite/organization-invite.module';
+import { MailModule } from './shared/mail/mail.module';
+import { SharedModule } from './shared/shared.module';
 
 @Module({
   imports: [
@@ -35,6 +38,8 @@ import { BillingModule } from './modules/billing/billing.module';
       ttl: 60000,
       limit: 100,
     }]),
+    SharedModule,
+    MailModule,
     StorageModule,
     UsersModule,
     AuthModule,
@@ -48,6 +53,7 @@ import { BillingModule } from './modules/billing/billing.module';
     EvaluationModule,
     OrganizationModule,
     OrganizationMemberModule,
+    OrganizationInviteModule,
     ShopManagerModule,
     SalesGoalModule,
     ChecklistModule,

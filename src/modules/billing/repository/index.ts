@@ -3,3 +3,7 @@ export * from "./create-subscription.repository";
 export * from "./update-subscription.repository";
 export * from "./find-subscription-by-id.repository";
 export * from "./find-all-subscriptions.repository";
+export * from "./update-user-role.repository";
+export * from "./find-subscription-by-asaas-id.repository";
+export * from "./webhook-event.repository";
+export * from "./subscription-intent.repository";

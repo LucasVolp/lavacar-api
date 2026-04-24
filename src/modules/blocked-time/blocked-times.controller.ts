@@ -13,6 +13,7 @@ export class BlockedTimesController {
   constructor(private readonly blockedTimesService: BlockedTimesService) {}
 
   @Post()
+  @Roles(Role.ADMIN, Role.OWNER, Role.MANAGER)
   create(@Body() data: CreateBlockedTimeDto, @CurrentUser() user: JwtPayload) {
     return this.blockedTimesService.create(data, user);
   }
@@ -37,11 +38,13 @@ export class BlockedTimesController {
   }
 
   @Patch(':id')
+  @Roles(Role.ADMIN, Role.OWNER, Role.MANAGER)
   update(@Param('id') id: string, @Body() data: UpdateBlockedTimeDto, @CurrentUser() user: JwtPayload) {
     return this.blockedTimesService.update(id, data, user);
   }
 
   @Delete(':id')
+  @Roles(Role.ADMIN, Role.OWNER, Role.MANAGER)
   remove(@Param('id') id: string, @CurrentUser() user: JwtPayload) {
     return this.blockedTimesService.remove(id, user);
   }

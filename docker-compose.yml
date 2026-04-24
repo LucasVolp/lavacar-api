@@ -46,6 +46,25 @@ services:
     security_opt:
       - no-new-privileges:true
 
+  # ✅ NGrok - Expõe o backend publicamente (opcional)
+  ngrok:
+    image: ngrok/ngrok:latest
+    container_name: lavacar_ngrok
+    restart: unless-stopped
+    command: http backend:3000
+    environment:
+      - NGROK_AUTHTOKEN=${NGROK_AUTHTOKEN}
+    ports:
+      - "4040:4040"
+    depends_on:
+      - backend
+    networks:
+      - lavacar_network
+    profiles:
+      - ngrok
+    security_opt:
+      - no-new-privileges:true
+
   # n8n:
   #   image: docker.n8n.io/n8nio/n8n:latest
   #   container_name: lavacar_n8n

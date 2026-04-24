@@ -1,0 +1,10 @@
+version: "3"
+
+tunnels:
+  http:
+    proto: http
+    addr: 3000
+    upstream_header: "off"
+    
+authtoken: ${NGROK_AUTHTOKEN}
+region: sa  # São Paulo

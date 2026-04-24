@@ -14,6 +14,7 @@ export class ScheduleController {
   constructor(private readonly scheduleService: ScheduleService) {}
 
   @Post()
+  @Roles(Role.ADMIN, Role.OWNER, Role.MANAGER)
   create(@Body() data: CreateScheduleDto, @CurrentUser() user: JwtPayload) {
     return this.scheduleService.create(data, user);
   }
@@ -44,11 +45,13 @@ export class ScheduleController {
   }
 
   @Patch(':id')
+  @Roles(Role.ADMIN, Role.OWNER, Role.MANAGER)
   update(@Param('id') id: string, @Body() data: UpdateScheduleDto, @CurrentUser() user: JwtPayload) {
     return this.scheduleService.update(id, data, user);
   }
 
   @Delete(':id')
+  @Roles(Role.ADMIN, Role.OWNER, Role.MANAGER)
   remove(@Param('id') id: string, @CurrentUser() user: JwtPayload) {
     return this.scheduleService.remove(id, user);
   }

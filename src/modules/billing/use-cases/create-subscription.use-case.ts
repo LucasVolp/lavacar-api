@@ -150,7 +150,7 @@ export class CreateCheckoutUseCase {
                 throw err;
             }
 
-            this.logger.error(`Error in CreateCheckoutUseCase: ${err.message}`);
+            this.logger.error(`Error in CreateCheckoutUseCase: ${(err as Error).message}`);
             throw new ServiceUnavailableException("Something bad happened while processing your request");
         }
     }

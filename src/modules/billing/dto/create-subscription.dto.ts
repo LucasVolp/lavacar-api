@@ -14,9 +14,9 @@ export class CreateAsaasSubscriptionDto {
     @IsNotEmpty()
     cycle: "MONTHLY" | "ANNUALLY";
 
-    @IsEnum(["CREDIT_CARD", "PIX", "UNDEFINED"])
+    @IsEnum(PaymentMethod)
     @IsOptional()
-    billingType?: "CREDIT_CARD" | "PIX" | "UNDEFINED";
+    billingType?: PaymentMethod;
 
 }
 

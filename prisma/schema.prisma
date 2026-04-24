@@ -78,6 +78,13 @@ enum PaymentMethod {
   PIX
 }
 
+enum InviteStatus {
+  PENDING
+  ACCEPTED
+  EXPIRED
+  REVOKED
+}
+
 // ==================== USUÁRIO ====================
 
 model User {
@@ -96,13 +103,17 @@ model User {
   updatedAt DateTime @updatedAt
 
   // Relacionamentos
-  vehicles            Vehicle[]
-  appointments        Appointment[]
-  evaluations         Evaluation[]
-  shops               Shop[] // Se for OWNER, pode ter múltiplas lojas
-  organizationMembers OrganizationMember[]
-  organizations       Organization[]
-  shopClients         ShopClient[]
+  vehicles                Vehicle[]
+  appointments            Appointment[]
+  evaluations             Evaluation[]
+  shops                   Shop[] // Se for OWNER, pode ter múltiplas lojas
+  organizationMembers     OrganizationMember[]
+  organizations           Organization[]
+  shopClients             ShopClient[]
+  subscriptionIntents     SubscriptionIntent[]
+  passwordResets          PasswordReset[]
+  emailChanges            EmailChange[]
+  organizationInvitesSent OrganizationInvite[]
 
   @@index([email])
   @@index([role])
@@ -150,6 +161,7 @@ model Organization {
   shops   Shop[]
   members OrganizationMember[]
   goals   SalesGoal[]
+  invites OrganizationInvite[]
 
   subscriptions Subscriptions[]
 }
@@ -168,12 +180,17 @@ model Subscriptions {
   currentPeriodEnd   DateTime
 
   nextDueDate DateTime?
+  
+  // Auditoria de cancelamento e expiração
+  cancelledAt DateTime? // Data exata do cancelamento
+  expiresAt   DateTime? // Data de expiração do período vigente (mesmo se cancelada)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   @@index([organizationId])
   @@index([status])
+  @@index([expiresAt])
 }
 
 model OrganizationMember {
@@ -257,6 +274,7 @@ model Shop {
   managers      ShopManager[]
   clients       ShopClient[]
   goals         SalesGoal[]
+  invites       OrganizationInvite[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -501,6 +519,43 @@ model Checklist {
   updatedAt DateTime @updatedAt
 }
 
+// ==================== WEBHOOK EVENTS (IDEMPOTÊNCIA) ====================
+
+model WebhookEvent {
+  id           String    @id @default(uuid())
+  asaasEventId String    @unique
+  event        String
+  status       String    @default("PENDING")
+  payload      Json
+  processedAt  DateTime?
+  error        String?
+  createdAt    DateTime  @default(now())
+
+  @@index([asaasEventId])
+  @@index([status])
+}
+
+// ==================== SUBSCRIPTION INTENT (PRÉ-PAGAMENTO) ====================
+
+model SubscriptionIntent {
+  id                  String        @id @default(uuid())
+  userId              String
+  user                User          @relation(fields: [userId], references: [id])
+  asaasCustomerId     String
+  asaasSubscriptionId String        @unique
+  billingType         PaymentMethod
+  cycle               String
+  orgName             String
+  document            String
+  status              String        @default("PENDING")
+  createdAt           DateTime      @default(now())
+  updatedAt           DateTime      @updatedAt
+
+  @@index([userId])
+  @@index([asaasSubscriptionId])
+  @@index([status])
+}
+
 // ==================== META DE VENDAS ====================
 
 enum GoalPeriod {
@@ -530,4 +585,68 @@ model SalesGoal {
   @@index([organizationId])
   @@index([startDate])
   @@index([endDate])
+}
+
+// ==================== SEGURANÇA: RECUPERAÇÃO DE SENHA ====================
+
+model PasswordReset {
+  id        String    @id @default(uuid())
+  userId    String
+  tokenHash String    @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expiresAt])
+}
+
+// ==================== SEGURANÇA: ALTERAÇÃO DE E-MAIL ====================
+
+model EmailChange {
+  id        String    @id @default(uuid())
+  userId    String
+  newEmail  String
+  tokenHash String    @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expiresAt])
+}
+
+// ==================== CONVITES DE ORGANIZAÇÃO ====================
+
+model OrganizationInvite {
+  id         String       @id @default(uuid())
+  email      String
+  role       Role         @default(EMPLOYEE)
+  tokenHash  String       @unique
+  status     InviteStatus @default(PENDING)
+  expiresAt  DateTime
+  acceptedAt DateTime?
+  revokedAt  DateTime?
+
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  shopId String?
+  shop   Shop?   @relation(fields: [shopId], references: [id], onDelete: Cascade)
+
+  invitedById String
+  invitedBy   User   @relation(fields: [invitedById], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([organizationId])
+  @@index([shopId])
+  @@index([email])
+  @@index([status])
+  @@index([expiresAt])
 }

@@ -32,6 +32,7 @@ export class ServiceController {
   ) {}
 
   @Post()
+  @Roles(Role.ADMIN, Role.OWNER, Role.MANAGER)
   create(@Body() createServiceDto: CreateServiceDto, @CurrentUser() user: JwtPayload) {
     return this.serviceService.create(createServiceDto, user);
   }
@@ -84,11 +85,13 @@ export class ServiceController {
   }
 
   @Patch(':id')
+  @Roles(Role.ADMIN, Role.OWNER, Role.MANAGER)
   update(@Param('id') id: string, @Body() updateServiceDto: UpdateServiceDto, @CurrentUser() user: JwtPayload) {
     return this.serviceService.update(id, updateServiceDto, user);
   }
 
   @Post(':id/upload/photo')
+  @Roles(Role.ADMIN, Role.OWNER, Role.MANAGER)
   @UseInterceptors(
     FileInterceptor('file', {
       storage: memoryStorage(),
@@ -130,6 +133,7 @@ export class ServiceController {
   }
 
   @Delete(':id/upload/photo')
+  @Roles(Role.ADMIN, Role.OWNER, Role.MANAGER)
   async deletePhoto(@Param('id') id: string, @CurrentUser() user: JwtPayload) {
     const service = await this.serviceService.findOne(id, user);
     if (service.photoUrl) {
@@ -141,6 +145,7 @@ export class ServiceController {
   }
 
   @Delete(':id')
+  @Roles(Role.ADMIN, Role.OWNER, Role.MANAGER)
   remove(@Param('id') id: string, @CurrentUser() user: JwtPayload) {
     return this.serviceService.remove(id, user);
   }
