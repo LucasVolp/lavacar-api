@@ -116,6 +116,40 @@ export class AuthService {
         role: true,
         isGuest: true,
         createdAt: true,
+        organizations: {
+          select: {
+            id: true,
+            name: true,
+            slug: true,
+          },
+        },
+        organizationMembers: {
+          where: { isActive: true },
+          select: {
+            id: true,
+            organizationId: true,
+            role: true,
+            organization: {
+              select: {
+                id: true,
+                name: true,
+                slug: true,
+              },
+            },
+            managedShops: {
+              select: {
+                shopId: true,
+                shop: {
+                  select: {
+                    id: true,
+                    name: true,
+                    slug: true,
+                  },
+                },
+              },
+            },
+          },
+        },
       },
     });
 
@@ -131,20 +165,17 @@ export class AuthService {
 
   async register(dto: RegisterDto) {
     const user = await this.registerUseCase.execute(dto);
-    const token = this.generateJwt(user);
-    return { user, access_token: token };
+    return this.getProfile(user.id);
   }
 
   async login(dto: LoginDto) {
     const user = await this.loginUseCase.execute(dto);
-    const token = this.generateJwt(user);
-    return { user, access_token: token };
+    return this.getProfile(user.id);
   }
 
   async completeRegistration(dto: CompleteRegistrationDto) {
     const user = await this.completeRegistrationUseCase.execute(dto);
-    const token = this.generateJwt(user);
-    return { user, access_token: token };
+    return this.getProfile(user.id);
   }
 
   async validateGoogleAccessToken(accessToken: string): Promise<any> {

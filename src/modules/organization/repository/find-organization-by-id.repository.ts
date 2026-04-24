@@ -10,6 +10,7 @@ export class FindOrganizationByIdRepository {
             where: { id },
             include: {
                 shops: true,
+                subscriptions: true,
                 members: {
                     include: {
                         user: {

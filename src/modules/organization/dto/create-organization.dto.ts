@@ -1,4 +1,4 @@
-import { IsString, IsOptional, IsUrl, MaxLength, MinLength, IsUUID } from 'class-validator';
+import { IsBoolean, IsOptional, IsString, IsUrl, MaxLength, MinLength, IsUUID } from 'class-validator';
 
 export class CreateOrganizationDto {
     @IsString()
@@ -6,10 +6,10 @@ export class CreateOrganizationDto {
     @MaxLength(100)
     name: string;
 
-    @IsOptional()
     @IsString()
+    @MinLength(11)
     @MaxLength(18)
-    document?: string; // CNPJ
+    document: string;
 
     @IsUUID()
     ownerId: string;
@@ -17,4 +17,8 @@ export class CreateOrganizationDto {
     @IsOptional()
     @IsUrl()
     logoUrl?: string;
+
+    @IsBoolean()
+    @IsOptional()
+    isActive?: boolean;
 }

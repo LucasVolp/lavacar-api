@@ -766,7 +766,7 @@ describe('AppointmentController', () => {
 
             const result = await controller.create(mockCreateDto as any, regularUser);
 
-            expect(result.customField).toBe('extra');
+            expect((result as any).customField).toBe('extra');
             expect(result.trackingUrl).toBe('url');
         });
 

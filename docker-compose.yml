@@ -32,6 +32,7 @@ services:
       - ./.env
     environment:
       - NODE_ENV=development
+      - ASAAS_API_SANDBOX_KEY=${ASAAS_API_SANDBOX_KEY}
     ports:
       - "3000:3000"
     volumes:
@@ -42,6 +43,25 @@ services:
         condition: service_healthy
     networks:
       - lavacar_network
+    security_opt:
+      - no-new-privileges:true
+
+  # ✅ NGrok - Expõe o backend publicamente (opcional)
+  ngrok:
+    image: ngrok/ngrok:latest
+    container_name: lavacar_ngrok
+    restart: unless-stopped
+    command: http backend:3000
+    environment:
+      - NGROK_AUTHTOKEN=${NGROK_AUTHTOKEN}
+    ports:
+      - "4040:4040"
+    depends_on:
+      - backend
+    networks:
+      - lavacar_network
+    profiles:
+      - ngrok
     security_opt:
       - no-new-privileges:true
 
