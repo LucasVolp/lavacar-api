@@ -11,6 +11,7 @@ import { Status, PaymentMethod } from 'prisma/generated';
 
 const mockPrisma = {
     organization: { findFirst: jest.fn(), create: jest.fn(), update: jest.fn() },
+    organizationMember: { upsert: jest.fn() },
     subscriptions: { create: jest.fn() },
     subscriptionIntent: { update: jest.fn() },
     user: { update: jest.fn() },
@@ -146,13 +147,16 @@ describe('HandleWebhookUseCase', () => {
     });
 
     describe('PAYMENT_DELETED / SUBSCRIPTION_DELETED events', () => {
-        it('should set subscription CANCELLED and deactivate org when local subscription exists', async () => {
+        it('should set subscription CANCELLED and keep org active until period end', async () => {
             mockFindSubscriptionByAsaasId.findByAsaasId.mockResolvedValue(localSubscription);
 
             await useCase.execute({ event: 'PAYMENT_DELETED', payment: { subscription: 'asaas-sub-1' } } as any);
 
-            expect(mockUpdateSubscription.update).toHaveBeenCalledWith('sub-local-1', { status: Status.CANCELLED });
-            expect(mockUpdateOrganization.update).toHaveBeenCalledWith('org-1', { isActive: false });
+            expect(mockUpdateSubscription.update).toHaveBeenCalledWith(
+                'sub-local-1',
+                expect.objectContaining({ status: Status.CANCELLED, cancelledAt: expect.any(Date) }),
+            );
+            expect(mockUpdateOrganization.update).not.toHaveBeenCalled();
         });
 
         it('should mark intent FAILED when payment cancelled before org creation', async () => {

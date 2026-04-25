@@ -3,6 +3,7 @@ import { BadRequestException } from '@nestjs/common';
 import { OrganizationController } from '../organization.controller';
 import { OrganizationService } from '../organization.service';
 import { StorageService } from '../../storage/storage.service';
+import { CanAccessOrganizationWithBillingGuard } from 'src/guards/can-access-organization-with-billing.guard';
 
 const mockOrganizationService = {
   create: jest.fn(),
@@ -32,7 +33,10 @@ describe('OrganizationController', () => {
         { provide: OrganizationService, useValue: mockOrganizationService },
         { provide: StorageService, useValue: mockStorageService },
       ],
-    }).compile();
+    })
+      .overrideGuard(CanAccessOrganizationWithBillingGuard)
+      .useValue({ canActivate: () => true })
+      .compile();
 
     controller = module.get<OrganizationController>(OrganizationController);
   });

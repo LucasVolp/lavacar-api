@@ -3,11 +3,13 @@ import { Logger } from '@nestjs/common';
 import { GetBillingStatusUseCase } from '../use-cases/get-billing-status.use-case';
 import { FindOrganizationByOwnerRepository } from 'src/modules/organization/repository';
 import { FindSubscriptionByOrganizationRepository } from '../repository/find-subscription-by-organization.repository';
+import { SubscriptionIntentRepository } from '../repository/subscription-intent.repository';
 import { AsaasService } from '../services/asaas.service';
 import { PaymentMethod, Status } from 'prisma/generated';
 
 const mockFindOrganizationByOwner = { findByOwnerId: jest.fn() };
 const mockFindSubscription = { findByOrganizationId: jest.fn() };
+const mockSubscriptionIntentRepository = { findByUserId: jest.fn() };
 const mockAsaasService = {
     getSubscriptionPayments: jest.fn(),
     getPixQrCode: jest.fn(),
@@ -44,6 +46,7 @@ describe('GetBillingStatusUseCase', () => {
                 GetBillingStatusUseCase,
                 { provide: FindOrganizationByOwnerRepository, useValue: mockFindOrganizationByOwner },
                 { provide: FindSubscriptionByOrganizationRepository, useValue: mockFindSubscription },
+                { provide: SubscriptionIntentRepository, useValue: mockSubscriptionIntentRepository },
                 { provide: AsaasService, useValue: mockAsaasService },
             ],
         }).compile();

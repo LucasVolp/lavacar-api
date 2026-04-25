@@ -24,6 +24,31 @@ export function getEndOfDayInTimezone(date: Date, timeZone: string = DEFAULT_TIM
 }
 
 /**
+ * Retorna o início do dia em UTC (00:00:00.000Z) preservando a data absoluta.
+ */
+export function getStartOfDayUTC(date: Date): Date {
+  const utcDate = new Date(date);
+  utcDate.setUTCHours(0, 0, 0, 0);
+  return utcDate;
+}
+
+/**
+ * Retorna o fim do dia em UTC (23:59:59.999Z) preservando a data absoluta.
+ */
+export function getEndOfDayUTC(date: Date): Date {
+  const utcDate = new Date(date);
+  utcDate.setUTCHours(23, 59, 59, 999);
+  return utcDate;
+}
+
+/**
+ * Formata uma data de forma explícita em UTC.
+ */
+export function formatInUTC(date: Date | string, formatString: string): string {
+  return formatInTimeZone(date, 'UTC', formatString);
+}
+
+/**
  * Extrai a hora "HH:mm" de uma string ISO DateTime ou Date
  * @example extractTimeFromDateTime("2025-12-25T10:30:00") => "10:30"
  * @example extractTimeFromDateTime(new Date()) => "14:25"

@@ -47,17 +47,17 @@ export class AcceptInviteUseCase {
     let user = await this.findUserByEmailRepository.findUserByEmail(invite.email);
 
     if (!user) {
-      if (!dto.firstName || !dto.lastName || !dto.password) {
-        throw new BadRequestException('Por favor, informe seu nome, sobrenome e senha para criar a conta.');
+      if (!dto.firstName || !dto.lastName || !dto.password || !dto.phone) {
+        throw new BadRequestException('Por favor, informe seu nome, sobrenome, telefone e senha para criar a conta.');
       }
-      
+
       const hashedPassword = await bcrypt.hash(dto.password, 10);
       user = await this.createUserRepository.create({
         email: invite.email,
         firstName: dto.firstName,
         lastName: dto.lastName,
         password: hashedPassword,
-        phone: `invite-${Date.now()}`,
+        phone: dto.phone,
         role: (invite.role || Role.USER) as unknown as UserRole,
       });
     }

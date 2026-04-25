@@ -2,6 +2,10 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { BadRequestException } from '@nestjs/common';
 import { AuthController } from '../auth.controller';
 import { AuthService } from '../auth.service';
+import { RequestPasswordResetUseCase } from '../use-cases/request-password-reset.use-case';
+import { ResetPasswordUseCase } from '../use-cases/reset-password.use-case';
+import { RequestEmailChangeUseCase } from '../use-cases/request-email-change.use-case';
+import { ConfirmEmailChangeUseCase } from '../use-cases/confirm-email-change.use-case';
 
 const mockAuthService = {
   register: jest.fn(),
@@ -15,6 +19,11 @@ const mockAuthService = {
   validateTrackingToken: jest.fn(),
 };
 
+const mockRequestPasswordResetUseCase = { execute: jest.fn() };
+const mockResetPasswordUseCase = { execute: jest.fn() };
+const mockRequestEmailChangeUseCase = { execute: jest.fn() };
+const mockConfirmEmailChangeUseCase = { execute: jest.fn() };
+
 describe('AuthController', () => {
   let controller: AuthController;
 
@@ -23,7 +32,13 @@ describe('AuthController', () => {
 
     const module: TestingModule = await Test.createTestingModule({
       controllers: [AuthController],
-      providers: [{ provide: AuthService, useValue: mockAuthService }],
+      providers: [
+        { provide: AuthService, useValue: mockAuthService },
+        { provide: RequestPasswordResetUseCase, useValue: mockRequestPasswordResetUseCase },
+        { provide: ResetPasswordUseCase, useValue: mockResetPasswordUseCase },
+        { provide: RequestEmailChangeUseCase, useValue: mockRequestEmailChangeUseCase },
+        { provide: ConfirmEmailChangeUseCase, useValue: mockConfirmEmailChangeUseCase },
+      ],
     }).compile();
 
     controller = module.get<AuthController>(AuthController);
