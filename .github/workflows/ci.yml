@@ -39,3 +39,7 @@ jobs:
 
       - name: Security Check
         run: pnpm audit --audit-level=high
+      
+      - name: Trigger Render Deploy
+        if: success()
+        run: curl -X POST ${{ secrets.RENDER_DEPLOY_HOOK }}
