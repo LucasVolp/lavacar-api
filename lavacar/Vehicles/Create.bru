@@ -1,0 +1,21 @@
+meta {
+  name: Create
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{base_url}}/vehicle
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "brand":"renault",
+    "model":"stepway",
+    "color":"preto",
+    "plate":"NSD-6647",
+    "userId":"cc1a63a9-5f4d-479e-9626-03dfe45a7fc8"
+  }
+}

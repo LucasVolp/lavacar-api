@@ -1,0 +1,38 @@
+# ---- Version control ----
+.git
+.gitignore
+
+# ---- Dependencies (rebuilt inside container) ----
+node_modules
+
+# ---- Build output (rebuilt inside container) ----
+dist
+
+# ---- Environment / secrets (NEVER ship into image) ----
+.env
+.env.*
+!.env.example
+
+# ---- IDE / editor ----
+.vscode
+.idea
+*.swp
+*.swo
+*~
+
+# ---- Tests / CI ----
+test
+coverage
+jest.config.*
+.eslintrc*
+eslint.config*
+.prettierrc*
+
+# ---- Docker meta (avoid recursive context) ----
+Dockerfile
+docker-compose*.yml
+.dockerignore
+
+# ---- Docs / misc ----
+*.md
+LICENSE

@@ -1,0 +1,26 @@
+meta {
+  name: Create
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{base_url}}/shop
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "name":"Shop 1",
+    "phone": "67992448204",
+    "zipCode": "79630220",
+    "street": "Rua Clóvis Bevilaqua",
+    "number": "635",
+    "neighborhood": "St. Terezinha",
+    "city": "Três Lagoas",
+    "state": "MS",
+    
+    "organizationId": "adc66fed-852f-42f2-bb30-ebabcd59c602"
+  }
+}

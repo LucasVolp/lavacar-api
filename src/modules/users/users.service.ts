@@ -1,0 +1,51 @@
+import { Injectable } from '@nestjs/common';
+import { CreateUserDto } from './dto/create-user.dto';
+import { UpdateUserDto } from './dto/update-user.dto';
+import { FindPublicUserUseCase, CreateUserUseCase, DeleteUserUseCase, FindAllUserUseCase, FindUserByEmailUseCase, FindUserByPhoneUseCase, FindUserUseCase } from './use-cases';
+import { UpdateUserUseCase } from './use-cases/update-user.use-case';
+
+@Injectable()
+export class UsersService {
+  constructor(
+    private readonly CreateUserUseCase: CreateUserUseCase,
+    private readonly FindAllUserUseCase: FindAllUserUseCase,
+    private readonly FindUserUseCase: FindUserUseCase,
+    private readonly UpdateUserUseCase: UpdateUserUseCase,
+    private readonly DeleteUserUsecase: DeleteUserUseCase,
+    private readonly FindUserByEmailUseCase: FindUserByEmailUseCase,
+    private readonly FindUserByPhoneUseCase: FindUserByPhoneUseCase,
+    private readonly FindPublicUserUseCase: FindPublicUserUseCase,
+  ){}
+
+  async create(data: CreateUserDto) {
+    return this.CreateUserUseCase.execute(data);
+  }
+
+  async findAll(filters?: { page?: number; perPage?: number }) {
+    return this.FindAllUserUseCase.execute(filters);
+  }
+
+  async findOne(id: string) {
+    return await this.FindUserUseCase.execute(id);
+  }
+
+  async FindByEmail(email: string) {
+    return await this.FindUserByEmailUseCase.execute(email);
+  }
+
+  async findByPhone(phone: string) {
+    return await this.FindUserByPhoneUseCase.execute(phone);
+  }
+
+  async findPublicUser(phone: string) {
+    return await this.FindPublicUserUseCase.execute(phone);
+  }
+
+  async update(id: string, data: UpdateUserDto) {
+    return await this.UpdateUserUseCase.execute(id, data);
+  }
+
+  async remove(id: string) {
+    return await this.DeleteUserUsecase.execute(id)
+  }
+}

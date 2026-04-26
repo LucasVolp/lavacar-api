@@ -1,0 +1,17 @@
+meta {
+  name: Update
+  type: http
+  seq: 4
+}
+
+patch {
+  url: {{base_url}}/service/8a741e84-6ff9-4edd-b67b-a253447f8d7c
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "name":"Service 124"
+  }
+}

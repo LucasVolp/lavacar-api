@@ -1,0 +1,121 @@
+import { Controller, Get, Post, Body, UseGuards, Req, Res, Query, BadRequestException, HttpCode, HttpStatus } from '@nestjs/common';
+import { AuthService } from './auth.service';
+import { AuthGuard } from '@nestjs/passport';
+import { Public } from 'src/shared/decorators/public.decorator';
+import { CurrentUser } from 'src/shared/decorators/current-user.decorator';
+import { JwtPayload } from 'src/shared/types/jwt-payload.interface';
+import { GuestLoginDto } from './dto/guest-login.dto';
+import { RegisterDto } from './dto/register.dto';
+import { LoginDto } from './dto/login.dto';
+import { CompleteRegistrationDto } from './dto/complete-registration.dto';
+import { RequestPasswordResetDto } from './dto/request-password-reset.dto';
+import { ResetPasswordDto } from './dto/reset-password.dto';
+import { RequestEmailChangeDto } from './dto/request-email-change.dto';
+import { ConfirmEmailChangeDto } from './dto/confirm-email-change.dto';
+import { RequestPasswordResetUseCase } from './use-cases/request-password-reset.use-case';
+import { ResetPasswordUseCase } from './use-cases/reset-password.use-case';
+import { RequestEmailChangeUseCase } from './use-cases/request-email-change.use-case';
+import { ConfirmEmailChangeUseCase } from './use-cases/confirm-email-change.use-case';
+import { Request, Response } from 'express';
+
+@Controller('auth')
+export class AuthController {
+  constructor(
+    private readonly authService: AuthService,
+    private readonly requestPasswordResetUseCase: RequestPasswordResetUseCase,
+    private readonly resetPasswordUseCase: ResetPasswordUseCase,
+    private readonly requestEmailChangeUseCase: RequestEmailChangeUseCase,
+    private readonly confirmEmailChangeUseCase: ConfirmEmailChangeUseCase,
+  ) {}
+
+  @Public()
+  @Get('google')
+  @UseGuards(AuthGuard('google'))
+  async googleAuth() {}
+
+  @Public()
+  @Post('guest')
+  async guestLogin(@Body() dto: GuestLoginDto) {
+    return this.authService.guestLogin(dto);
+  }
+
+  @Public()
+  @Post('register')
+  async register(@Body() dto: RegisterDto) {
+    return this.authService.register(dto);
+  }
+
+  @Public()
+  @Post('login')
+  async login(@Body() dto: LoginDto) {
+    return this.authService.login(dto);
+  }
+
+  @Public()
+  @Post('complete-registration')
+  async completeRegistration(@Body() dto: CompleteRegistrationDto) {
+    return this.authService.completeRegistration(dto);
+  }
+
+  @Public()
+  @Get('google/redirect')
+  @UseGuards(AuthGuard('google'))
+  googleAuthRedirect(@Req() req: Request, @Res() res: Response) {
+    const user = req.user as any;
+
+    // Usuário novo via Google — precisa completar cadastro com telefone
+    if (user.needsRegistration) {
+      const profile = encodeURIComponent(JSON.stringify(user.googleProfile));
+      const redirectUrl = `${process.env.FRONTEND_URL}/auth/complete-registration?profile=${profile}`;
+      return res.redirect(redirectUrl);
+    }
+
+    const accessToken = this.authService.generateJwt(user);
+    const redirectUrl = `${process.env.FRONTEND_URL}/auth/callback?access_token=${accessToken}`;
+    res.redirect(redirectUrl);
+  }
+
+  @Get('me')
+  getProfile(@CurrentUser() user: JwtPayload) {
+    return this.authService.getProfile(user.id);
+  }
+
+  @Public()
+  @Get('track/validate')
+  validateTrackingToken(@Query('token') token: string) {
+    if (!token) {
+      throw new BadRequestException('Token é obrigatório.');
+    }
+    return this.authService.validateTrackingToken(token);
+  }
+
+  @Public()
+  @Post('password/request-reset')
+  @HttpCode(HttpStatus.OK)
+  async requestPasswordReset(@Body() dto: RequestPasswordResetDto) {
+    return this.requestPasswordResetUseCase.execute(dto);
+  }
+
+  @Public()
+  @Post('password/reset')
+  @HttpCode(HttpStatus.OK)
+  async resetPassword(@Body() dto: ResetPasswordDto) {
+    return this.resetPasswordUseCase.execute(dto);
+  }
+
+  @Post('email/request-change')
+  @HttpCode(HttpStatus.OK)
+  async requestEmailChange(
+    @CurrentUser() currentUser: JwtPayload,
+    @Body() dto: RequestEmailChangeDto,
+  ) {
+    return this.requestEmailChangeUseCase.execute(currentUser.id, dto);
+  }
+
+  @Public()
+  @Post('email/confirm-change')
+  @HttpCode(HttpStatus.OK)
+  async confirmEmailChange(@Body() dto: ConfirmEmailChangeDto) {
+    return this.confirmEmailChangeUseCase.execute(dto);
+  }
+}

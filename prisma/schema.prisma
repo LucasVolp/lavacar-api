@@ -1,137 +1,652 @@
 generator client {
-  provider = "prisma-client-js"
+  provider = "prisma-client"
+  output   = "./generated"
 }
 
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
 }
 
+// ==================== ENUMS ====================
+
 enum Role {
-  USER
-  ADMIN
+  USER // Cliente
+  OWNER // Dono do estabelecimento
+  EMPLOYEE // Funcionário (futuro)
+  MANAGER // Gerente do estabelecimento (futuro)
+  ADMIN // Admin do sistema (você)
 }
 
 enum AppointmentStatus {
-  PENDING       // Agendado, mas não iniciado
-  WAITING       // Cliente chegou, aguardando início
-  IN_PROGRESS   // Lavagem em andamento
-  COMPLETED     // Serviço concluído
-  CANCELED      // Cancelado
-  NO_SHOW       // Cliente não compareceu
+  PENDING // Agendado, aguardando confirmação
+  CONFIRMED // Confirmado pelo estabelecimento
+  WAITING // Cliente chegou, aguardando início
+  IN_PROGRESS // Serviço em andamento
+  COMPLETED // Concluído
+  CANCELED // Cancelado (pelo cliente ou loja)
+  NO_SHOW // Cliente não compareceu
 }
+
+enum Weekday {
+  SUNDAY
+  MONDAY
+  TUESDAY
+  WEDNESDAY
+  THURSDAY
+  FRIDAY
+  SATURDAY
+}
+
+enum ShopStatus {
+  ACTIVE // Loja ativa e funcionando
+  INACTIVE // Loja temporariamente fechada
+  SUSPENDED // Suspensa por inadimplência (SaaS)
+}
+
+enum BlockedTimeType {
+  FULL_DAY // Dia inteiro bloqueado
+  PARTIAL // Período específico bloqueado
+}
+
+enum VehicleType {
+  CAR
+  MOTORCYCLE
+  TRUCK
+  SUV
+  VAN
+  OTHER
+}
+
+enum VehicleSize {
+  SMALL
+  MEDIUM
+  LARGE
+  MOTORCYCLE
+}
+
+enum Status {
+  ACTIVE
+  PENDING
+  OVERDUE
+  EXPIRED
+  CANCELLED
+}
+
+enum PaymentMethod {
+  CREDIT_CARD
+  BOLETO
+  PIX
+}
+
+enum InviteStatus {
+  PENDING
+  ACCEPTED
+  EXPIRED
+  REVOKED
+}
+
+// ==================== USUÁRIO ====================
 
 model User {
-  id        String     @id @default(uuid())
-  name      String
-  email     String     @unique
-  password  String
-  role      Role       @default(USER)
-  shops     Shop[]     // Se for admin
-  vehicles  Vehicle[]
-  appointments Appointment[]
-  createdAt DateTime   @default(now())
-  updatedAt DateTime   @updatedAt
+  id        String   @id @default(uuid())
+  firstName String
+  lastName  String?
+  email     String?  @unique
+  cpf       String?  @unique
+  password  String?
+  phone     String   @unique
+  picture   String?
+  role      Role     @default(USER)
+  isActive  Boolean  @default(true)
+  isGuest   Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relacionamentos
+  vehicles                Vehicle[]
+  appointments            Appointment[]
+  evaluations             Evaluation[]
+  shops                   Shop[] // Se for OWNER, pode ter múltiplas lojas
+  organizationMembers     OrganizationMember[]
+  organizations           Organization[]
+  shopClients             ShopClient[]
+  subscriptionIntents     SubscriptionIntent[]
+  passwordResets          PasswordReset[]
+  emailChanges            EmailChange[]
+  organizationInvitesSent OrganizationInvite[]
+
+  @@index([email])
+  @@index([role])
 }
 
-model Vehicle {
-  id        String     @id @default(uuid())
-  brand     String
-  model     String
-  color     String
-  plate     String     @unique
-  userId    String
-  user      User       @relation(fields: [userId], references: [id])
-  appointments Appointment[]
-  createdAt DateTime   @default(now())
-  updatedAt DateTime   @updatedAt
+// ==================== VEÍCULO ====================
 
+model Vehicle {
+  id        String      @id @default(uuid())
+  plate     String?     @unique
+  brand     String // Marca (ex: Fiat)
+  model     String // Modelo (ex: Uno)
+  year      Int? // Ano
+  color     String?
+  size      VehicleSize @default(MEDIUM)
+  type      VehicleType @default(CAR)
+  isActive  Boolean     @default(true) // Soft delete
+  userId    String
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+
+  // Relacionamentos
+  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  appointments Appointment[]
+
+  @@unique([plate, userId]) // Mesmo usuário não pode ter placa duplicada
+  @@index([userId])
+  @@index([plate])
+}
+
+model Organization {
+  id         String   @id @default(uuid())
+  name       String
+  slug       String   @unique
+  document   String?  @unique
+  logoUrl    String?
+  ownerId    String
+  owner      User     @relation(fields: [ownerId], references: [id])
+  customerId String? // Para integração com sistemas de pagamento
+  isActive   Boolean  @default(true)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  // Relacionamentos
+  shops   Shop[]
+  members OrganizationMember[]
+  goals   SalesGoal[]
+  invites OrganizationInvite[]
+
+  subscriptions Subscriptions[]
+}
+
+model Subscriptions {
+  id             String       @id @default(uuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  subscriptionId     String        @unique
+  status             Status
+  plan               String
+  billingType        PaymentMethod
+  price              Float
+  currentPeriodStart DateTime
+  currentPeriodEnd   DateTime
+
+  nextDueDate DateTime?
+  
+  // Auditoria de cancelamento e expiração
+  cancelledAt DateTime? // Data exata do cancelamento
+  expiresAt   DateTime? // Data de expiração do período vigente (mesmo se cancelada)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([organizationId])
+  @@index([status])
+  @@index([expiresAt])
+}
+
+model OrganizationMember {
+  id             String   @id @default(uuid())
+  userId         String
+  organizationId String
+  role           Role     @default(EMPLOYEE)
+  isActive       Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  managedShops ShopManager[]
+
+  @@unique([userId, organizationId])
+  @@index([organizationId])
   @@index([userId])
 }
 
-model Shop {
-  id          String       @id @default(uuid())
-  name        String
-  address     String
-  contactPhone String
-  ownerId     String
-  owner       User         @relation(fields: [ownerId], references: [id])
-  services    Service[]
-  schedules   Schedule[]
-  blockedTimes BlockedTime[]
-  appointments Appointment[]
-  createdAt   DateTime     @default(now())
-  updatedAt   DateTime     @updatedAt
+model ShopManager {
+  id        String   @id @default(uuid())
+  shopId    String
+  memberId  String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  @@index([ownerId])
+  shop   Shop               @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  member OrganizationMember @relation(fields: [memberId], references: [id], onDelete: Cascade)
+
+  @@unique([shopId, memberId])
+  @@index([shopId])
+  @@index([memberId])
 }
 
-model Service {
+// ==================== ESTABELECIMENTO ====================
+
+model Shop {
   id          String     @id @default(uuid())
   name        String
-  description String
-  price       Float
-  duration    Int        // em minutos
-  shopId      String
-  shop        Shop       @relation(fields: [shopId], references: [id])
-  appointments Appointment[]
-  createdAt   DateTime   @default(now())
-  updatedAt   DateTime   @updatedAt
+  slug        String     @unique // URL amigável: "lavacar-do-joao"
+  description String?
+  document    String?
+  phone       String
+  email       String?
+  status      ShopStatus @default(ACTIVE)
+  logoUrl     String?
+  bannerUrl   String?
+  socialLinks Json?
+  gallery     String[]   @default([])
 
+  // Endereço
+  zipCode      String // CEP - campo obrigatório, usado para buscar o resto
+  street       String // Logradouro (rua, avenida, etc)
+  number       String // Número - usuário preenche
+  complement   String? // Complemento - usuário preenche (opcional)
+  neighborhood String // Bairro
+  city         String // Cidade
+  state        String  @db.Char(2) // UF (2 caracteres: SP, RJ, MG)
+  timeZone     String  @default("America/Sao_Paulo") // Fuso horário da loja
+
+  // Configurações
+  slotInterval       Int @default(30) // Intervalo entre slots em minutos (15, 30, 60)
+  bufferBetweenSlots Int @default(0) // Tempo de folga entre agendamentos
+  maxAdvanceDays     Int @default(30) // Quantos dias à frente pode agendar
+  minAdvanceMinutes  Int @default(60) // Antecedência mínima para agendar (1h)
+
+  // Relacionamentos
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id])
+
+  ownerId String?
+  owner   User?   @relation(fields: [ownerId], references: [id])
+
+  services      Service[]
+  schedules     Schedule[]
+  blockedTimes  BlockedTime[]
+  appointments  Appointment[]
+  serviceGroups ServiceGroup[]
+  managers      ShopManager[]
+  clients       ShopClient[]
+  goals         SalesGoal[]
+  invites       OrganizationInvite[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([slug, organizationId])
+  @@index([organizationId])
+  @@index([ownerId])
+  @@index([status])
+  @@index([city, state])
+}
+
+// ==================== GRUPO DE SERVIÇOS ====================
+// Organiza serviços em categorias (Lavagem, Polimento, Higienização, etc)
+
+model ServiceGroup {
+  id          String  @id @default(uuid())
+  name        String // "Lavagens", "Polimentos", "Extras"
+  description String?
+  isActive    Boolean @default(true)
+  shopId      String
+
+  shop     Shop      @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  services Service[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([name, shopId])
   @@index([shopId])
 }
+
+// ==================== SERVIÇO ====================
+
+model Service {
+  id          String  @id @default(uuid())
+  name        String // "Lavagem Simples"
+  description String?
+  photoUrl    String?
+  price       Decimal @db.Decimal(10, 2) // Usar Decimal para valores monetários!
+  duration    Int // Duração em minutos
+  isActive    Boolean @default(true) // Pode desativar sem excluir
+
+  isBudgetOnly Boolean @default(false) // Se true, apenas orçamento
+  hasVariants  Boolean @default(false) // Verifica se tem variações (ex: Carro pequeno, médio, grande)
+
+  shopId  String
+  groupId String?
+  shop    Shop          @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  group   ServiceGroup? @relation(fields: [groupId], references: [id], onDelete: SetNull)
+
+  appointmentServices AppointmentService[]
+  variants            ServiceVariant[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([name, shopId])
+  @@index([shopId])
+  @@index([groupId])
+  @@index([isActive])
+}
+
+model ServiceVariant {
+  id       String      @id @default(uuid())
+  size     VehicleSize
+  price    Decimal     @db.Decimal(10, 2)
+  duration Int
+
+  serviceId String
+  service   Service @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([serviceId, size])
+  @@index([serviceId])
+}
+
+// ==================== HORÁRIO DE FUNCIONAMENTO ====================
 
 model Schedule {
   id        String     @id @default(uuid())
-  weekday   Int        // 0 = Domingo, 6 = Sábado
-  startTime String     // "08:00"
-  endTime   String     // "18:00"
-  shopId    String
-  shop      Shop       @relation(fields: [shopId], references: [id])
+  weekday   Weekday
+  isOpen    ShopStatus @default(ACTIVE) // Pode marcar como fechado
+  startTime String // "08:00" - Hora de abertura
+  endTime   String // "18:00" - Hora de fechamento
 
+  // Suporte a intervalo (almoço, por exemplo)
+  breakStartTime String? // "12:00"
+  breakEndTime   String? // "13:00"
+
+  shopId String
+  shop   Shop   @relation(fields: [shopId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([weekday, shopId]) // Um registro por dia da semana por loja
   @@index([shopId])
-  @@unique([weekday, shopId]) // Um dia por shop
 }
 
+// ==================== BLOQUEIO DE HORÁRIOS ====================
+// Feriados, imprevistos, férias, etc
+
 model BlockedTime {
-  id        String     @id @default(uuid())
-  date      DateTime
-  reason    String
-  shopId    String
-  shop      Shop       @relation(fields: [shopId], references: [id])
+  id     String          @id @default(uuid())
+  type   BlockedTimeType
+  date   DateTime        @db.Date // Data do bloqueio
+  reason String? // "Feriado", "Manutenção"
+
+  // Se for PARTIAL, especifica o período
+  startTime String? // "08:00"
+  endTime   String? // "12:00"
+
+  shopId String
+  shop   Shop   @relation(fields: [shopId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([shopId])
   @@index([date])
+  @@index([shopId, date])
 }
 
+// ==================== AGENDAMENTO ====================
+
 model Appointment {
-  id           String            @id @default(uuid())
-  userId       String
-  user         User              @relation(fields: [userId], references: [id])
-  shopId       String
-  shop         Shop              @relation(fields: [shopId], references: [id])
-  vehicleId    String
-  vehicle      Vehicle           @relation(fields: [vehicleId], references: [id])
-  serviceId    String
-  service      Service           @relation(fields: [serviceId], references: [id])
-  scheduledAt  DateTime
-  status       AppointmentStatus @default(PENDING)
-  evaluation   Evaluation?
-  createdAt    DateTime          @default(now())
-  updatedAt    DateTime          @updatedAt
+  id                 String            @id @default(uuid())
+  scheduledAt        DateTime // Data e hora do agendamento
+  endTime            DateTime // Hora prevista de término (calculado)
+  status             AppointmentStatus @default(PENDING)
+  totalPrice         Decimal           @db.Decimal(10, 2) // Valor total
+  totalDuration      Int // Duração total em minutos
+  notes              String? // Observações do cliente
+  cancellationReason String? // Motivo do cancelamento
+
+  // Relacionamentos
+  userId    String
+  shopId    String
+  vehicleId String
+  user      User    @relation(fields: [userId], references: [id])
+  shop      Shop    @relation(fields: [shopId], references: [id])
+  vehicle   Vehicle @relation(fields: [vehicleId], references: [id])
+
+  services   AppointmentService[]
+  evaluation Evaluation?
+  checklist  Checklist?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([userId])
   @@index([shopId])
   @@index([vehicleId])
-  @@index([serviceId])
   @@index([scheduledAt])
+  @@index([status])
+  @@index([shopId, scheduledAt]) // Busca de agenda por loja e data
 }
 
+// ==================== SERVIÇOS DO AGENDAMENTO ====================
+// Tabela pivot para múltiplos serviços por agendamento
+
+model AppointmentService {
+  id            String @id @default(uuid())
+  appointmentId String
+  serviceId     String
+
+  // Snapshot do serviço no momento do agendamento
+  // (importante pois preço/duração podem mudar)
+  serviceName  String
+  servicePrice Decimal @db.Decimal(10, 2)
+  duration     Int
+
+  isBudget    Boolean      @default(false) // Se true, este serviço é apenas para orçamento, não terá valor
+  vehicleSize VehicleSize? // Tamanho do veículo para este serviço (se aplicável)
+
+  appointment Appointment @relation(fields: [appointmentId], references: [id], onDelete: Cascade)
+  service     Service     @relation(fields: [serviceId], references: [id])
+
+  createdAt DateTime @default(now())
+
+  @@unique([appointmentId, serviceId])
+  @@index([appointmentId])
+  @@index([serviceId])
+}
+
+// ==================== AVALIAÇÃO ====================
+
 model Evaluation {
-  id            String     @id @default(uuid())
-  rating        Int        // 1 a 5
+  id            String   @id @default(uuid())
+  rating        Int
   comment       String?
-  appointmentId String     @unique
-  appointment   Appointment @relation(fields: [appointmentId], references: [id])
-  createdAt     DateTime   @default(now())
+  photos        String[] // Foto do serviço, opcional
+  appointmentId String   @unique
+  userId        String // Quem avaliou
+
+  appointment Appointment @relation(fields: [appointmentId], references: [id], onDelete: Cascade)
+  user        User        @relation(fields: [userId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([appointmentId])
+  @@index([userId])
+}
+
+// ==================== CLIENTES DO ESTABELECIMENTO (CRM) ====================
+
+model ShopClient {
+  id     String @id @default(uuid())
+  shopId String
+  userId String
+
+  customName  String?
+  customPhone String?
+  customEmail String?
+  notes       String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  shop Shop @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([shopId, userId])
+  @@index([shopId])
+  @@index([userId])
+}
+
+// ==================== CHECKLIST / VISTORIA ====================
+
+model Checklist {
+  id            String   @id @default(uuid())
+  appointmentId String   @unique
+  description   String? // Descrição de avarias ou observações
+  photos        String[] // URLs das fotos da vistoria
+
+  appointment Appointment @relation(fields: [appointmentId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// ==================== WEBHOOK EVENTS (IDEMPOTÊNCIA) ====================
+
+model WebhookEvent {
+  id           String    @id @default(uuid())
+  asaasEventId String    @unique
+  event        String
+  status       String    @default("PENDING")
+  payload      Json
+  processedAt  DateTime?
+  error        String?
+  createdAt    DateTime  @default(now())
+
+  @@index([asaasEventId])
+  @@index([status])
+}
+
+// ==================== SUBSCRIPTION INTENT (PRÉ-PAGAMENTO) ====================
+
+model SubscriptionIntent {
+  id                  String        @id @default(uuid())
+  userId              String
+  user                User          @relation(fields: [userId], references: [id])
+  asaasCustomerId     String
+  asaasSubscriptionId String        @unique
+  billingType         PaymentMethod
+  cycle               String
+  orgName             String
+  document            String
+  status              String        @default("PENDING")
+  createdAt           DateTime      @default(now())
+  updatedAt           DateTime      @updatedAt
+
+  @@index([userId])
+  @@index([asaasSubscriptionId])
+  @@index([status])
+}
+
+// ==================== META DE VENDAS ====================
+
+enum GoalPeriod {
+  WEEKLY
+  MONTHLY
+  CUSTOM
+}
+
+model SalesGoal {
+  id        String     @id @default(uuid())
+  amount    Decimal    @db.Decimal(10, 2)
+  period    GoalPeriod
+  startDate DateTime
+  endDate   DateTime
+
+  shopId         String?
+  organizationId String?
+
+  shop         Shop?         @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  organization Organization? @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([shopId, period, startDate])
+  @@index([shopId])
+  @@index([organizationId])
+  @@index([startDate])
+  @@index([endDate])
+}
+
+// ==================== SEGURANÇA: RECUPERAÇÃO DE SENHA ====================
+
+model PasswordReset {
+  id        String    @id @default(uuid())
+  userId    String
+  tokenHash String    @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expiresAt])
+}
+
+// ==================== SEGURANÇA: ALTERAÇÃO DE E-MAIL ====================
+
+model EmailChange {
+  id        String    @id @default(uuid())
+  userId    String
+  newEmail  String
+  tokenHash String    @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expiresAt])
+}
+
+// ==================== CONVITES DE ORGANIZAÇÃO ====================
+
+model OrganizationInvite {
+  id         String       @id @default(uuid())
+  email      String
+  role       Role         @default(EMPLOYEE)
+  tokenHash  String       @unique
+  status     InviteStatus @default(PENDING)
+  expiresAt  DateTime
+  acceptedAt DateTime?
+  revokedAt  DateTime?
+
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  shopId String?
+  shop   Shop?   @relation(fields: [shopId], references: [id], onDelete: Cascade)
+
+  invitedById String
+  invitedBy   User   @relation(fields: [invitedById], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([organizationId])
+  @@index([shopId])
+  @@index([email])
+  @@index([status])
+  @@index([expiresAt])
 }

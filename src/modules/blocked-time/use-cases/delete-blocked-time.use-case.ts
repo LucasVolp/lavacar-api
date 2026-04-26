@@ -1,0 +1,36 @@
+import { Injectable, Logger, NotFoundException, ServiceUnavailableException } from '@nestjs/common';
+import { DeleteBlockedTimeRepository, FindBlockedTimeByIdRepository } from '../repository';
+import { JwtPayload } from 'src/shared/types/jwt-payload.interface';
+
+@Injectable()
+export class DeleteBlockedTimeUseCase {
+  constructor(
+    private readonly BlockedTimeRepository: DeleteBlockedTimeRepository,
+    private readonly FindBlockedTimeByIdRepository: FindBlockedTimeByIdRepository,
+    private readonly logger: Logger = new Logger(),
+  ) {}
+
+  async execute(id: string, user: JwtPayload) {
+    try {
+      const exists = await this.FindBlockedTimeByIdRepository.findById(id, user);
+      if (!exists) {
+        this.logger.warn(`Blocked time not found with ID: ${id}`, DeleteBlockedTimeUseCase.name);
+        throw new NotFoundException('Blocked time not found!');
+      }
+      const blockedTime = await this.BlockedTimeRepository.delete(id);
+      this.logger.log('Blocked time deleted!', DeleteBlockedTimeUseCase.name);
+      return blockedTime;
+    } catch (err) {
+      if (err instanceof NotFoundException) {
+        throw err;
+      }
+      const error = new ServiceUnavailableException({
+        message: 'Error deleting blocked time',
+        cause: err,
+        description: 'Error deleting blocked time',
+      });
+      this.logger.error(error.message, err.stack);
+      throw error;
+    }
+  }
+}

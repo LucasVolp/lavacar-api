@@ -1,0 +1,71 @@
+services:
+  # PostgreSQL now running on Neon DB (managed service)
+  # No longer need local postgres container
+
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: builder          # dev uses the builder stage (has devDeps)
+    container_name: lavacar_backend
+    restart: unless-stopped
+    entrypoint: ["/app/entrypoint.sh"]
+    env_file:
+      - ./.env
+    environment:
+      - NODE_ENV=development
+      - ASAAS_API_SANDBOX_KEY=${ASAAS_API_SANDBOX_KEY}
+    ports:
+      - "3000:3000"
+    volumes:
+      - .:/app
+      - /app/node_modules
+    networks:
+      - lavacar_network
+    security_opt:
+      - no-new-privileges:true
+
+  # ✅ NGrok - Expõe o backend publicamente (opcional)
+  ngrok:
+    image: ngrok/ngrok:latest
+    container_name: lavacar_ngrok
+    restart: unless-stopped
+    command: http backend:3000
+    environment:
+      - NGROK_AUTHTOKEN=${NGROK_AUTHTOKEN}
+    ports:
+      - "4040:4040"
+    depends_on:
+      - backend
+    networks:
+      - lavacar_network
+    profiles:
+      - ngrok
+    security_opt:
+      - no-new-privileges:true
+
+  # n8n:
+  #   image: docker.n8n.io/n8nio/n8n:latest
+  #   container_name: lavacar_n8n
+  #   restart: unless-stopped
+  #   ports:
+  #     - "5678:5678"
+  #   environment:
+  #     - NODE_ENV=production
+  #     - GENERIC_TIMEZONE=${TZ:-America/Sao_Paulo}
+  #     - N8N_HOST=${N8N_HOST:-localhost}
+  #     - N8N_PORT=5678
+  #     - N8N_PROTOCOL=${N8N_PROTOCOL:-http}
+  #     - WEBHOOK_URL=${WEBHOOK_URL:-http://localhost:5678}
+  #   volumes:
+  #     - n8n_data:/home/node/.n8n
+  #   networks:
+  #     - lavacar_network
+  #   depends_on:
+  #     postgres:
+  #       condition: service_healthy
+  #   security_opt:
+  #     - no-new-privileges:true
+
+networks:
+  lavacar_network:

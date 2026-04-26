@@ -1,0 +1,17 @@
+meta {
+  name: Update
+  type: http
+  seq: 4
+}
+
+patch {
+  url: {{base_url}}/organizations/94e3f3f2-de3e-4b02-aab2-2b808fd94455
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "logoUrl": ""
+  }
+}

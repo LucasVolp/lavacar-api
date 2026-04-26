@@ -1,0 +1,15 @@
+meta {
+  name: Find All
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{base_url}}/organizations
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: /auth/callback?access_token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI5ZjkwZjdkNC0yYjQyLTQ1NDktYmU4OC0xZWQ1NTY2Y2ZlZDEiLCJlbWFpbCI6Imx1Y2FzZ2FicmllbHZtYkBnbWFpbC5jb20iLCJwaG9uZSI6Iis1NTY3OTkyNDQ4MjA0Iiwicm9sZSI6Ik9XTkVSIiwiaWF0IjoxNzc0NDg3NzAxLCJleHAiOjE3NzQ1NzQxMDF9.8B8Yxg0TnNi0QPBIltJU4hRu3wKzp6K2gCeREecEKd0:200
+}

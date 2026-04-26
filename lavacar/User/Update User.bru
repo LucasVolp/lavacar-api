@@ -1,0 +1,21 @@
+meta {
+  name: Update User
+  type: http
+  seq: 4
+}
+
+patch {
+  url: {{base_url}}/users/968ca70e-d158-41e7-8297-967b038f4ee5
+  body: json
+  auth: inherit
+}
+
+headers {
+  Authorization: Bearer: yJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI5NjhjYTcwZS1kMTU4LTQxZTctODI5Ny05NjdiMDM4ZjRlZTUiLCJlbWFpbCI6Imx1Y2FzZ2FicmllbHZtYkBnbWFpbC5jb20iLCJyb2xlIjoiVVNFUiIsImlhdCI6MTc3MTAyNTc1OSwiZXhwIjoxNzcxMTEyMTU5fQ.X1YLlzD1dttWKnL0Bns1GHcjrAbapB3pcteJN0dqmvI
+}
+
+body:json {
+  {
+    "role": "OWNER"
+  }
+}

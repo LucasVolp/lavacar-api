@@ -1,0 +1,157 @@
+import {
+  BadRequestException,
+  Body,
+  Controller,
+  Delete,
+  ForbiddenException,
+  Get,
+  Param,
+  Patch,
+  Post,
+  Query,
+  UploadedFile,
+  UseInterceptors,
+} from '@nestjs/common';
+import { UsersService } from './users.service';
+import { CreateUserDto } from './dto/create-user.dto';
+import { UpdateUserDto } from './dto/update-user.dto';
+import { Public } from 'src/shared/decorators/public.decorator';
+import { CurrentUser } from 'src/shared/decorators/current-user.decorator';
+import { JwtPayload } from 'src/shared/types/jwt-payload.interface';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { memoryStorage } from 'multer';
+import { StorageService } from '../storage/storage.service';
+import { Role } from './types/Role';
+
+@Controller('users')
+export class UsersController {
+  constructor(
+    private readonly usersService: UsersService,
+    private readonly storageService: StorageService,
+  ) {}
+
+  @Public()
+  @Post()
+  create(@Body() data: CreateUserDto) {
+    return this.usersService.create(data);
+  }
+
+  @Public()
+  @Get()
+  findAll(
+    @CurrentUser() user: JwtPayload,
+    @Query('page') page?: string,
+    @Query('perPage') perPage?: string,
+  ) {
+    if (user.role !== 'ADMIN') {
+      throw new ForbiddenException('Only ADMIN can list all users');
+    }
+    return this.usersService.findAll({
+      page: page ? parseInt(page, 10) : undefined,
+      perPage: perPage ? parseInt(perPage, 10) : undefined,
+    });
+  }
+
+  @Get(':id')
+  findOne(@Param('id') id: string, @CurrentUser() user: JwtPayload) {
+    if (user.id !== id && user.role !== 'ADMIN') {
+      throw new ForbiddenException('You can only view your own profile');
+    }
+    return this.usersService.findOne(id);
+  }
+
+  @Get('email/:email')
+  FindOneByEmail(@Param('email') email: string, @CurrentUser() user: JwtPayload) {
+    if (user.role !== 'ADMIN') {
+      throw new ForbiddenException('Only ADMIN can search users by email');
+    }
+    return this.usersService.FindByEmail(email);
+  }
+
+  @Get('phone/:phone')
+  findByPhone(@Param('phone') phone: string, @CurrentUser() user: JwtPayload) {
+    if (user.role !== Role.OWNER && user.role !== Role.ADMIN) {
+      throw new ForbiddenException('You cant search users by phone');
+    }
+    return this.usersService.findByPhone(phone);
+  }
+
+  @Get('public/phone/:phone')
+  @Public()
+  findPublicUser(@Param('phone') phone: string) {
+    return this.usersService.findPublicUser(phone);
+  }
+
+  @Patch(':id')
+  update(@Param('id') id: string, @Body() data: UpdateUserDto, @CurrentUser() user: JwtPayload) {
+    if (user.id !== id && user.role !== 'ADMIN') {
+      throw new ForbiddenException('You can only update your own profile');
+    }
+    return this.usersService.update(id, data);
+  }
+
+  @Post(':id/upload/avatar')
+  @UseInterceptors(
+    FileInterceptor('file', {
+      storage: memoryStorage(),
+      limits: { fileSize: 8 * 1024 * 1024 },
+      fileFilter: (_req, file, cb) => {
+        if (!file.mimetype.startsWith('image/')) {
+          return cb(new BadRequestException('Apenas imagens sao permitidas'), false);
+        }
+        cb(null, true);
+      },
+    }),
+  )
+  async uploadAvatar(
+    @Param('id') id: string,
+    @UploadedFile() file: Express.Multer.File,
+    @CurrentUser() user: JwtPayload,
+  ) {
+    if (user.id !== id && user.role !== 'ADMIN') {
+      throw new ForbiddenException('You can only update your own profile');
+    }
+    if (!file) throw new BadRequestException('Arquivo nao enviado');
+
+    const current = await this.usersService.findOne(id);
+    const url = await this.storageService.uploadFile({
+      file,
+      fileType: 'IMAGE',
+      context: {
+        type: 'USER',
+        userId: id,
+        category: 'avatar',
+      },
+    });
+
+    if (current?.picture) {
+      await this.storageService.deleteFile(current.picture).catch(() => undefined);
+    }
+
+    await this.usersService.update(id, { picture: url });
+    return { url };
+  }
+
+  @Delete(':id/upload/avatar')
+  async deleteAvatar(@Param('id') id: string, @CurrentUser() user: JwtPayload) {
+    if (user.id !== id && user.role !== 'ADMIN') {
+      throw new ForbiddenException('You can only update your own profile');
+    }
+
+    const current = await this.usersService.findOne(id);
+    if (current?.picture) {
+      await this.storageService.deleteFile(current.picture);
+    }
+
+    await this.usersService.update(id, { picture: null as any });
+    return { success: true };
+  }
+
+  @Delete(':id')
+  remove(@Param('id') id: string, @CurrentUser() user: JwtPayload) {
+    if (user.role !== 'ADMIN') {
+      throw new ForbiddenException('Only ADMIN can delete users');
+    }
+    return this.usersService.remove(id);
+  }
+}
