@@ -18,7 +18,7 @@ const mockUpdateOrganization = { update: jest.fn() };
 const mockFindSubscription = { findByOrganizationId: jest.fn() };
 const mockCreateSubscription = { create: jest.fn() };
 const mockUpdateSubscription = { update: jest.fn() };
-const mockSubscriptionIntent = { create: jest.fn() };
+const mockSubscriptionIntent = { create: jest.fn(), findByUserId: jest.fn(), updateBillingType: jest.fn() };
 const mockAsaasService = {
     createCustomer: jest.fn(),
     createSubscription: jest.fn(),

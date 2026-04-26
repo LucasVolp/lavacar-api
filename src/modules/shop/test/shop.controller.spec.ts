@@ -3,6 +3,7 @@ import { BadRequestException } from '@nestjs/common';
 import { ShopController } from '../shop.controller';
 import { ShopService } from '../shop.service';
 import { StorageService } from '../../storage/storage.service';
+import { CanAccessShopGuard } from 'src/guards/can-access-shop.guard';
 import { JwtPayload } from 'src/shared/types/jwt-payload.interface';
 import { CreateShopDto } from '../dto/create-shop.dto';
 
@@ -66,7 +67,10 @@ describe('ShopController', () => {
         { provide: ShopService, useValue: mockShopService },
         { provide: StorageService, useValue: mockStorageService },
       ],
-    }).compile();
+    })
+      .overrideGuard(CanAccessShopGuard)
+      .useValue({ canActivate: () => true })
+      .compile();
 
     controller = module.get<ShopController>(ShopController);
   });

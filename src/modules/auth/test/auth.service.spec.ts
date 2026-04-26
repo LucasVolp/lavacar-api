@@ -476,6 +476,26 @@ describe('AuthService', () => {
           role: true,
           isGuest: true,
           createdAt: true,
+          organizations: {
+            select: { id: true, name: true, slug: true },
+          },
+          organizationMembers: {
+            where: { isActive: true },
+            select: {
+              id: true,
+              organizationId: true,
+              role: true,
+              organization: {
+                select: { id: true, name: true, slug: true },
+              },
+              managedShops: {
+                select: {
+                  shopId: true,
+                  shop: { select: { id: true, name: true, slug: true } },
+                },
+              },
+            },
+          },
         },
       });
     });
@@ -539,12 +559,13 @@ describe('AuthService', () => {
     it('should delegate to registerUseCase and return user + token', async () => {
       const user = { id: 'u1', email: 'a@b.com', phone: '+55', role: 'USER' };
       mockRegisterUseCase.execute.mockResolvedValue(user);
+      mockPrismaService.user.findUnique.mockResolvedValue(user);
 
       const dto = { firstName: 'A', phone: '+5511999999999', password: '123456' } as any;
       const result = await service.register(dto);
 
       expect(mockRegisterUseCase.execute).toHaveBeenCalledWith(dto);
-      expect(result).toEqual({ user, access_token: 'mock-token' });
+      expect(result).toMatchObject({ user, access_token: 'mock-token' });
     });
 
     it('should propagate BadRequestException from registerUseCase', async () => {
@@ -556,6 +577,7 @@ describe('AuthService', () => {
     it('should generate JWT for newly registered user', async () => {
       const user = { id: 'new1', email: 'new@b.com', phone: '+5511999999999', role: 'USER' };
       mockRegisterUseCase.execute.mockResolvedValue(user);
+      mockPrismaService.user.findUnique.mockResolvedValue(user);
 
       await service.register({ firstName: 'New', phone: '+5511999999999', password: 'secret123' } as any);
 
@@ -575,12 +597,13 @@ describe('AuthService', () => {
     it('should delegate to loginUseCase and return user + token', async () => {
       const user = { id: 'u1', email: 'a@b.com', phone: '+55', role: 'USER' };
       mockLoginUseCase.execute.mockResolvedValue(user);
+      mockPrismaService.user.findUnique.mockResolvedValue(user);
 
       const dto = { email: 'a@b.com', password: '123456' };
       const result = await service.login(dto);
 
       expect(mockLoginUseCase.execute).toHaveBeenCalledWith(dto);
-      expect(result).toEqual({ user, access_token: 'mock-token' });
+      expect(result).toMatchObject({ user, access_token: 'mock-token' });
     });
 
     it('should propagate UnauthorizedException from loginUseCase', async () => {
@@ -622,12 +645,13 @@ describe('AuthService', () => {
     it('should delegate to completeRegistrationUseCase and return token', async () => {
       const user = { id: 'u1', email: 'a@b.com', phone: '+55', role: 'USER' };
       mockCompleteRegistrationUseCase.execute.mockResolvedValue(user);
+      mockPrismaService.user.findUnique.mockResolvedValue(user);
 
       const dto = { phone: '+5511999999999', email: 'a@b.com', firstName: 'A' } as any;
       const result = await service.completeRegistration(dto);
 
       expect(mockCompleteRegistrationUseCase.execute).toHaveBeenCalledWith(dto);
-      expect(result).toEqual({ user, access_token: 'mock-token' });
+      expect(result).toMatchObject({ user, access_token: 'mock-token' });
     });
 
     it('should propagate errors from completeRegistrationUseCase', async () => {

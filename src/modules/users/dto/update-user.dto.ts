@@ -1,16 +1,29 @@
 import { PartialType } from '@nestjs/mapped-types';
 import { CreateUserDto } from './create-user.dto';
-import { IsBoolean, IsEmail, IsEnum, IsOptional, IsString, Matches } from 'class-validator';
+import { IsBoolean, IsEmail, IsEnum, IsOptional, IsString, Matches, MaxLength } from 'class-validator';
+import { Transform } from 'class-transformer';
 import { Role } from '../types/Role';
 
-// Email não pode ser alterado após criação (ou pode, dependendo da regra de negócio)
+const NAME_PATTERN = /^[a-zA-ZÀ-ÿ\s'.\-]+$/;
+
+function sanitizeName(value: unknown): string | unknown {
+    if (typeof value !== 'string') return value;
+    return value.trim().replace(/<[^>]*>/g, '').replace(/[;&]/g, '').slice(0, 100);
+}
+
 export class UpdateUserDto extends PartialType(CreateUserDto) {
     @IsString()
     @IsOptional()
+    @MaxLength(100)
+    @Matches(NAME_PATTERN, { message: 'Nome inválido. Use apenas letras, espaços, hífens e apóstrofos.' })
+    @Transform(({ value }) => sanitizeName(value))
     firstName?: string;
 
     @IsString()
     @IsOptional()
+    @MaxLength(100)
+    @Matches(NAME_PATTERN, { message: 'Sobrenome inválido. Use apenas letras, espaços, hífens e apóstrofos.' })
+    @Transform(({ value }) => sanitizeName(value))
     lastName?: string;
 
     @IsEmail()

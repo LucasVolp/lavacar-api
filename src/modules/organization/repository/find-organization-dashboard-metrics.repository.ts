@@ -1,9 +1,16 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { AppointmentStatus, Weekday } from 'prisma/generated';
-import { endOfDay, startOfDay, subDays, subMonths, format } from 'date-fns';
+import { subDays, subMonths } from 'date-fns';
 import { toZonedTime } from 'date-fns-tz';
 import { PrismaService } from 'src/shared/databases/prisma.database';
-import { getEndOfDayInTimezone, getStartOfDayInTimezone, timeToMinutes } from 'src/shared/utils/time.util';
+import {
+  formatInUTC,
+  getEndOfDayInTimezone,
+  getEndOfDayUTC,
+  getStartOfDayInTimezone,
+  getStartOfDayUTC,
+  timeToMinutes,
+} from 'src/shared/utils/time.util';
 
 export type OrganizationMetricsPeriod = '7d' | '30d' | '90d' | 'lifetime';
 
@@ -41,6 +48,8 @@ const WEEKDAY_BY_NUMBER: Weekday[] = [
 
 @Injectable()
 export class FindOrganizationDashboardMetricsRepository {
+  private readonly logger = new Logger(FindOrganizationDashboardMetricsRepository.name);
+
   constructor(private readonly prisma: PrismaService) {}
 
   async findOrganizationDashboardMetrics(
@@ -81,7 +90,16 @@ export class FindOrganizationDashboardMetricsRepository {
     const shopIds = organization.shops.map((shop) => shop.id);
     const range = this.getDateRange(filters);
 
+    this.logger.debug({
+      message: `Dashboard metrics request`,
+      organizationId,
+      shopCount: shopIds.length,
+      period: filters.period || '30d',
+      dateRange: range,
+    });
+
     if (shopIds.length === 0) {
+      this.logger.warn(`Organization ${organizationId} has no shops`);
       return {
         organization: {
           id: organization.id,
@@ -153,6 +171,12 @@ export class FindOrganizationDashboardMetricsRepository {
         },
       }),
     ]);
+
+    this.logger.debug({
+      message: `Database query results`,
+      appointmentCount: appointments.length,
+      scheduleCount: schedules.length,
+    });
 
     const now = new Date();
 
@@ -271,8 +295,8 @@ export class FindOrganizationDashboardMetricsRepository {
   private getDateRange(filters: OrganizationDashboardMetricsFilters): DateRange {
     if (filters.startDate || filters.endDate) {
       return {
-        startDate: filters.startDate,
-        endDate: filters.endDate,
+        startDate: filters.startDate ? getStartOfDayUTC(filters.startDate) : undefined,
+        endDate: filters.endDate ? getEndOfDayUTC(filters.endDate) : undefined,
       };
     }
 
@@ -281,21 +305,21 @@ export class FindOrganizationDashboardMetricsRepository {
     switch (filters.period) {
       case '7d':
         return {
-          startDate: startOfDay(subDays(now, 6)),
-          endDate: endOfDay(now),
+          startDate: getStartOfDayUTC(subDays(now, 6)),
+          endDate: getEndOfDayUTC(now),
         };
       case '90d':
         return {
-          startDate: startOfDay(subMonths(now, 3)),
-          endDate: endOfDay(now),
+          startDate: getStartOfDayUTC(subMonths(now, 3)),
+          endDate: getEndOfDayUTC(now),
         };
       case 'lifetime':
         return {};
       case '30d':
       default:
         return {
-          startDate: startOfDay(subDays(now, 29)),
-          endDate: endOfDay(now),
+          startDate: getStartOfDayUTC(subDays(now, 29)),
+          endDate: getEndOfDayUTC(now),
         };
     }
   }
@@ -410,7 +434,15 @@ export class FindOrganizationDashboardMetricsRepository {
 
     const userIds = Array.from(new Set(activeAppointments.map((appointment) => appointment.userId)));
 
+    this.logger.debug({
+      message: `Client mix resolution`,
+      activeAppointmentCount: activeAppointments.length,
+      uniqueUserCount: userIds.length,
+      periodStart,
+    });
+
     if (userIds.length === 0) {
+      this.logger.warn(`No active appointments found for shops: ${shopIds.join(',')}`);
       return { newClients: 0, recurringClients: 0 };
     }
 
@@ -430,10 +462,17 @@ export class FindOrganizationDashboardMetricsRepository {
         }
       }
 
-      return {
+      const result = {
         recurringClients,
         newClients: Math.max(userIds.length - recurringClients, 0),
       };
+
+      this.logger.debug({
+        message: `Client mix (lifetime mode calculated)`,
+        result,
+      });
+
+      return result;
     }
 
     const existingClients = await this.prisma.appointment.findMany({
@@ -458,10 +497,18 @@ export class FindOrganizationDashboardMetricsRepository {
       }
     }
 
-    return {
+    const result = {
       recurringClients,
       newClients: Math.max(userIds.length - recurringClients, 0),
     };
+
+    this.logger.debug({
+      message: `Client mix (period mode - existing clients before periodStart)`,
+      existingClientCount: existingClientIds.size,
+      result,
+    });
+
+    return result;
   }
 
   private buildRevenueSeries(
@@ -473,11 +520,11 @@ export class FindOrganizationDashboardMetricsRepository {
 
     for (const appointment of appointments) {
       const key = groupByMonth
-        ? format(appointment.scheduledAt, 'yyyy-MM')
-        : format(appointment.scheduledAt, 'yyyy-MM-dd');
+        ? formatInUTC(appointment.scheduledAt, 'yyyy-MM')
+        : formatInUTC(appointment.scheduledAt, 'yyyy-MM-dd');
       const label = groupByMonth
-        ? format(appointment.scheduledAt, 'MM/yyyy')
-        : format(appointment.scheduledAt, 'dd/MM');
+        ? formatInUTC(appointment.scheduledAt, 'MM/yyyy')
+        : formatInUTC(appointment.scheduledAt, 'dd/MM');
 
       const current = grouped.get(key) || {
         label,

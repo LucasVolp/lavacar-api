@@ -28,6 +28,10 @@ export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
     });
   }
 
+  private isBlockedDomain(email: string): boolean {
+    return /^.+@(.*\.)?nexocar\.com\.br$/i.test(email);
+  }
+
   async validate(
     accessToken: string,
     refreshToken: string,
@@ -36,6 +40,11 @@ export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
   ): Promise<any> {
     try {
       const email = profile.emails[0].value;
+
+      if (this.isBlockedDomain(email)) {
+        return done(new Error('Domínio de e-mail não permitido.'), false);
+      }
+
       const firstName = profile.name.givenName;
       const lastName = profile.name.familyName;
       const picture = profile.photos[0].value;

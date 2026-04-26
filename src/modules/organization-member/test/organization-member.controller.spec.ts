@@ -3,6 +3,7 @@ import { ForbiddenException, NotFoundException, BadRequestException } from '@nes
 import { OrganizationMemberController } from '../organization-member.controller';
 import { OrganizationMemberService } from '../organization-member.service';
 import { JwtPayload } from 'src/shared/types/jwt-payload.interface';
+import { CanAccessOrganizationWithBillingGuard } from 'src/guards/can-access-organization-with-billing.guard';
 
 const mockOrganizationMemberService = {
   create: jest.fn(),
@@ -33,7 +34,10 @@ describe('OrganizationMemberController', () => {
       providers: [
         { provide: OrganizationMemberService, useValue: mockOrganizationMemberService },
       ],
-    }).compile();
+    })
+      .overrideGuard(CanAccessOrganizationWithBillingGuard)
+      .useValue({ canActivate: () => true })
+      .compile();
 
     controller = module.get<OrganizationMemberController>(OrganizationMemberController);
   });

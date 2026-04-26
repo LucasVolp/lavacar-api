@@ -1,24 +1,6 @@
 services:
-  postgres:
-    image: postgres:15-alpine
-    container_name: lavacar_postgres
-    restart: unless-stopped
-    env_file:
-      - ./.env
-    ports:
-      - "3002:5432"
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-    networks:
-      - lavacar_network
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
-      interval: 5s
-      timeout: 5s
-      retries: 5
-    # Harden: drop all capabilities, read-only root where possible
-    security_opt:
-      - no-new-privileges:true
+  # PostgreSQL now running on Neon DB (managed service)
+  # No longer need local postgres container
 
   backend:
     build:
@@ -38,9 +20,6 @@ services:
     volumes:
       - .:/app
       - /app/node_modules
-    depends_on:
-      postgres:
-        condition: service_healthy
     networks:
       - lavacar_network
     security_opt:
@@ -87,10 +66,6 @@ services:
   #       condition: service_healthy
   #   security_opt:
   #     - no-new-privileges:true
-
-volumes:
-  postgres_data:
-  # n8n_data:
 
 networks:
   lavacar_network:
