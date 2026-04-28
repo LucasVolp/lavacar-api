@@ -4,6 +4,7 @@ import { AppointmentService } from '../appointment.service';
 import { AuthService } from 'src/modules/auth/auth.service';
 import { JwtPayload } from 'src/shared/types/jwt-payload.interface';
 import { AppointmentStatus } from '../types/AppointmentStatus';
+import { SubscriptionGuard } from 'src/guards/subscription.guard';
 
 // ── Mocks ──────────────────────────────────────────────────────────
 const mockAppointmentService = {
@@ -75,7 +76,10 @@ describe('AppointmentController', () => {
                 { provide: AppointmentService, useValue: mockAppointmentService },
                 { provide: AuthService, useValue: mockAuthService },
             ],
-        }).compile();
+        })
+            .overrideGuard(SubscriptionGuard)
+            .useValue({ canActivate: () => true })
+            .compile();
 
         controller = module.get<AppointmentController>(AppointmentController);
     });

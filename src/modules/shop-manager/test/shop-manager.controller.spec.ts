@@ -3,6 +3,7 @@ import { ShopManagerController } from '../shop-manager.controller';
 import { ShopManagerService } from '../shop-manager.service';
 import { CreateShopManagerDto } from '../dto/create-shop-manager.dto';
 import { UpdateShopManagerDto } from '../dto/update-shop-manager.dto';
+import { SubscriptionGuard } from 'src/guards/subscription.guard';
 
 const mockShopManagerService = {
     create: jest.fn(),
@@ -23,7 +24,10 @@ describe('ShopManagerController', () => {
         const module: TestingModule = await Test.createTestingModule({
             controllers: [ShopManagerController],
             providers: [{ provide: ShopManagerService, useValue: mockShopManagerService }],
-        }).compile();
+        })
+            .overrideGuard(SubscriptionGuard)
+            .useValue({ canActivate: () => true })
+            .compile();
 
         controller = module.get<ShopManagerController>(ShopManagerController);
     });

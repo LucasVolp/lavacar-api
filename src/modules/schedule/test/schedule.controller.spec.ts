@@ -6,6 +6,7 @@ import { UpdateScheduleDto } from '../dto/update-schedule.dto';
 import { JwtPayload } from 'src/shared/types/jwt-payload.interface';
 import { Weekday } from '../types/Weekday';
 import { NotFoundException, BadRequestException } from '@nestjs/common';
+import { SubscriptionGuard } from 'src/guards/subscription.guard';
 
 // ---------------------------------------------------------------------------
 // Mocks
@@ -111,7 +112,10 @@ describe('ScheduleController', () => {
       providers: [
         { provide: ScheduleService, useValue: mockScheduleService },
       ],
-    }).compile();
+    })
+      .overrideGuard(SubscriptionGuard)
+      .useValue({ canActivate: () => true })
+      .compile();
 
     controller = module.get<ScheduleController>(ScheduleController);
   });

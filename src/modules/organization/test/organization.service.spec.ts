@@ -58,7 +58,7 @@ describe('OrganizationService', () => {
 
       const result = await service.create(createDto);
 
-      expect(mockCreateOrganizationUseCase.execute).toHaveBeenCalledWith(createDto);
+      expect(mockCreateOrganizationUseCase.execute).toHaveBeenCalledWith(createDto, undefined);
       expect(result).toEqual(created);
     });
 
@@ -68,7 +68,7 @@ describe('OrganizationService', () => {
 
       await service.create(fullDto);
 
-      expect(mockCreateOrganizationUseCase.execute).toHaveBeenCalledWith(fullDto);
+      expect(mockCreateOrganizationUseCase.execute).toHaveBeenCalledWith(fullDto, undefined);
     });
 
     it('should propagate BadRequestException for duplicate document', async () => {
@@ -427,7 +427,7 @@ describe('OrganizationService', () => {
 
       await service.create(maliciousDto);
 
-      expect(mockCreateOrganizationUseCase.execute).toHaveBeenCalledWith(maliciousDto);
+      expect(mockCreateOrganizationUseCase.execute).toHaveBeenCalledWith(maliciousDto, undefined);
     });
 
     it('should pass XSS-like strings to use case layer (DTO validation guards)', async () => {
@@ -440,7 +440,7 @@ describe('OrganizationService', () => {
 
       await service.create(xssDto);
 
-      expect(mockCreateOrganizationUseCase.execute).toHaveBeenCalledWith(xssDto);
+      expect(mockCreateOrganizationUseCase.execute).toHaveBeenCalledWith(xssDto, undefined);
     });
 
     it('should forward slug with special characters to use case', async () => {
@@ -472,7 +472,7 @@ describe('OrganizationService', () => {
       const result = await service.create(minDto);
 
       expect(result).toBeDefined();
-      expect(mockCreateOrganizationUseCase.execute).toHaveBeenCalledWith(minDto);
+      expect(mockCreateOrganizationUseCase.execute).toHaveBeenCalledWith(minDto, undefined);
     });
 
     it('should handle findAll returning empty results', async () => {

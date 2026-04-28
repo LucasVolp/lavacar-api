@@ -1,6 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { BillingController } from '../billing.controller';
 import { BillingService } from '../billing.service';
+import { AsaasService } from '../services/asaas.service';
 
 const mockBillingService = {
     createCheckout: jest.fn(),
@@ -22,6 +23,7 @@ describe('BillingController', () => {
             controllers: [BillingController],
             providers: [
                 { provide: BillingService, useValue: mockBillingService },
+                { provide: AsaasService, useValue: {} },
             ],
         }).compile();
 
