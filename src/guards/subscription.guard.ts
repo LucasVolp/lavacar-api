@@ -88,13 +88,9 @@ export class SubscriptionGuard implements CanActivate {
 
         if (params.organizationId) return params.organizationId;
 
+        if (query.organizationId) return query.organizationId;
+
         if (params.shopId) return this.getOrgIdByShopId(params.shopId);
-
-        if (params.id) {
-            const fromShop = await this.getOrgIdByShopId(params.id);
-            if (fromShop) return fromShop;
-        }
-
         if (query.shopId) return this.getOrgIdByShopId(query.shopId);
 
         return null;
