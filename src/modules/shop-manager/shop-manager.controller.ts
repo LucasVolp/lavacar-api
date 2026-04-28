@@ -1,10 +1,12 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, Query } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, Query, UseGuards } from '@nestjs/common';
+import { SubscriptionGuard } from 'src/guards/subscription.guard';
 import { ShopManagerService } from './shop-manager.service';
 import { CreateShopManagerDto, UpdateShopManagerDto } from './dto';
 import { Roles } from 'src/decorators/roles.decorator';
 import { Role } from 'src/modules/users/types/Role';
 
 @Controller('shop-managers')
+@UseGuards(SubscriptionGuard)
 export class ShopManagerController {
     constructor(private readonly shopManagerService: ShopManagerService) {}
 

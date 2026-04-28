@@ -10,7 +10,6 @@ import {
     HttpCode,
     HttpStatus,
     Logger,
-    UnauthorizedException,
 } from '@nestjs/common';
 import { CreateBillingDto } from './dto/create-customer.dto';
 import { CreateAsaasSubscriptionDto } from './dto/create-subscription.dto';
@@ -18,6 +17,7 @@ import { CreateSelfCheckoutDto } from './dto/create-self-checkout.dto';
 import { AsaasWebhookDto } from './dto/webhook.dto';
 import { PaymentMethod } from 'prisma/generated';
 import { BillingService } from './billing.service';
+import { AsaasService } from './services/asaas.service';
 import { Roles } from 'src/decorators/roles.decorator';
 import { Role } from 'src/modules/users/types/Role';
 import { Public } from 'src/shared/decorators/public.decorator';
@@ -28,7 +28,10 @@ import { JwtPayload } from 'src/shared/types/jwt-payload.interface';
 export class BillingController {
     private readonly logger = new Logger(BillingController.name);
 
-    constructor(private readonly billingService: BillingService) {}
+    constructor(
+        private readonly billingService: BillingService,
+        private readonly asaasService: AsaasService,
+    ) {}
 
     @Public()
     @Post('webhook')
@@ -37,11 +40,7 @@ export class BillingController {
         @Body() webhookData: AsaasWebhookDto,
         @Headers('asaas-access-token') webhookToken: string,
     ) {
-        const expectedToken = process.env.ASAAS_WEBHOOK_TOKEN;
-
-        if (!expectedToken || !webhookToken || webhookToken !== expectedToken) {
-            throw new UnauthorizedException('Token de webhook inválido');
-        }
+        this.asaasService.validateWebhookToken(webhookToken);
 
         const savedEvent = await this.billingService.saveWebhookEvent(webhookData);
         if (!savedEvent) return { received: true };

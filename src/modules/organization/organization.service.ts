@@ -23,8 +23,8 @@ export class OrganizationService {
         private readonly findOrganizationDashboardMetricsUseCase: FindOrganizationDashboardMetricsUseCase,
     ) {}
 
-    create(data: CreateOrganizationDto) {
-        return this.createOrganizationUseCase.execute(data);
+    create(data: CreateOrganizationDto, callerRole?: string) {
+        return this.createOrganizationUseCase.execute(data, callerRole);
     }
 
     findAll(filters?: { page?: number; perPage?: number }) {

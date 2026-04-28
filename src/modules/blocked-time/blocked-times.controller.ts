@@ -1,4 +1,5 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, Query } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, Query, UseGuards } from '@nestjs/common';
+import { SubscriptionGuard } from 'src/guards/subscription.guard';
 import { BlockedTimesService } from './blocked-times.service';
 import { CreateBlockedTimeDto } from './dto/create-blocked-time.dto';
 import { UpdateBlockedTimeDto } from './dto/update-blocked-time.dto';
@@ -8,6 +9,7 @@ import { Roles } from 'src/decorators/roles.decorator';
 import { Role } from 'src/modules/users/types/Role';
 
 @Controller('blockedtime')
+@UseGuards(SubscriptionGuard)
 @Roles(Role.ADMIN, Role.OWNER, Role.EMPLOYEE, Role.MANAGER)
 export class BlockedTimesController {
   constructor(private readonly blockedTimesService: BlockedTimesService) {}

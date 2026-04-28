@@ -1,4 +1,5 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, Query } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, Query, UseGuards } from '@nestjs/common';
+import { SubscriptionGuard } from 'src/guards/subscription.guard';
 import { ScheduleService } from './schedule.service';
 import { CreateScheduleDto } from './dto/create-schedule.dto';
 import { UpdateScheduleDto } from './dto/update-schedule.dto';
@@ -9,6 +10,7 @@ import { Role } from 'src/modules/users/types/Role';
 import { Public } from 'src/shared/decorators/public.decorator';
 
 @Controller('schedule')
+@UseGuards(SubscriptionGuard)
 @Roles(Role.ADMIN, Role.OWNER, Role.EMPLOYEE, Role.MANAGER)
 export class ScheduleController {
   constructor(private readonly scheduleService: ScheduleService) {}

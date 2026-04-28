@@ -24,8 +24,10 @@ import { FileInterceptor } from '@nestjs/platform-express';
 import { memoryStorage } from 'multer';
 import { StorageService } from '../storage/storage.service';
 import { CanAccessShopGuard } from 'src/guards/can-access-shop.guard';
+import { SubscriptionGuard } from 'src/guards/subscription.guard';
 
 @Controller('shop')
+@UseGuards(SubscriptionGuard)
 export class ShopController {
   constructor(
     private readonly shopService: ShopService,

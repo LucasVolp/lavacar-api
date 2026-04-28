@@ -1,8 +1,10 @@
-import { CanActivate, ExecutionContext, ForbiddenException, Injectable, Logger } from "@nestjs/common";
+import { CanActivate, ExecutionContext, ForbiddenException, HttpException, HttpStatus, Injectable, Logger } from "@nestjs/common";
 import { Status } from "prisma/generated";
 import { PrismaService } from "src/shared/databases/prisma.database";
 import { IS_PUBLIC_KEY } from "src/shared/decorators/public.decorator";
 import { Reflector } from "@nestjs/core";
+
+const TRIAL_DAYS = 15;
 
 @Injectable()
 export class CanAccessOrganizationWithBillingGuard implements CanActivate {
@@ -69,21 +71,25 @@ export class CanAccessOrganizationWithBillingGuard implements CanActivate {
                 throw new ForbiddenException("Organização inativa");
             }
 
+            const now = new Date();
+
             if (!organization.subscriptions || organization.subscriptions.length === 0) {
-                this.logger.warn(`Organization ${organizationId} has no active subscription`);
-                throw new ForbiddenException("Nenhuma assinatura ativa");
+                const trialEndsAt = new Date(organization.createdAt);
+                trialEndsAt.setDate(trialEndsAt.getDate() + TRIAL_DAYS);
+
+                if (now < trialEndsAt) return true;
+
+                this.logger.warn(`Trial expired for organization ${organizationId}`);
+                throw new HttpException('TRIAL_EXPIRED', HttpStatus.PAYMENT_REQUIRED);
             }
 
             const subscription = organization.subscriptions[0];
-            const now = new Date();
 
             if (subscription.expiresAt && subscription.expiresAt <= now) {
                 this.logger.warn(
                     `Organization ${organizationId} subscription expired at ${subscription.expiresAt}`,
                 );
-                throw new ForbiddenException(
-                    "Sua assinatura expirou. Por favor, renove para continuar utilizando o sistema.",
-                );
+                throw new HttpException('SUBSCRIPTION_EXPIRED', HttpStatus.PAYMENT_REQUIRED);
             }
 
             const isValidStatus =
@@ -98,20 +104,21 @@ export class CanAccessOrganizationWithBillingGuard implements CanActivate {
                 );
 
                 const statusMessages: Record<string, string> = {
-                    [Status.PENDING]:
-                        "Sua assinatura está pendente de confirmação. Aguarde o processamento do pagamento.",
-                    [Status.OVERDUE]: "Sua assinatura está inadimplente. Por favor, realize o pagamento para continuar.",
-                    [Status.EXPIRED]: "Sua assinatura expirou. Por favor, renove para continuar utilizando o sistema.",
-                    [Status.CANCELLED]:
-                        "Sua assinatura foi cancelada e não está mais vigente. Por favor, contrate um novo plano.",
+                    [Status.PENDING]: 'SUBSCRIPTION_PENDING',
+                    [Status.OVERDUE]: 'SUBSCRIPTION_OVERDUE',
+                    [Status.EXPIRED]: 'SUBSCRIPTION_EXPIRED',
+                    [Status.CANCELLED]: 'SUBSCRIPTION_CANCELLED',
                 };
 
-                throw new ForbiddenException(statusMessages[subscription.status as string] || "Status de assinatura inválido");
+                throw new HttpException(
+                    statusMessages[subscription.status as string] ?? 'SUBSCRIPTION_INVALID',
+                    HttpStatus.PAYMENT_REQUIRED,
+                );
             }
 
             return true;
         } catch (error) {
-            if (error instanceof ForbiddenException) {
+            if (error instanceof ForbiddenException || error instanceof HttpException) {
                 throw error;
             }
             this.logger.error(`Error checking billing access for org ${organizationId}:`, error);

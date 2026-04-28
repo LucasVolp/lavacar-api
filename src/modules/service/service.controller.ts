@@ -9,8 +9,10 @@ import {
   Post,
   Query,
   UploadedFile,
+  UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
+import { SubscriptionGuard } from 'src/guards/subscription.guard';
 import { ServiceService } from './service.service';
 import { CreateServiceDto } from './dto/create-service.dto';
 import { UpdateServiceDto } from './dto/update-service.dto';
@@ -24,6 +26,7 @@ import { memoryStorage } from 'multer';
 import { StorageService } from '../storage/storage.service';
 
 @Controller('service')
+@UseGuards(SubscriptionGuard)
 @Roles(Role.ADMIN, Role.OWNER, Role.EMPLOYEE, Role.MANAGER)
 export class ServiceController {
   constructor(

@@ -10,18 +10,26 @@ export class CreateOrganizationRepository {
     async create(data: CreateOrganizationDto) {
         const slug = generateSlug(data.name);
 
-        return await this.prisma.organization.create({
-            data: {
-                ...data,
-                slug,
-                members: {
-                create: {
-                    userId: data.ownerId,
-                    role: 'OWNER',        
+        return await this.prisma.$transaction(async (tx) => {
+            const organization = await tx.organization.create({
+                data: {
+                    ...data,
+                    slug,
+                    members: {
+                        create: {
+                            userId: data.ownerId,
+                            role: 'OWNER',
+                        },
+                    },
                 },
-            },
-            },
+            });
 
+            await tx.user.update({
+                where: { id: data.ownerId },
+                data: { role: 'OWNER' },
+            });
+
+            return organization;
         });
     }
 }
