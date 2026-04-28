@@ -21,6 +21,12 @@ export interface SubscriptionStatus {
     pixData?: PixData;
 }
 
+export interface TrialInfo {
+    isActive: boolean;
+    endsAt: string;
+    daysRemaining: number;
+}
+
 export interface BillingStatusResponse {
     userRole: string;
     canAccessOrganization: boolean;
@@ -29,8 +35,11 @@ export interface BillingStatusResponse {
         id: string;
         name: string;
         isActive: boolean;
+        createdAt?: string;
+        document?: string;
     };
     subscription?: SubscriptionStatus;
+    trial?: TrialInfo;
 }
 
 @Injectable()
@@ -80,23 +89,30 @@ export class GetBillingStatusUseCase {
                 id: organization.id,
                 name: organization.name,
                 isActive: organization.isActive,
+                createdAt: organization.createdAt.toISOString(),
+                document: organization.document ?? undefined,
             };
 
             if (!subscription) {
+                const now = new Date();
+                const trialEndsAt = new Date(organization.createdAt);
+                trialEndsAt.setDate(trialEndsAt.getDate() + 15);
+                const isTrialActive = now < trialEndsAt;
+                const daysRemaining = Math.max(
+                    0,
+                    Math.ceil((trialEndsAt.getTime() - now.getTime()) / 86_400_000),
+                );
+
                 return {
                     userRole,
-                    canAccessOrganization: false,
+                    canAccessOrganization: isTrialActive,
                     hasOrganization: true,
                     organization: orgInfo,
+                    trial: { isActive: isTrialActive, endsAt: trialEndsAt.toISOString(), daysRemaining },
                 };
             }
 
             const now = new Date();
-            
-            // Lógica de permissão:
-            // 1. Se subscription ACTIVE e org ACTIVE = acesso
-            // 2. Se subscription CANCELLED mas expiresAt no futuro = acesso (vigente)
-            // 3. Se expiresAt no passado = sem acesso (vencida)
             const isExpired: boolean = subscription.expiresAt ? subscription.expiresAt <= now : false;
             const isCancelledButVigent: boolean =
                 subscription.status === Status.CANCELLED &&

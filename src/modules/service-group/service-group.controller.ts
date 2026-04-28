@@ -1,4 +1,5 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, Query } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, Query, UseGuards } from '@nestjs/common';
+import { SubscriptionGuard } from 'src/guards/subscription.guard';
 import { ServiceGroupService } from './service-group.service';
 import { CreateServiceGroupDto } from './dto/create-service-group.dto';
 import { UpdateServiceGroupDto } from './dto/update-service-group.dto';
@@ -8,6 +9,7 @@ import { Roles } from 'src/decorators/roles.decorator';
 import { Role } from 'src/modules/users/types/Role';
 
 @Controller('service-groups')
+@UseGuards(SubscriptionGuard)
 @Roles(Role.ADMIN, Role.OWNER, Role.EMPLOYEE, Role.MANAGER)
 export class ServiceGroupController {
     constructor(private readonly serviceGroupService: ServiceGroupService) {}

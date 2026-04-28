@@ -3,6 +3,7 @@ import { SalesGoalController } from '../sales-goal.controller';
 import { SalesGoalService } from '../sales-goal.service';
 import { JwtPayload } from 'src/shared/types/jwt-payload.interface';
 import { ForbiddenException, NotFoundException, ServiceUnavailableException, BadRequestException } from '@nestjs/common';
+import { SubscriptionGuard } from 'src/guards/subscription.guard';
 
 const mockSalesGoalService = {
   create: jest.fn(),
@@ -30,7 +31,10 @@ describe('SalesGoalController', () => {
       providers: [
         { provide: SalesGoalService, useValue: mockSalesGoalService },
       ],
-    }).compile();
+    })
+      .overrideGuard(SubscriptionGuard)
+      .useValue({ canActivate: () => true })
+      .compile();
 
     controller = module.get<SalesGoalController>(SalesGoalController);
   });

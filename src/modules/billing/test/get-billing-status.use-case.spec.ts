@@ -15,7 +15,7 @@ const mockAsaasService = {
     getPixQrCode: jest.fn(),
 };
 
-const org = { id: 'org-1', name: 'Lavacar Central', isActive: true };
+const org = { id: 'org-1', name: 'Lavacar Central', isActive: true, createdAt: new Date('2020-01-01') };
 
 const activeSubscription = {
     id: 'sub-1',

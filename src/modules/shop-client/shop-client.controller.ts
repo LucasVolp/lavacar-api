@@ -1,4 +1,5 @@
-import { Controller, Get, Post, Body, Param, Delete, Query, Patch } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, Delete, Query, Patch, UseGuards } from '@nestjs/common';
+import { SubscriptionGuard } from 'src/guards/subscription.guard';
 import { ShopClientService } from './shop-client.service';
 import { CreateShopClientDto } from './dto/create-shop-client.dto';
 import { UpdateShopClientDto } from './dto/update-shop-client.dto';
@@ -9,6 +10,7 @@ import { Role } from 'src/modules/users/types/Role';
 import { Public } from 'src/shared/decorators/public.decorator';
 
 @Controller('shop-clients')
+@UseGuards(SubscriptionGuard)
 @Roles(Role.ADMIN, Role.OWNER, Role.EMPLOYEE, Role.MANAGER)
 export class ShopClientController {
     constructor(private readonly shopClientService: ShopClientService) {}

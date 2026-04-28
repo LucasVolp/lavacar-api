@@ -4,6 +4,7 @@ import { ServiceController } from '../service.controller';
 import { ServiceService } from '../service.service';
 import { StorageService } from '../../storage/storage.service';
 import { JwtPayload } from 'src/shared/types/jwt-payload.interface';
+import { SubscriptionGuard } from 'src/guards/subscription.guard';
 
 const mockServiceService = {
   create: jest.fn(),
@@ -57,7 +58,10 @@ describe('ServiceController', () => {
         { provide: ServiceService, useValue: mockServiceService },
         { provide: StorageService, useValue: mockStorageService },
       ],
-    }).compile();
+    })
+      .overrideGuard(SubscriptionGuard)
+      .useValue({ canActivate: () => true })
+      .compile();
 
     controller = module.get<ServiceController>(ServiceController);
   });

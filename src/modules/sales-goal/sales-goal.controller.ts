@@ -1,4 +1,5 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, Query } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, Query, UseGuards } from '@nestjs/common';
+import { SubscriptionGuard } from 'src/guards/subscription.guard';
 import { SalesGoalService } from './sales-goal.service';
 import { CreateSalesGoalDto } from './dto/create-sales-goal.dto';
 import { UpdateSalesGoalDto } from './dto/update-sales-goal.dto';
@@ -8,6 +9,7 @@ import { Roles } from 'src/decorators/roles.decorator';
 import { Role } from 'src/modules/users/types/Role';
 
 @Controller('sales-goal')
+@UseGuards(SubscriptionGuard)
 @Roles(Role.ADMIN, Role.OWNER, Role.EMPLOYEE, Role.MANAGER)
 export class SalesGoalController {
     constructor(private readonly salesGoalService: SalesGoalService) {}

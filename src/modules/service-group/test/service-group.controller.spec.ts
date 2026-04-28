@@ -2,6 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { ServiceGroupController } from '../service-group.controller';
 import { ServiceGroupService } from '../service-group.service';
 import { JwtPayload } from 'src/shared/types/jwt-payload.interface';
+import { SubscriptionGuard } from 'src/guards/subscription.guard';
 
 const mockServiceGroupService = {
   create: jest.fn(),
@@ -39,7 +40,10 @@ describe('ServiceGroupController', () => {
       providers: [
         { provide: ServiceGroupService, useValue: mockServiceGroupService },
       ],
-    }).compile();
+    })
+      .overrideGuard(SubscriptionGuard)
+      .useValue({ canActivate: () => true })
+      .compile();
 
     controller = module.get<ServiceGroupController>(ServiceGroupController);
   });

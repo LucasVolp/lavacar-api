@@ -1,4 +1,5 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, Query } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, Query, UseGuards } from '@nestjs/common';
+import { SubscriptionGuard } from 'src/guards/subscription.guard';
 import { AppointmentService } from './appointment.service';
 import { CreateAppointmentDto } from './dto/create-appointment.dto';
 import { CreateWalkInDto } from './dto/create-walk-in.dto';
@@ -12,6 +13,7 @@ import { Public } from 'src/shared/decorators/public.decorator';
 import { AuthService } from 'src/modules/auth/auth.service';
 
 @Controller('appointments')
+@UseGuards(SubscriptionGuard)
 @Roles(Role.ADMIN, Role.OWNER, Role.EMPLOYEE, Role.MANAGER, Role.USER)
 export class AppointmentController {
     constructor(

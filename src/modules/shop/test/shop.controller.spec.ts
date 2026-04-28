@@ -6,6 +6,7 @@ import { StorageService } from '../../storage/storage.service';
 import { CanAccessShopGuard } from 'src/guards/can-access-shop.guard';
 import { JwtPayload } from 'src/shared/types/jwt-payload.interface';
 import { CreateShopDto } from '../dto/create-shop.dto';
+import { SubscriptionGuard } from 'src/guards/subscription.guard';
 
 // ---------------------------------------------------------------------------
 // Mocks
@@ -69,6 +70,8 @@ describe('ShopController', () => {
       ],
     })
       .overrideGuard(CanAccessShopGuard)
+      .useValue({ canActivate: () => true })
+      .overrideGuard(SubscriptionGuard)
       .useValue({ canActivate: () => true })
       .compile();
 

@@ -12,6 +12,8 @@ import {
   UseInterceptors,
   UseGuards,
 } from '@nestjs/common';
+import { CurrentUser } from 'src/shared/decorators/current-user.decorator';
+import { JwtPayload } from 'src/shared/types/jwt-payload.interface';
 import { OrganizationService } from './organization.service';
 import { CreateOrganizationDto, UpdateOrganizationDto } from './dto';
 import { OrganizationMetricsPeriod } from './repository';
@@ -32,8 +34,8 @@ export class OrganizationController {
   ) {}
 
   @Post()
-  create(@Body() data: CreateOrganizationDto) {
-    return this.organizationService.create(data);
+  create(@Body() data: CreateOrganizationDto, @CurrentUser() user?: JwtPayload) {
+    return this.organizationService.create(data, user?.role);
   }
 
   @Get()

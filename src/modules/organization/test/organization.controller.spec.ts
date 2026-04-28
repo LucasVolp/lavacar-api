@@ -61,7 +61,7 @@ describe('OrganizationController', () => {
 
       const result = await controller.create(createDto as any);
 
-      expect(mockOrganizationService.create).toHaveBeenCalledWith(createDto);
+      expect(mockOrganizationService.create).toHaveBeenCalledWith(createDto, undefined);
       expect(result).toEqual(org);
     });
 
@@ -71,7 +71,7 @@ describe('OrganizationController', () => {
 
       await controller.create(fullDto as any);
 
-      expect(mockOrganizationService.create).toHaveBeenCalledWith(fullDto);
+      expect(mockOrganizationService.create).toHaveBeenCalledWith(fullDto, undefined);
     });
 
     it('should propagate errors from service', async () => {
@@ -472,7 +472,7 @@ describe('OrganizationController', () => {
 
       await controller.create(maliciousDto as any);
 
-      expect(mockOrganizationService.create).toHaveBeenCalledWith(maliciousDto);
+      expect(mockOrganizationService.create).toHaveBeenCalledWith(maliciousDto, undefined);
     });
 
     it('should forward XSS-like name to service', async () => {
@@ -484,7 +484,7 @@ describe('OrganizationController', () => {
 
       await controller.create(xssDto as any);
 
-      expect(mockOrganizationService.create).toHaveBeenCalledWith(xssDto);
+      expect(mockOrganizationService.create).toHaveBeenCalledWith(xssDto, undefined);
     });
 
     it('should handle path traversal in slug parameter', async () => {

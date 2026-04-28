@@ -3,6 +3,7 @@ import { BlockedTimesController } from '../blocked-times.controller';
 import { BlockedTimesService } from '../blocked-times.service';
 import { JwtPayload } from 'src/shared/types/jwt-payload.interface';
 import { BlockedTimeType } from '../types/BlockedTimeType';
+import { SubscriptionGuard } from 'src/guards/subscription.guard';
 
 // ── Mocks ──────────────────────────────────────────────────────────
 const mockBlockedTimesService = {
@@ -71,7 +72,10 @@ describe('BlockedTimesController', () => {
             providers: [
                 { provide: BlockedTimesService, useValue: mockBlockedTimesService },
             ],
-        }).compile();
+        })
+            .overrideGuard(SubscriptionGuard)
+            .useValue({ canActivate: () => true })
+            .compile();
 
         controller = module.get<BlockedTimesController>(BlockedTimesController);
     });

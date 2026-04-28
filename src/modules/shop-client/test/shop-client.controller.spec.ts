@@ -4,6 +4,7 @@ import { ShopClientService } from '../shop-client.service';
 import { JwtPayload } from 'src/shared/types/jwt-payload.interface';
 import { CreateShopClientDto } from '../dto/create-shop-client.dto';
 import { UpdateShopClientDto } from '../dto/update-shop-client.dto';
+import { SubscriptionGuard } from 'src/guards/subscription.guard';
 
 // ---------------------------------------------------------------------------
 // Mocks
@@ -49,7 +50,10 @@ describe('ShopClientController', () => {
       providers: [
         { provide: ShopClientService, useValue: mockShopClientService },
       ],
-    }).compile();
+    })
+      .overrideGuard(SubscriptionGuard)
+      .useValue({ canActivate: () => true })
+      .compile();
 
     controller = module.get<ShopClientController>(ShopClientController);
   });
