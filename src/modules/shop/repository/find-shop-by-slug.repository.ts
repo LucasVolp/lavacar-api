@@ -18,6 +18,7 @@ export class FindShopBySlugRepository {
                 status: true,
                 logoUrl: true,
                 bannerUrl: true,
+                gallery: true,
                 socialLinks: true,
                 zipCode: true,
                 street: true,
