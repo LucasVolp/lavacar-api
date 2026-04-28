@@ -24,8 +24,11 @@ export class CreateOrganizationRepository {
                 },
             });
 
-            await tx.user.update({
-                where: { id: data.ownerId },
+            await tx.user.updateMany({
+                where: {
+                    id: data.ownerId,
+                    NOT: { role: 'ADMIN' },
+                },
                 data: { role: 'OWNER' },
             });
 
