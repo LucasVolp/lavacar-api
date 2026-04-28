@@ -34,7 +34,7 @@ export class OrganizationController {
   ) {}
 
   @Post()
-  create(@Body() data: CreateOrganizationDto, @CurrentUser() user: JwtPayload) {
+  create(@Body() data: CreateOrganizationDto, @CurrentUser() user?: JwtPayload) {
     return this.organizationService.create(data, user?.role);
   }
 
